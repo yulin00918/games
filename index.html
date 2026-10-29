@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>總舖師 連線版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* =========================================================
+   ① Firebase 設定（老師只要改這裡）
+   把 Firebase 主控台給你的設定貼進來。
+   留空白 = 「本機測試模式」：同一台電腦開好幾個分頁就能模擬多位玩家。
+   ========================================================= */
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCwWWNly7V-ORMbTFBVcN_ZQ_zdZ-4L5Ik",
+  authDomain: "tsongposai.firebaseapp.com",
+  databaseURL: "https://tsongposai-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "tsongposai",
+  storageBucket: "tsongposai.firebasestorage.app",
+  messagingSenderId: "340842053383",
+  appId: "1:340842053383:web:9f2a6f1654dfc1ddcbcfa2"
+};
+</script>
+<style>
+:root{
+  --red:#a8231b; --red-d:#7d160f; --red-l:#f6dcd6;
+  --cream:#fbf4e6; --paper:#fffaf0; --ink:#2a1c12; --muted:#7a6656;
+  --gold:#c08a24; --gold-l:#f5e6c4; --green:#2f7a4a; --green-l:#dcefe1;
+  --line:#e6d6bc; --shadow:0 2px 0 rgba(90,50,20,.08),0 6px 18px rgba(90,50,20,.08);
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--cream);color:var(--ink);font-family:"Noto Sans TC",system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+body{background-image:radial-gradient(circle at 1px 1px,rgba(168,35,27,.06) 1px,transparent 0);background-size:18px 18px;min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer}
+h1,h2,h3{font-family:"Noto Serif TC",serif;margin:0}
+.wrap{max-width:760px;margin:0 auto;padding:16px 16px 120px}
+.wide{max-width:1100px}
+.btn{border:0;border-radius:999px;padding:12px 20px;font-weight:700;background:var(--red);color:#fff;box-shadow:0 3px 0 var(--red-d);transition:transform .08s}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--red-d)}
+.btn[disabled]{background:#cbbcaa;box-shadow:none;cursor:not-allowed}
+.btn.ghost{background:var(--paper);color:var(--red);box-shadow:inset 0 0 0 2px var(--red)}
+.btn.gold{background:var(--gold);box-shadow:0 3px 0 #8d6417}
+.btn.green{background:var(--green);box-shadow:0 3px 0 #1d5331}
+.btn.sm{padding:7px 14px;font-size:14px}
+.btn.block{width:100%}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grid{display:grid;gap:12px}
+.chip{display:inline-flex;align-items:center;gap:3px;border-radius:999px;padding:2px 9px;font-size:13px;background:#efe4d0;white-space:nowrap}
+.chip.ok{background:var(--green-l);color:#1d5331}
+.chip.no{background:#f1e9df;color:#a99683;text-decoration:line-through}
+.chip.red{background:var(--red-l);color:var(--red-d)}
+.chip.gold{background:var(--gold-l);color:#7a560e}
+input{font:inherit;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:#fff;width:100%}
+input:focus{outline:none;border-color:var(--red)}
+label{font-weight:700;font-size:14px;display:block;margin:12px 0 6px}
+
+/* 首頁 */
+.hero{text-align:center;padding:36px 0 18px}
+.hero .plate{width:120px;height:120px;margin:0 auto 14px;border-radius:50%;background:var(--red);display:grid;place-items:center;box-shadow:0 0 0 8px var(--paper),0 0 0 10px var(--gold),var(--shadow);font-size:56px}
+.hero h1{font-size:44px;font-weight:900;color:var(--red);letter-spacing:.12em}
+.hero p{margin:6px 0 0;color:var(--muted)}
+.mode{display:inline-block;margin-top:10px;font-size:12px;padding:3px 10px;border-radius:999px;background:var(--gold-l);color:#7a560e}
+
+/* 頂部狀態列 */
+.top{position:sticky;top:0;z-index:20;background:var(--red);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.top .in{max-width:760px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
+.top .rd{font-family:"Noto Serif TC",serif;font-weight:900;font-size:18px}
+.top .stat{margin-left:auto;display:flex;gap:14px;align-items:center;font-weight:700}
+.dots{display:inline-flex;gap:4px}
+.dots i{width:12px;height:12px;border-radius:50%;background:#fff;display:inline-block}
+.dots i.off{background:rgba(255,255,255,.25)}
+.tabs{display:flex;background:var(--red-d);max-width:760px;margin:0 auto}
+.tabs button{flex:1;border:0;background:none;color:rgba(255,255,255,.7);padding:9px 0;font-weight:700;font-size:15px;border-bottom:3px solid transparent}
+.tabs button.on{color:#fff;border-bottom-color:var(--gold)}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(251,244,230,.96);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
+.bar .in{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:center}
+
+/* 行情卡 */
+.market{border-radius:var(--radius);padding:12px 14px;background:linear-gradient(135deg,#fff7e3,#f7e3b8);border:2px dashed var(--gold);margin-bottom:14px}
+.market .t{font-weight:900;font-family:"Noto Serif TC",serif;font-size:18px}
+.market .tw{font-style:italic;color:#6b4b14;margin-top:2px}
+
+/* 委託卡 */
+.comm{background:var(--paper);border:3px solid var(--red);border-radius:18px;padding:16px;position:relative;box-shadow:var(--shadow)}
+.comm h2{font-size:24px;color:var(--red)}
+.comm .tw{background:var(--red-l);border-radius:10px;padding:8px 12px;margin:10px 0;font-style:italic}
+.cond{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.cond:last-child{border-bottom:0}
+.cond .ck{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:14px;background:#efe4d0;flex:none}
+.cond.ok .ck{background:var(--green);color:#fff}
+.cond .n{margin-left:auto;font-weight:700;color:var(--muted)}
+.sec{font-weight:900;font-family:"Noto Serif TC",serif;font-size:17px;margin:18px 0 8px}
+
+/* 市場 */
+.ings{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ing{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+.ing.sel{border-color:var(--red);background:#fff4f1}
+.ing .e{font-size:34px;line-height:1.1}
+.ing .p{font-weight:900;font-size:20px;color:var(--red)}
+.ing .p s{color:var(--muted);font-weight:400;font-size:14px;margin-right:4px}
+.ing .have{font-size:12px;color:var(--muted)}
+.qty{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:6px}
+.qty button{width:34px;height:34px;border-radius:50%;border:0;background:#efe4d0;font-weight:900;font-size:18px}
+.qty button[disabled]{opacity:.35}
+.qty b{min-width:18px;font-size:18px}
+
+/* 料理 */
+.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px}
+.filters button{border:0;border-radius:999px;padding:6px 12px;background:#efe4d0;white-space:nowrap;font-size:14px;font-weight:500}
+.filters button.on{background:var(--ink);color:#fff}
+.dish{display:flex;gap:12px;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px}
+.dish.can{border:2px solid var(--green);background:#f6fbf6}
+.dish.done{opacity:.6}
+.dish .ic{width:46px;height:46px;border-radius:50%;background:var(--red-l);display:grid;place-items:center;font-size:24px;flex:none}
+.dish .nm{font-weight:700;font-size:17px}
+.dish .nm small{color:var(--gold);font-size:13px;margin-left:4px}
+.dish .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.dish .act{margin-left:auto;flex:none;text-align:right}
+.hint{font-size:12px;margin-top:5px}
+.hint.good{color:var(--green);font-weight:700}
+.hint.bad{color:var(--red);font-weight:700}
+
+/* 師傅 */
+.chefs{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.chef{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:12px}
+.chef.got{border-color:var(--green);background:#f6fbf6}
+.chef .h{display:flex;gap:8px;align-items:center}
+.chef .av{font-size:32px}
+.chef .q{font-style:italic;color:#6b4b14;font-size:14px;margin:8px 0}
+
+/* 老師畫面 */
+.code{font-family:"Noto Serif TC",serif;font-weight:900;font-size:72px;letter-spacing:.15em;color:var(--red);line-height:1}
+.ptable{width:100%;border-collapse:collapse;font-size:15px}
+.ptable th,.ptable td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.ptable td:first-child,.ptable td:nth-child(3),.ptable td:nth-child(4){white-space:nowrap}
+.ptable th{white-space:nowrap;font-size:13px;color:var(--muted);font-weight:500}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:700}
+.pill.wait{background:#efe4d0}.pill.act{background:var(--gold-l);color:#7a560e}.pill.end{background:#e3e9f4;color:#2c4a7a}.pill.win{background:var(--green-l);color:#1d5331}.pill.fail{background:var(--red-l);color:var(--red-d)}
+.qr{background:#fff;padding:10px;border-radius:12px;display:inline-block}
+.tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.tcard{padding:14px}
+.chip .x{border:0;background:none;padding:0 0 0 4px;font-weight:900;color:var(--muted)}
+.ptable.mini td{padding:6px 4px;font-size:14px}
+.hostgrid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:900px){.hostgrid{grid-template-columns:320px 1fr}}
+
+/* 結算 */
+.rank{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:var(--paper);border:1px solid var(--line);margin-bottom:8px}
+.rank .no{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-family:"Noto Serif TC",serif;background:#efe4d0;font-size:18px}
+.rank.r1 .no{background:var(--gold);color:#fff}
+.rank .sc{margin-left:auto;font-weight:900;font-size:24px;color:var(--red)}
+
+/* 對話框、提示 */
+.modal{position:fixed;inset:0;background:rgba(42,28,18,.55);z-index:50;display:grid;place-items:center;padding:16px}
+.modal .box{background:var(--paper);border-radius:18px;padding:20px;max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.modal h3{margin-bottom:8px;color:var(--red)}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;z-index:60;font-weight:500;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:90vw;text-align:center}
+.banner{background:var(--gold-l);border:1px solid #e8cf93;border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:14px}
+.banner.err{background:var(--red-l);border-color:#e7b3aa}
+.empty{text-align:center;color:var(--muted);padding:24px}
+</style>
+</head>
+<body>
+<div id="app"><div class="empty">載入中…</div></div>
+<div id="layer"></div>
+
+<script>
+"use strict";
+/* =========================================================
+   ② 遊戲資料（依《總舖師》Excel 定案版）
+   ========================================================= */
+const ING = {
+  meat:{icon:"🥩",name:"肉類",base:2}, sea:{icon:"🐟",name:"海鮮",base:3},
+  veg:{icon:"🥬",name:"蔬菜",base:1}, grain:{icon:"🌾",name:"五穀根莖",base:1},
+  dry:{icon:"🍄",name:"乾貨",base:2}, spice:{icon:"🧄",name:"辛香調味",base:1},
+  fruit:{icon:"🍊",name:"水果",base:2}
+};
+const ING_KEYS = Object.keys(ING);
+const TYPES = [
+  {k:"cold",icon:"❄️",name:"冷盤"},{k:"hot",icon:"♨️",name:"熱菜"},{k:"soup",icon:"🍲",name:"湯羹"},
+  {k:"staple",icon:"🍚",name:"主食"},{k:"dessert",icon:"🍮",name:"甜點／水果"}
+];
+const TYPE = Object.fromEntries(TYPES.map(t=>[t.k,t]));
+const TAGS = {lucky:{icon:"🧧",name:"好意頭"},elder:{icon:"🥄",name:"長輩友善"},fresh:{icon:"🌿",name:"清爽"}};
+const TECH = {
+  liang:{icon:"🥗",name:"冷盤／涼拌"}, zheng:{icon:"♨️",name:"蒸／炊"}, zhu:{icon:"🍲",name:"煮／燉"},
+  lu:{icon:"🥘",name:"滷／燒"}, zha:{icon:"🔥",name:"炸／烤"}, chao:{icon:"🍳",name:"炒／燴"}
+};
+const CHEFS = [
+  {tech:"liang",name:"阿珠師",av:"👩‍🍳",feat:"🌿清爽、頭盤",say:"冷盤愛排甲媠，予人看著就開胃！"},
+  {tech:"zheng",name:"阿海師",av:"👨‍🍳",feat:"🐟海鮮、米食、大菜",say:"火候愛顧好，炊甲拄好，食物才會好食！"},
+  {tech:"zhu",name:"阿春師",av:"👩‍🍳",feat:"🍲湯羹最多、選擇廣",say:"好湯愛有耐性，慢慢仔燉，滋味才會出來。"},
+  {tech:"lu",name:"阿義師",av:"👨‍🍳",feat:"★★★大菜專門",say:"滷物毋通趕，慢慢仔滷，才會食味。"},
+  {tech:"zha",name:"阿勇師",av:"👨‍🍳",feat:"酥炸、宴席熱門菜",say:"油溫愛顧好，炸出來才會芳閣酥！"},
+  {tech:"chao",name:"阿滿師",av:"👩‍🍳",feat:"💰便宜、靈活",say:"火愛猛，手跤愛緊，芳味才炒會出來！"}
+];
+const CHEF_BY_TECH = Object.fromEntries(CHEFS.map(c=>[c.tech,c]));
+// [編號, 名稱, 類型, 手路, 星級, 食材, 標籤]
+const DISHES = [
+ ["R01","五福大拼盤","cold","liang",3,["meat","sea","dry"],["lucky"]],
+ ["R02","白斬雞","cold","liang",2,["meat","spice"],["fresh"]],
+ ["R03","涼拌海鮮","cold","liang",2,["sea","veg"],["fresh"]],
+ ["R04","涼拌時蔬","cold","liang",1,["veg"],["fresh"]],
+ ["R05","紅麴醉雞","cold","liang",2,["meat","spice"],["fresh"]],
+ ["R06","清蒸石斑魚","hot","zheng",3,["sea","spice"],["lucky","fresh"]],
+ ["R07","糖醋魚","hot","zha",2,["sea","spice"],[]],
+ ["R08","紅燒蹄膀","hot","lu",3,["meat","spice"],["elder"]],
+ ["R09","滷豬腳","hot","lu",3,["meat","spice"],["lucky","elder"]],
+ ["R10","三杯雞","hot","chao",2,["meat","spice"],[]],
+ ["R11","鳳梨蜜汁排骨","hot","zha",2,["meat","fruit"],["lucky"]],
+ ["R12","炸蝦捲","hot","zha",2,["sea","grain"],[]],
+ ["R13","鳳梨蝦球","hot","zha",2,["sea","fruit"],["lucky"]],
+ ["R14","炒雙鮮","hot","chao",2,["sea","veg"],[]],
+ ["R15","紅燒獅子頭","hot","lu",3,["meat","veg"],["lucky","elder"]],
+ ["R16","蒜蓉蒸蝦","hot","zheng",2,["sea","spice"],["fresh"]],
+ ["R17","炒時蔬","hot","chao",1,["veg"],["fresh"]],
+ ["R18","佛跳牆","hot","zhu",3,["meat","sea","dry"],["elder"]],
+ ["R19","筍干封肉","hot","lu",3,["meat","dry"],[]],
+ ["R20","魷魚螺肉蒜","soup","zhu",3,["sea","meat","spice"],[]],
+ ["R21","香菇雞湯","soup","zhu",2,["meat","dry"],["elder"]],
+ ["R22","排骨蘿蔔湯","soup","zhu",2,["meat","veg"],["elder"]],
+ ["R23","海鮮羹","soup","zhu",2,["sea","dry"],["elder"]],
+ ["R24","紅蟳米糕","staple","zheng",3,["sea","grain"],["lucky"]],
+ ["R25","油飯","staple","zheng",2,["grain","dry"],["lucky"]],
+ ["R26","炒米粉","staple","chao",2,["grain","veg"],[]],
+ ["R27","芋頭米粉","staple","zhu",2,["grain","dry"],["elder"]],
+ ["R28","炸湯圓","dessert","zha",2,["grain"],["lucky"]],
+ ["R29","甜湯","dessert","zhu",1,["grain"],["elder"]],
+ ["R30","季節水果","dessert",null,1,["fruit"],["fresh"]]
+].map(([id,name,type,tech,stars,ing,tags])=>({id,name,type,tech,stars,ing,tags}));
+const DISH = Object.fromEntries(DISHES.map(d=>[d.id,d]));
+
+// 條件：type 料理類型／tag 特殊標籤／star3 大菜／ing 含某食材的料理／tech 不同手路／allTypes 五類各一／money 剩餘箍錢
+const T=(v,n=1)=>({k:"type",v,n}), G=(v,n)=>({k:"tag",v,n}), S3=n=>({k:"star3",n}), IG=(v,n)=>({k:"ing",v,n}), M=n=>({k:"money",n});
+const COMMS = [
+ ["C01","🏠 厝邊請客",1,4,[T("hot"),T("staple"),T("dessert")],14,[G("lucky",2)],"厝邊頭尾做伙來，辦一桌予逐家食好料！"],
+ ["C02","👨‍👩‍👧‍👦 家庭聚餐",1,4,[T("hot"),T("soup"),T("staple")],14,[G("elder",2)],"一家伙仔做伙食飯，菜愛顧著老大人。"],
+ ["C03","🎉 歡喜相聚",1,4,[T("cold"),T("hot"),T("dessert")],15,[G("lucky",2)],"逐家久久才見一擺，今仔日愛食甲歡歡喜喜！"],
+ ["C04","🏮 小桌辦桌",1,4,[T("hot",2),T("staple")],15,[S3(1)],"人客無濟，菜毋免濟，毋過愛有一兩道好料！"],
+ ["C05","👶 滿月宴",1,5,[T("hot"),T("soup"),T("staple")],20,[G("lucky",2)],"囡仔滿月矣，辦桌請親情朋友做伙來鬥鬧熱！"],
+ ["C06","🎂 生日宴",1,5,[T("cold"),T("hot"),T("dessert")],19,[G("fresh",2)],"今仔日做生日，準備一桌好食閣清爽的料理！"],
+ ["C07","🤝 朋友相招宴",1,5,[T("hot",2),T("staple")],19,[S3(1)],"朋友相招來食飯，熱菜愛有，嘛愛予逐家食會飽！"],
+ ["C08","🏘️ 社區同樂宴",1,5,[T("cold"),T("hot",2),T("staple")],18,[M(2)],"庄跤厝邊做伙來，菜色愛閣較豐富！"],
+ ["C09","🙏 答謝宴",2,6,[T("cold"),T("hot",2),T("soup"),G("lucky",2)],23,[G("lucky",3)],"今仔日欲答謝逐家，這桌愛辦予好看閣好食！"],
+ ["C10","🎂 添壽宴",2,6,[T("soup"),G("elder",2),G("lucky",2),S3(1)],24,[G("elder",3)],"老大人添壽，菜愛好入口，嘛愛有好意頭！"],
+ ["C11","🧺 儉儉仔辦桌",2,6,[T("hot",2),T("staple"),T("dessert")],19,[M(1)],"箍錢愛算予準，毋通開了了，菜嘛愛辦予好！"],
+ ["C12","🏮 傳統辦桌",2,6,[T("cold"),T("hot",2),T("soup"),T("staple"),T("dessert")],24,[S3(2)],"冷盤、熱菜、湯、飯佮甜的，逐項攏愛顧著！"],
+ ["C13","👶 收涎宴",2,5,[T("soup"),G("lucky",2),G("fresh",1),S3(1)],19,[G("elder",1)],"囡仔欲收涎矣，辦一桌請親情朋友來鬥鬧熱！"],
+ ["C14","👵 敬老宴",2,5,[T("soup"),G("elder",2),G("lucky",2),S3(1)],19,[T("dessert")],"今仔日請老大人，菜愛好食閣好入口。"],
+ ["C15","💒 囍宴",2,6,[T("cold"),T("hot",2),T("soup"),G("lucky",2)],24,[G("lucky",3)],"今仔日好日子，菜愛澎湃，嘛愛有好意頭！"],
+ ["C16","🏠 入厝宴",2,5,[T("hot",2),T("staple"),G("lucky",2)],19,[S3(2)],"新厝入伙，辦一桌予逐家來鬥鬧熱！"],
+ ["C17","🎓 謝師宴",2,5,[T("cold"),T("hot"),T("soup"),T("dessert")],20,[{k:"allTypes",n:5}],"欲多謝老師，這桌菜愛用心準備！"],
+ ["C18","👴 銀髮好食宴",3,5,[G("elder",3),T("soup"),G("fresh",2)],18,[S3(2)],"欲予老大人食甲歡喜，菜愛好入口，嘛毋通傷膩。"],
+ ["C19","🧨 平安宴",3,6,[T("hot",2),T("soup"),T("staple"),S3(1)],23,[G("lucky",3)],"祈求平安順序，這桌愛有傳統辦桌的氣勢！"],
+ ["C20","🌾 豐收宴",3,5,[T("staple"),T("dessert"),IG("grain",2),G("lucky",2)],18,[T("staple",2)],"今年收成好，咱用在地食材辦一桌！"],
+ ["C21","🪙 精打細算宴",3,5,[T("hot"),T("staple"),T("dessert")],16,[M(1)],"箍錢有限，愛算予準，閣愛予人客食甲滿意！"],
+ ["C22","👑 澎湃大宴",3,6,[S3(2),IG("sea",2),T("soup")],25,[S3(3)],"主家欲辦一桌澎湃的，好料毋通少！"],
+ ["C23","🌿 清爽宴",3,5,[G("fresh",3),IG("veg",2),T("dessert")],17,[G("fresh",4)],"今仔日想欲食清爽的，菜蔬愛準備較濟。"],
+ ["C24","👨‍🍳 真功夫宴",3,6,[{k:"tech",n:4},T("hot",2),S3(1)],22,[S3(2)],"欲看你的真本事，無仝款的手路攏愛展出來！"]
+].map(([id,name,lv,count,req,budget,bonus,tw])=>({id,name,lv,count,req,budget,bonus,tw}));
+const COMM = Object.fromEntries(COMMS.map(c=>[c.id,c]));
+const LV = {1:"🌶️ 入門",2:"🌶️🌶️ 標準",3:"🌶️🌶️🌶️ 挑戰"};
+
+const CARDS = [
+ ["H01","🥩 肉攤貨足","A","meat",-1,"今仔日肉攤貨真齊，價數較俗！"],
+ ["H02","🥩 肉價起","A","meat",1,"肉類來貨較少，價數起去矣！"],
+ ["H03","🐟 魚仔大出","A","sea",-1,"魚仔大出，今仔日買魚較俗！"],
+ ["H04","🐟 風湧大","A","sea",1,"風湧大，魚貨較少，價數嘛起去矣！"],
+ ["H05","🥬 菜市豐收","A","veg",-1,"菜蔬大出，菜價真好！"],
+ ["H06","🥬 菜價起","A","veg",1,"菜蔬來貨較少，今仔日較貴。"],
+ ["H07","🌾 米糧貨足","A","grain",-1,"米糧貨足，今仔日較俗！"],
+ ["H08","🌾 米糧起價","A","grain",1,"米糧價數起，買進愛閣想一下。"],
+ ["H09","🍄 南北貨大出","A","dry",-1,"南北貨來真濟，價數較俗！"],
+ ["H10","🍄 乾貨起價","A","dry",1,"乾貨來貨少，今仔日較貴。"],
+ ["H11","🍊 果子當造","A","fruit",-1,"當造果子真濟，俗閣好食！"],
+ ["H12","🍊 果子起價","A","fruit",1,"果子來貨較少，價數起去矣！"],
+ ["H13","🧺 熟客相挺","B",null,0,"本回合一次買 2 種不同食材，總價 －1 箍。"],
+ ["H14","🏷️ 趁俗買","B",null,0,"本回合每位玩家第一次買的 1 份食材 －1 箍。"],
+ ["H15","📦 貨色真齊","B",null,0,"本回合每次上市採買，最多可以買 3 份食材。"],
+ ["H16","🚚 貨來較慢","B",null,0,"本回合每次上市採買，最多只能買 1 份食材。"],
+ ["H17","☀️ 今日平盤","B",null,0,"今仔日價數無變動，所有食材維持基本價。"],
+ ["H18","🧾 精打細算","B",null,0,"本回合若一次只買 1 份食材，該份 －1 箍。"]
+].map(([id,name,kind,ing,d,text])=>({id,name,kind,ing,d,text}));
+const CARD = Object.fromEntries(CARDS.map(c=>[c.id,c]));
+const ROUNDS = 6, MAX_PLAYERS = 6;
+
+/* =========================================================
+   ③ 連線層：Firebase（正式）／localStorage（本機測試）
+   ========================================================= */
+const store = {
+  get(k){ try{return localStorage.getItem(k)}catch(e){return null} },
+  set(k,v){ try{localStorage.setItem(k,v)}catch(e){} },
+  del(k){ try{localStorage.removeItem(k)}catch(e){} }
+};
+function setPath(obj, path, val){
+  const ks = path.split("/"); let o = obj;
+  for(let i=0;i<ks.length-1;i++){ if(o[ks[i]]==null||typeof o[ks[i]]!=="object") o[ks[i]]={}; o=o[ks[i]]; }
+  const last = ks[ks.length-1];
+  if(val===null||val===undefined) delete o[last]; else o[last]=JSON.parse(JSON.stringify(val));
+}
+const LocalNet = {
+  mode:"local", mem:{}, ls:{},
+  key(c){return "tsps_room_"+c},
+  read(c){ const s=store.get(this.key(c)); if(s){try{return JSON.parse(s)}catch(e){}} return this.mem[c]||null },
+  write(c,o){ this.mem[c]=o; store.set(this.key(c),JSON.stringify(o)); (this.ls[c]||[]).forEach(f=>f(o)); },
+  async exists(c){ return !!this.read(c) },
+  async create(c,o){ this.write(c,o) },
+  async get(c){ return this.read(c) },
+  watch(c,cb){ (this.ls[c]=this.ls[c]||[]).push(cb); cb(this.read(c)); return ()=>{this.ls[c]=this.ls[c].filter(f=>f!==cb)} },
+  async update(c,patch){ const o=this.read(c)||{}; for(const p in patch) setPath(o,p,patch[p]); this.write(c,o) },
+  async txMeta(c,fn){ const o=this.read(c); if(!o) return; const n=fn(o.meta); if(n!==undefined){o.meta=n; this.write(c,o)} }
+};
+window.addEventListener("storage",e=>{
+  if(!e.key||!e.key.startsWith("tsps_room_")) return;
+  const c=e.key.slice(10); let o=null; try{o=JSON.parse(e.newValue)}catch(err){}
+  LocalNet.mem[c]=o; (LocalNet.ls[c]||[]).forEach(f=>f(o));
+});
+async function makeFirebaseNet(cfg){
+  const V="10.12.2";
+  const app = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
+  const db = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-database.js`);
+  const fa = app.initializeApp(cfg); const d = db.getDatabase(fa);
+  const r = c=>db.ref(d,"rooms/"+c);
+  return {
+    mode:"firebase",
+    async exists(c){ return (await db.get(r(c))).exists() },
+    async create(c,o){ await db.set(r(c),o) },
+    async get(c){ return (await db.get(r(c))).val() },
+    watch(c,cb){ return db.onValue(r(c),s=>cb(s.val())) },
+    async update(c,patch){ await db.update(r(c),patch) },
+    async txMeta(c,fn){ await db.runTransaction(db.ref(d,`rooms/${c}/meta`),cur=>{ if(cur===null) return cur; return fn(cur) }) }
+  };
+}
+let NET = LocalNet, NET_ERR = "";
+
+/* =========================================================
+   ④ 規則計算
+   ========================================================= */
+const shuffle = a=>{a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]} return a};
+const uid = ()=>Math.random().toString(36).slice(2,10);
+const esc = s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function marketCard(meta){ if(!meta||meta.round<2||!meta.deck) return null; return CARD[meta.deck[meta.round-2]]||null }
+function price(ing, meta){
+  let p = ING[ing].base; const c = marketCard(meta);
+  if(c && c.kind==="A" && c.ing===ing && ing!=="spice") p += c.d;
+  return Math.max(0,p);
+}
+function maxPerBuy(meta){ const c=marketCard(meta); if(c&&c.id==="H15") return 3; if(c&&c.id==="H16") return 1; return 2 }
+function actionsLeft(p,meta){ const u=p.used||{}; return 2-(u.round===meta.round?(u.n||0):0) }
+function cartCost(cart, p, meta){
+  const items=[]; for(const k of ING_KEYS) for(let i=0;i<(cart[k]||0);i++) items.push(k);
+  const sum = items.reduce((s,k)=>s+price(k,meta),0);
+  const c = marketCard(meta); let disc=0; const notes=[]; let useFirst=false;
+  if(c&&c.id==="H13"&&items.length===2&&items[0]!==items[1]&&sum>0){disc++;notes.push("🧺 熟客相挺 －1")}
+  if(c&&c.id==="H14"&&p.firstBuyRound!==meta.round&&items.length>0){ if(items.some(k=>price(k,meta)>0)){disc++;notes.push("🏷️ 趁俗買 －1")} useFirst=true }
+  if(c&&c.id==="H18"&&items.length===1&&sum>0){disc++;notes.push("🧾 精打細算 －1")}
+  return {items,sum,total:Math.max(0,sum-disc),notes,useFirst};
+}
+function condCount(c, ds, money){
+  switch(c.k){
+    case "type": return ds.filter(d=>d.type===c.v).length;
+    case "tag": return ds.filter(d=>d.tags.includes(c.v)).length;
+    case "star3": return ds.filter(d=>d.stars===3).length;
+    case "ing": return ds.filter(d=>d.ing.includes(c.v)).length;
+    case "tech": return new Set(ds.map(d=>d.tech).filter(Boolean)).size;
+    case "allTypes": return TYPES.filter(t=>ds.some(d=>d.type===t.k)).length;
+    case "money": return money;
+  }
+  return 0;
+}
+function condLabel(c){
+  switch(c.k){
+    case "type": return `${TYPE[c.v].icon}${TYPE[c.v].name} ≥ ${c.n}`;
+    case "tag": return `${TAGS[c.v].icon}${TAGS[c.v].name} ≥ ${c.n}`;
+    case "star3": return `★★★大菜 ≥ ${c.n}`;
+    case "ing": return `${ING[c.v].icon}${ING[c.v].name}料理 ≥ ${c.n}`;
+    case "tech": return `不同手路 ≥ ${c.n} 種`;
+    case "allTypes": return `五種料理類型各有 1 道`;
+    case "money": return `剩餘箍錢 ≥ ${c.n}`;
+  }
+}
+function reqMet(comm, ids, money){ const ds=ids.map(i=>DISH[i]); return comm.req.every(c=>condCount(c,ds,money)>=c.n) }
+function bonusMet(comm, ids, money){ const ds=ids.map(i=>DISH[i]); return comm.bonus.every(c=>condCount(c,ds,money)>=c.n) }
+function basketCount(p){ return ING_KEYS.reduce((s,k)=>s+((p.basket||{})[k]||0),0) }
+function scoreOf(p){
+  if(!p.completedRound) return {total:0,base:0,bonus:0,early:0};
+  const early = p.completedRound<=4?2:(p.completedRound===5?1:0);
+  const bonus = p.bonus?1:0;
+  return {total:5+bonus+early,base:5,bonus,early};
+}
+function canCook(p, d){
+  const miss = d.ing.filter(k=>!((p.basket||{})[k]>0));
+  const tech = d.tech && !(p.techs||{})[d.tech];
+  return {miss, tech, ok: miss.length===0 && !tech};
+}
+function isFinished(p){ return !!(p.completedRound||p.failed) }
+function playerList(room){ return Object.entries(room.players||{}).map(([id,p])=>({id,...p})).sort((a,b)=>(a.joinedAt||0)-(b.joinedAt||0)) }
+function ranking(room){
+  const ps = playerList(room).map(p=>({...p,sc:scoreOf(p),left:basketCount(p)}));
+  ps.sort((a,b)=>b.sc.total-a.sc.total || a.left-b.left || (b.money||0)-(a.money||0));
+  let rank=0, prev=null;
+  ps.forEach((p,i)=>{ const key=`${p.sc.total}|${p.left}|${p.money}`; if(key!==prev){rank=i+1; prev=key} p.rank=rank });
+  return ps;
+}
+
+/* =========================================================
+   ⑤ 狀態與畫面
+   ========================================================= */
+const S = { code:null, me:null, role:null, room:null, unsub:null, tab:"comm", cart:{}, filter:"can", busy:false,
+            codes:[], rooms:{}, unsubs:{}, focus:null };
+const $app = document.getElementById("app"), $layer = document.getElementById("layer");
+
+function toast(msg){ const t=document.createElement("div"); t.className="toast"; t.textContent=msg; $layer.appendChild(t); setTimeout(()=>t.remove(),2200) }
+function ask(title, body, okText="確定", cancelText="取消"){
+  return new Promise(res=>{
+    const m=document.createElement("div"); m.className="modal";
+    m.innerHTML=`<div class="box"><h3>${title}</h3><div>${body}</div><div class="row" style="justify-content:flex-end;margin-top:16px">${cancelText?`<button class="btn ghost sm" data-r="0">${cancelText}</button>`:""}<button class="btn sm" data-r="1">${okText}</button></div></div>`;
+    m.addEventListener("click",e=>{ const b=e.target.closest("[data-r]"); if(b){m.remove(); res(b.dataset.r==="1")} });
+    $layer.appendChild(m);
+  });
+}
+// 本機測試模式：每個分頁各自記住自己的身分（sessionStorage）；連線模式：記在這台裝置（localStorage）
+function sessStore(){ try{ return NET.mode==="local"?sessionStorage:localStorage }catch(e){ return null } }
+function sGet(k){ try{ return JSON.parse(sessStore().getItem(k)||"null") }catch(e){ return null } }
+function sSet(k,v){ try{ v==null?sessStore().removeItem(k):sessStore().setItem(k,JSON.stringify(v)) }catch(e){} }
+function saveSession(){ sSet("tsps_session",{code:S.code,me:S.me}) }
+function clearSession(){ sSet("tsps_session",null) }
+function loadSession(){ return sGet("tsps_session") }
+function saveHost(){ sSet("tsps_host",S.codes.length?{me:S.me,codes:S.codes}:null) }
+function loadHost(){ return sGet("tsps_host") }
+
+/* ---------- 連線與自動換回合（玩家、老師都會幫忙檢查） ---------- */
+function connect(code){
+  if(S.unsub) S.unsub();
+  S.code=code; S.role="player";
+  S.unsub = NET.watch(code, room=>{ S.room=room; checkAdvance(code,room); render(); });
+}
+function hostWatch(code){
+  if(S.unsubs[code]) return;
+  S.unsubs[code] = NET.watch(code, room=>{ S.rooms[code]=room; checkAdvance(code,room); render(); });
+}
+function hostOpen(me, codes){
+  S.role="host"; S.me=me; S.codes=codes.slice(); S.focus=null;
+  history.replaceState(null,"","?teacher=1");
+  codes.forEach(hostWatch); saveHost(); render();
+}
+function hostClose(){
+  Object.values(S.unsubs).forEach(f=>{ try{f()}catch(e){} });
+  S.unsubs={}; S.rooms={}; S.codes=[]; S.role=null; S.focus=null; saveHost();
+}
+function checkAdvance(code, r){
+  if(!r||!r.meta||r.meta.status!=="playing") return;
+  const ps=playerList(r); if(!ps.length) return;
+  const round=r.meta.round;
+  if(ps.every(p=>isFinished(p)||(p.endedRound||0)>=round)) advance(code, r, round);
+}
+async function advance(code, r, fromRound){
+  const allFinished = playerList(r).every(isFinished);
+  await NET.txMeta(code, meta=>{
+    if(!meta||meta.status!=="playing"||meta.round!==fromRound) return; // 別人已經換過了
+    const m={...meta};
+    if(fromRound>=ROUNDS||allFinished){ m.status="ended" } else { m.round=fromRound+1 }
+    return m;
+  });
+}
+
+function render(){
+  if(S.role==="host") return S.focus ? renderFocus(S.focus) : renderDashboard();
+  if(!S.code){ return renderHome() }
+  const r=S.room;
+  if(!r){ $app.innerHTML=`<div class="wrap"><div class="card empty">找不到房間 ${esc(S.code)}，可能已經關閉。<br><br><button class="btn" data-act="leave">回首頁</button></div></div>`; return }
+  const p=(r.players||{})[S.me];
+  if(!p){ $app.innerHTML=`<div class="wrap"><div class="card empty">你已經不在這個房間了。<br><br><button class="btn" data-act="leave">回首頁</button></div></div>`; return }
+  if(r.meta.status==="lobby") return renderPlayerLobby(p);
+  if(r.meta.status==="ended") return renderEnded(r,false);
+  if(!p.chef) return renderChefPick(p);
+  return renderPlayerGame(p);
+}
+
+/* ---------- 首頁 ---------- */
+function renderHome(){
+  const qs=new URLSearchParams(location.search); const pre=qs.get("room")||"";
+  const sess=loadSession(), hs=loadHost();
+  $app.innerHTML=`<div class="wrap">
+    <div class="hero"><div class="plate">🍽️</div><h1>總舖師</h1><p>辦桌料理桌遊・連線版</p>
+      <span class="mode">${NET.mode==="firebase"?"🌐 連線模式":"💻 本機測試模式（同一台電腦開多個分頁）"}</span></div>
+    ${NET_ERR?`<div class="banner err">${esc(NET_ERR)}</div>`:""}
+    ${sess&&sess.code?`<div class="card" style="margin-bottom:14px"><div class="row"><div>上次的房間 <b>${esc(sess.code)}</b></div><button class="btn sm" style="margin-left:auto" data-act="resume">回到房間</button></div></div>`:""}
+    <div class="card">
+      <h3>🙋 我是學生：加入遊戲</h3>
+      <label for="jcode">房號</label><input id="jcode" inputmode="numeric" maxlength="4" placeholder="4 位數字" value="${esc(pre)}">
+      <label for="jname">你的名字</label><input id="jname" maxlength="10" placeholder="例如：小明">
+      <button class="btn block" style="margin-top:14px" data-act="join">加入</button>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3>👩‍🏫 我是老師：開桌</h3>
+      <p class="muted small" style="margin:6px 0 12px">一組一桌，每桌最多 ${MAX_PLAYERS} 人。所有桌子都在同一個老師畫面裡，可以一起開始、一起看進度。</p>
+      ${hs&&hs.codes&&hs.codes.length?`<button class="btn ghost block" style="margin-bottom:10px" data-act="hostresume">回到老師畫面（${hs.codes.length} 桌）</button>`:""}
+      <label for="ntab">要開幾桌？</label>
+      <div class="row"><input id="ntab" type="number" min="1" max="12" value="4" style="width:110px"><button class="btn gold" style="flex:1" data-act="create">開桌</button></div>
+    </div>
+  </div>`;
+}
+async function newRoomCode(){
+  for(let i=0;i<30;i++){ const c=String(Math.floor(1000+Math.random()*9000)); if(!S.codes.includes(c)&&!(await NET.exists(c))) return c }
+  throw new Error("no code");
+}
+async function createRooms(n, me){
+  const codes=[];
+  for(let i=0;i<n;i++){
+    const code=await newRoomCode();
+    await NET.create(code,{meta:{status:"lobby",round:0,lv:S.lv||"1",hostId:me,createdAt:Date.now()}});
+    codes.push(code);
+  }
+  return codes;
+}
+async function createFromHome(){
+  const n=Math.max(1,Math.min(12,parseInt(document.getElementById("ntab").value,10)||1));
+  const me=uid(); const codes=await createRooms(n,me);
+  hostOpen(me,codes);
+}
+async function addTable(){
+  const codes=await createRooms(1,S.me);
+  S.codes.push(...codes); codes.forEach(hostWatch); saveHost(); render();
+  toast(`新增第 ${S.codes.length} 桌，房號 ${codes[0]}`);
+}
+async function joinRoom(){
+  const code=(document.getElementById("jcode").value||"").trim();
+  const name=(document.getElementById("jname").value||"").trim();
+  if(!/^\d{4}$/.test(code)) return toast("請輸入 4 位數房號");
+  if(!name) return toast("請輸入名字");
+  const room=await NET.get(code);
+  if(!room) return toast("找不到這個房號");
+  const ps=playerList(room);
+  const sess=loadSession();
+  if(sess&&sess.code===code&&room.players&&room.players[sess.me]){ S.me=sess.me; connect(code); return }
+  if(room.meta.status!=="lobby") return toast("這桌已經開始了，請跟老師說");
+  if(ps.length>=MAX_PLAYERS) return toast(`這桌已經滿 ${MAX_PLAYERS} 人了`);
+  if(ps.some(p=>p.name===name)) return toast("這個名字有人用了，換一個吧");
+  const me=uid();
+  await NET.update(code,{[`players/${me}`]:{name,joinedAt:Date.now()}});
+  S.me=me; S.code=code; saveSession(); history.replaceState(null,"","?room="+code); connect(code);
+}
+
+/* ---------- 老師：總覽（所有桌） ---------- */
+function joinUrl(code){ return location.origin+location.pathname+"?room="+code }
+function tableNo(code){ return S.codes.indexOf(code)+1 }
+function roomPill(r){
+  if(!r) return `<span class="pill wait">連線中…</span>`;
+  const st=r.meta.status;
+  if(st==="lobby") return `<span class="pill wait">等待入座</span>`;
+  if(st==="playing") return `<span class="pill act">第 ${r.meta.round} / ${ROUNDS} 回合</span>`;
+  return `<span class="pill win">🏆 已結束</span>`;
+}
+function statusPill(p,round){
+  if(p.completedRound) return `<span class="pill win">🎉 完成・第${p.completedRound}回合</span>`;
+  if(p.failed) return `<span class="pill fail">委託失敗</span>`;
+  if(!p.chef) return `<span class="pill wait">選師傅中</span>`;
+  if((p.endedRound||0)>=round) return `<span class="pill end">✔ 結束本回合</span>`;
+  return `<span class="pill act">行動中</span>`;
+}
+function tableCard(code){
+  const r=S.rooms[code]; const no=tableNo(code);
+  const head=`<div class="row"><b style="font-family:'Noto Serif TC',serif;font-size:18px">第 ${no} 桌</b>${roomPill(r)}
+    <button class="btn ghost sm" style="margin-left:auto" data-act="focus" data-code="${code}">放大</button></div>
+    <div class="row" style="margin:6px 0 10px"><span class="muted small">房號</span><span class="code" style="font-size:40px">${esc(code)}</span></div>`;
+  if(!r) return `<div class="card tcard">${head}</div>`;
+  const ps=playerList(r), st=r.meta.status;
+  let body="";
+  if(st==="lobby"){
+    body=`<div class="row" style="align-items:flex-start">
+      <div class="qr qrbox" data-qr="${code}" data-size="110"></div>
+      <div style="flex:1;min-width:140px"><div class="small muted">${ps.length} / ${MAX_PLAYERS} 人・${({"1":"🌶️ 入門","2":"🌶️🌶️ 標準","3":"🌶️🌶️🌶️ 挑戰","mix":"🎲 混合"})[r.meta.lv||"1"]}</div>
+      <div class="row" style="gap:6px;margin-top:6px">${ps.map(p=>`<span class="chip">${esc(p.name)}<button class="x" data-act="kick" data-code="${code}" data-id="${p.id}" title="移除">×</button></span>`).join("")||`<span class="muted small">還沒有人加入</span>`}</div></div></div>
+      <div class="row" style="margin-top:12px"><button class="btn green sm" data-act="start" data-code="${code}" ${ps.length<1?"disabled":""}>開始這桌</button>
+      <button class="btn ghost sm" data-act="removetable" data-code="${code}">刪除這桌</button></div>`;
+  } else if(st==="playing"){
+    const c=marketCard(r.meta);
+    body=`<div class="small" style="margin-bottom:6px">📈 ${c?`${c.name}`:"第 1 回合無行情"}</div>
+      <table class="ptable mini"><tbody>${ps.map(p=>{const cm=COMM[p.commission]; return `<tr><td><b>${esc(p.name)}</b></td><td>${(p.dishes||[]).length}/${cm?cm.count:"-"} 道</td><td>💰${p.money??"-"}</td><td>${statusPill(p,r.meta.round)}</td></tr>`}).join("")}</tbody></table>
+      <div class="row" style="margin-top:10px"><button class="btn ghost sm" data-act="force" data-code="${code}">強制下一回合</button></div>`;
+  } else {
+    const rk=ranking(r);
+    body=`${rk.slice(0,3).map(p=>`<div class="row small" style="padding:3px 0"><b>${["🥇","🥈","🥉"][p.rank-1]||p.rank}</b>${esc(p.name)}<span style="margin-left:auto;font-weight:900;color:var(--red)">${p.sc.total} 聲望</span></div>`).join("")}
+      <div class="row" style="margin-top:10px"><button class="btn gold sm" data-act="again" data-code="${code}">這桌再玩一局</button></div>`;
+  }
+  return `<div class="card tcard">${head}${body}</div>`;
+}
+function renderDashboard(){
+  const rooms=S.codes.map(c=>S.rooms[c]).filter(Boolean);
+  const lobbyReady=rooms.filter(r=>r.meta.status==="lobby"&&playerList(r).length>0).length;
+  const nPlayers=rooms.reduce((s,r)=>s+playerList(r).length,0);
+  const lv=S.lv||"1";
+  const lvBtn=(v,t)=>`<button class="${lv===v?"on":""}" data-act="lv" data-v="${v}">${t}</button>`;
+  $app.innerHTML=`<div class="wrap wide">
+    <div class="row" style="margin:6px 0 14px"><h2 style="font-size:26px;color:var(--red)">👩‍🏫 老師控制台</h2>
+      <span class="muted">${S.codes.length} 桌・${nPlayers} 位學生</span>
+      <span style="margin-left:auto" class="row"><button class="btn ghost sm" data-act="addtable">＋ 再開一桌</button><button class="btn ghost sm" data-act="hostleave">離開</button></span></div>
+    ${NET.mode==="local"?`<div class="banner">💻 本機測試模式：另開分頁到同一個網址，輸入房號就能當學生加入。</div>`:`<div class="banner">學生掃各桌的 QR Code，或打開網址輸入房號。網址：<b>${esc(location.origin+location.pathname)}</b></div>`}
+    <div class="card" style="margin-bottom:14px"><div class="row"><b>委託難度（套用到還沒開始的桌）</b></div>
+      <div class="filters" style="margin-top:8px">${lvBtn("1","🌶️ 入門")}${lvBtn("2","🌶️🌶️ 標準")}${lvBtn("3","🌶️🌶️🌶️ 挑戰")}${lvBtn("mix","🎲 混合")}</div>
+      <button class="btn green" style="margin-top:6px" data-act="startall" ${lobbyReady?"":"disabled"}>全部開始（${lobbyReady} 桌）</button></div>
+    <div class="tables">${S.codes.map(tableCard).join("")}</div>
+  </div>`;
+  drawQRs();
+}
+function drawQRs(){
+  document.querySelectorAll("[data-qr]").forEach(el=>{
+    if(NET.mode!=="firebase"||!window.QRCode){ el.remove(); return }
+    const n=Number(el.dataset.size)||180;
+    try{ new QRCode(el,{text:joinUrl(el.dataset.qr),width:n,height:n}) }catch(e){}
+  });
+}
+
+/* ---------- 老師：放大單桌（投影用） ---------- */
+function renderFocus(code){
+  const r=S.rooms[code];
+  const back=`<div class="row" style="margin-bottom:12px"><button class="btn ghost sm" data-act="unfocus">← 回到所有桌</button><b>第 ${tableNo(code)} 桌</b>${roomPill(r)}</div>`;
+  if(!r){ $app.innerHTML=`<div class="wrap wide">${back}<div class="empty">連線中…</div></div>`; return }
+  const ps=playerList(r), m=r.meta;
+  if(m.status==="lobby"){
+    $app.innerHTML=`<div class="wrap wide">${back}<div class="hostgrid">
+      <div class="card" style="text-align:center"><div class="muted small">房號</div><div class="code">${esc(code)}</div>
+        <div class="qr" data-qr="${code}" data-size="200" style="margin-top:12px"></div></div>
+      <div class="card"><div class="row"><h2>🍽️ 等待入座</h2><span class="muted" style="margin-left:auto">${ps.length} / ${MAX_PLAYERS} 人</span></div>
+        <div class="row" style="margin:12px 0;gap:8px">${ps.map(p=>`<span class="chip" style="font-size:18px;padding:6px 14px">${esc(p.name)}</span>`).join("")||`<span class="muted">還沒有人加入</span>`}</div>
+        <button class="btn green" data-act="start" data-code="${code}" ${ps.length<1?"disabled":""}>開始這桌</button></div></div></div>`;
+    return drawQRs();
+  }
+  if(m.status==="ended") return renderEnded(r,true,back);
+  $app.innerHTML=`<div class="wrap wide">${back}
+    <div class="row" style="margin-bottom:14px"><h2 style="font-size:28px;color:var(--red)">第 ${m.round} / ${ROUNDS} 回合</h2><span class="muted">房號 ${esc(code)}</span>
+      <button class="btn ghost sm" style="margin-left:auto" data-act="force" data-code="${code}">強制進入下一回合</button></div>
+    ${marketHTML(m,true)}
+    <div class="card" style="overflow-x:auto"><table class="ptable"><thead><tr><th>玩家</th><th>委託</th><th>出菜</th><th>箍錢</th><th>手路</th><th>狀態</th></tr></thead><tbody>
+    ${ps.map(p=>{const cm=COMM[p.commission]; return `<tr>
+      <td><b>${esc(p.name)}</b></td><td>${cm?esc(cm.name):"-"}</td><td>${(p.dishes||[]).length} / ${cm?cm.count:"-"}</td><td>💰${p.money??"-"}</td>
+      <td>${Object.keys(p.techs||{}).map(t=>TECH[t].icon).join(" ")||"-"}</td><td>${statusPill(p,m.round)}</td></tr>`}).join("")}
+    </tbody></table></div></div>`;
+}
+
+/* ---------- 老師的操作 ---------- */
+async function startGame(code){
+  const r=S.rooms[code]; if(!r||r.meta.status!=="lobby") return;
+  const ps=playerList(r); if(!ps.length) return;
+  const lv=r.meta.lv||"1";
+  const pool=shuffle(COMMS.filter(c=>lv==="mix"||String(c.lv)===lv));
+  const patch={"meta/status":"playing","meta/round":1,"meta/deck":shuffle(CARDS.map(c=>c.id)),"meta/startedAt":Date.now()};
+  ps.forEach((p,i)=>{
+    const c=pool[i%pool.length];
+    patch[`players/${p.id}`]={name:p.name,joinedAt:p.joinedAt,commission:c.id,money:c.budget,
+      basket:Object.fromEntries(ING_KEYS.map(k=>[k,0])),dishes:[],endedRound:0};
+  });
+  await NET.update(code,patch);
+}
+async function setLevel(v){
+  S.lv=v; render();
+  for(const c of S.codes){ const r=S.rooms[c]; if(r&&r.meta.status==="lobby") await NET.update(c,{"meta/lv":v}) }
+}
+async function playAgain(code){
+  const r=S.rooms[code]; if(!r) return;
+  const patch={"meta/status":"lobby","meta/round":0,"meta/deck":null,"meta/lv":S.lv||r.meta.lv||"1"};
+  playerList(r).forEach(p=>patch[`players/${p.id}`]={name:p.name,joinedAt:p.joinedAt});
+  await NET.update(code,patch);
+}
+async function removeTable(code){
+  if(!await ask(`刪除第 ${tableNo(code)} 桌？`,`房號 ${esc(code)} 會從控制台移除，已加入的學生要重新加入別桌。`,"刪除")) return;
+  if(S.unsubs[code]){ S.unsubs[code](); delete S.unsubs[code] }
+  S.codes=S.codes.filter(c=>c!==code); delete S.rooms[code]; saveHost(); render();
+}
+
+function marketHTML(m, big){
+  if(m.round<2) return `<div class="market"><div class="t">📈 第 1 回合不抽行情卡</div><div class="small">所有食材照基本價。</div></div>`;
+  const c=marketCard(m); if(!c) return "";
+  const eff = c.kind==="A" ? `${ING[c.ing].icon}${ING[c.ing].name} ${c.d>0?"＋1":"－1"} 箍` : c.text;
+  return `<div class="market" ${big?'style="font-size:18px"':""}><div class="small muted">📈 今日行情 ${c.id}</div><div class="t" ${big?'style="font-size:26px"':""}>${c.name}</div>
+    <div><b>${esc(eff)}</b></div>${c.kind==="A"?`<div class="tw">「${esc(c.text)}」</div>`:""}</div>`;
+}
+/* ---------- 玩家：等待室 ---------- */
+function renderPlayerLobby(p){
+  const ps=playerList(S.room);
+  $app.innerHTML=`<div class="wrap"><div class="hero"><div class="plate">🪑</div><h1 style="font-size:32px">${esc(p.name)}，請入座</h1><p>房號 ${esc(S.code)}・等老師按下開始</p></div>
+    <div class="card"><div class="sec" style="margin-top:0">同桌的人（${ps.length}）</div><div class="row">${ps.map(x=>`<span class="chip ${x.id===S.me?"red":""}">${esc(x.name)}</span>`).join("")}</div></div>
+    <div class="card" style="margin-top:14px"><div class="sec" style="margin-top:0">📖 一句話規則</div>
+    <p style="margin:0">接委託、拜師學手路；每回合 2 個行動買食材或學藝；食材＋手路備齊就能做菜，完成主家的要求！</p></div>
+    <div style="text-align:center;margin-top:16px"><button class="btn ghost sm" data-act="leave">離開房間</button></div></div>`;
+}
+
+/* ---------- 玩家：拜師 ---------- */
+function renderChefPick(p){
+  const cm=COMM[p.commission];
+  $app.innerHTML=`<div class="wrap">
+    <div class="sec">🧾 你接到的委託</div>${commHTML(p,cm,false)}
+    <div class="sec">👨‍🍳 拜師：免費學會一種手路</div>
+    <p class="small muted" style="margin-top:-4px">看看委託需要哪些料理，再選最有幫助的師傅。其他人也可以拜同一位。</p>
+    <div class="chefs">${CHEFS.map(c=>`<div class="chef"><div class="h"><span class="av">${c.av}</span><div><b>${c.name}</b><div class="small">${TECH[c.tech].icon} ${TECH[c.tech].name}・${DISHES.filter(d=>d.tech===c.tech).length} 道菜</div></div></div>
+      <div class="q">「${c.say}」</div><div class="small muted">${c.feat}</div>
+      <div class="small" style="margin:6px 0">${DISHES.filter(d=>d.tech===c.tech).map(d=>d.name).join("、")}</div>
+      <button class="btn sm block" data-act="pickchef" data-t="${c.tech}">拜 ${c.name} 為師</button></div>`).join("")}</div>
+  </div>`;
+}
+
+/* ---------- 玩家：遊戲中 ---------- */
+function commHTML(p, cm, live){
+  const ds=(p.dishes||[]).map(i=>DISH[i]);
+  const row=(c)=>{const h=condCount(c,ds,p.money); const ok=h>=c.n; return `<div class="cond ${live&&ok?"ok":""}"><span class="ck">${live&&ok?"✓":""}</span>${condLabel(c)}${live&&c.k!=="money"?`<span class="n">${h}/${c.n}</span>`:""}</div>`};
+  return `<div class="comm"><div class="row"><span class="chip gold">${LV[cm.lv]}</span><span class="chip">${cm.id}</span><span class="chip red" style="margin-left:auto">💰 預算 ${cm.budget} 箍</span></div>
+    <h2 style="margin-top:8px">${cm.name}</h2><div class="tw">「${cm.tw}」</div>
+    <div class="row"><b>🍽️ 出 ${cm.count} 道菜</b>${live?`<span class="muted">（已出 ${ds.length} 道）</span>`:""}</div>
+    <div class="sec" style="font-size:15px;margin:10px 0 2px">✅ 必要條件</div>${cm.req.map(row).join("")}
+    <div class="sec" style="font-size:15px;margin:10px 0 2px">🌟 主家真歡喜（加碼 +1）</div>${cm.bonus.map(row).join("")}
+  </div>`;
+}
+function renderPlayerGame(p){
+  const m=S.room.meta, cm=COMM[p.commission], left=actionsLeft(p,m);
+  const done=isFinished(p), ended=(p.endedRound||0)>=m.round;
+  const tab=S.tab;
+  const tb=(k,t)=>`<button class="${tab===k?"on":""}" data-act="tab" data-v="${k}">${t}</button>`;
+  let body="";
+  if(done) body = finishedHTML(p,cm);
+  else if(tab==="comm") body = commHTML(p,cm,true) + myTableHTML(p);
+  else if(tab==="market") body = marketTabHTML(p,m,left,ended);
+  else if(tab==="cook") body = cookTabHTML(p,m,cm,ended);
+  else body = learnTabHTML(p,left,ended);
+  const waitMsg = ended&&!done ? `<div class="banner">⏳ 你這回合已經結束，等其他人…（${playerList(S.room).filter(x=>!isFinished(x)&&(x.endedRound||0)<m.round).map(x=>esc(x.name)).join("、")}）</div>` : "";
+  $app.innerHTML=`<div class="top"><div class="in"><span class="rd">第 ${m.round}/${ROUNDS} 回合</span><span class="small">${esc(p.name)}</span>
+      <span class="stat"><span>💰 ${p.money}</span><span class="dots" title="剩餘行動">${[0,1].map(i=>`<i class="${i<left&&!ended&&!done?"":"off"}"></i>`).join("")}</span></span></div>
+    ${done?"":`<div class="tabs">${tb("comm","🧾 委託")}${tb("market","🛒 市場")}${tb("cook","🍳 做菜")}${tb("learn","👨‍🍳 學藝")}</div>`}</div>
+    <div class="wrap">${waitMsg}${done?"":marketHTML(m,false)}${body}</div>
+    ${done||ended?"":`<div class="bar"><div class="in"><span class="small muted">剩 ${left} 個行動・做菜不用行動</span><button class="btn" style="margin-left:auto" data-act="endround">結束這回合 ➜</button></div></div>`}`;
+}
+function myTableHTML(p){
+  const ds=(p.dishes||[]).map(i=>DISH[i]);
+  const bk=ING_KEYS.filter(k=>(p.basket||{})[k]>0);
+  return `<div class="sec">🍽️ 我的辦桌</div><div class="card">${ds.length?`<div class="row">${ds.map(d=>`<span class="chip red">${TYPE[d.type].icon} ${d.id} ${d.name}</span>`).join("")}</div>`:`<span class="muted">還沒有出菜</span>`}</div>
+   <div class="sec">🧺 我的菜籃仔</div><div class="card">${bk.length?`<div class="row">${bk.map(k=>`<span class="chip">${ING[k].icon}${ING[k].name} ×${p.basket[k]}</span>`).join("")}</div>`:`<span class="muted">空的</span>`}</div>
+   <div class="sec">👨‍🍳 我的手路</div><div class="card"><div class="row">${Object.keys(p.techs||{}).map(t=>`<span class="chip ok">${TECH[t].icon} ${TECH[t].name}</span>`).join("")}</div></div>`;
+}
+function marketTabHTML(p,m,left,ended){
+  const max=maxPerBuy(m); const n=ING_KEYS.reduce((s,k)=>s+(S.cart[k]||0),0);
+  const cost=cartCost(S.cart,p,m); const lock=ended||left<=0;
+  return `<div class="row" style="margin-bottom:8px"><b>🛒 上市採買</b><span class="small muted">花 1 個行動，最多買 ${max} 份</span></div>
+    <div class="ings">${ING_KEYS.map(k=>{const pr=price(k,m), b=ING[k].base, q=S.cart[k]||0; return `<div class="ing ${q?"sel":""}">
+      <div class="e">${ING[k].icon}</div><div>${ING[k].name}</div>
+      <div class="p">${pr!==b?`<s>${b}</s>`:""}${pr} 箍</div><div class="have">菜籃仔有 ${(p.basket||{})[k]||0}${k==="spice"?"・不受行情影響":""}</div>
+      <div class="qty"><button data-act="cart" data-k="${k}" data-d="-1" ${q<=0||lock?"disabled":""}>−</button><b>${q}</b><button data-act="cart" data-k="${k}" data-d="1" ${n>=max||lock?"disabled":""}>＋</button></div></div>`}).join("")}</div>
+    <div class="card" style="margin-top:14px"><div class="row"><div><div>共 ${n} 份・原價 ${cost.sum} 箍</div>${cost.notes.map(x=>`<div class="small" style="color:var(--green)">${x}</div>`).join("")}</div>
+      <div style="margin-left:auto;text-align:right"><div class="small muted">要付</div><div style="font-size:26px;font-weight:900;color:var(--red)">${cost.total} 箍</div></div></div>
+      ${cost.total>p.money?`<div class="small" style="color:var(--red)">箍錢不夠喔！</div>`:""}
+      <button class="btn block" style="margin-top:10px" data-act="buy" ${!n||lock||cost.total>p.money?"disabled":""}>${lock?(ended?"這回合已結束":"行動用完了"):"確定採買（用 1 個行動）"}</button></div>`;
+}
+function cookTabHTML(p,m,cm,ended){
+  const made=new Set(p.dishes||[]); const full=(p.dishes||[]).length>=cm.count;
+  const f=S.filter;
+  const fb=(k,t)=>`<button class="${f===k?"on":""}" data-act="filter" data-v="${k}">${t}</button>`;
+  let list=DISHES.slice();
+  if(f==="can") list=list.filter(d=>!made.has(d.id)&&canCook(p,d).ok);
+  else if(f==="made") list=list.filter(d=>made.has(d.id));
+  else if(f!=="all") list=list.filter(d=>d.type===f);
+  const remain=cm.count-(p.dishes||[]).length;
+  return `<div class="row" style="margin-bottom:8px"><b>🍳 做菜・出菜</b><span class="small muted">還可以出 ${remain} 道・不用行動</span></div>
+    <div class="filters">${fb("can","✅ 現在能做")}${fb("all","全部")}${TYPES.map(t=>fb(t.k,t.icon+t.name)).join("")}${fb("made","已出菜")}</div>
+    <div class="grid">${list.length?list.map(d=>dishHTML(p,d,cm,made,full,ended,remain)).join(""):`<div class="empty">${f==="can"?"目前沒有能做的菜。去🛒市場買食材，或去👨‍🍳學藝學手路吧！":"沒有料理"}</div>`}</div>`;
+}
+function dishHTML(p,d,cm,made,full,ended,remain){
+  const st=canCook(p,d); const isMade=made.has(d.id);
+  let hint="";
+  if(!isMade&&st.ok&&remain===1){
+    const ids=[...(p.dishes||[]),d.id];
+    hint = reqMet(cm,ids,p.money) ? `<div class="hint good">🎉 出這道就完成委託！${bonusMet(cm,ids,p.money)?"還有主家真歡喜🌟":""}</div>` : `<div class="hint bad">⚠️ 這是最後一道，出了條件還不夠</div>`;
+  }
+  const ing=d.ing.map(k=>`<span class="chip ${(p.basket||{})[k]>0?"ok":"no"}">${ING[k].icon}${ING[k].name}</span>`).join("");
+  const tech=d.tech?`<span class="chip ${(p.techs||{})[d.tech]?"ok":"no"}">${TECH[d.tech].icon}${TECH[d.tech].name}</span>`:`<span class="chip ok">無須手路</span>`;
+  const tags=d.tags.map(t=>`<span class="chip gold">${TAGS[t].icon}${TAGS[t].name}</span>`).join("");
+  const btn = isMade?`<span class="chip ok">已出菜</span>`:(st.ok&&!full&&!ended?`<button class="btn green sm" data-act="cook" data-id="${d.id}">做菜</button>`:"");
+  return `<div class="dish ${isMade?"done":(st.ok&&!full?"can":"")}"><div class="ic">${TYPE[d.type].icon}</div>
+    <div style="flex:1;min-width:0"><div class="nm">${d.name}<small>${"★".repeat(d.stars)}</small></div><div class="small muted">${d.id}・${TYPE[d.type].name}</div>
+    <div class="tags">${ing}${tech}</div>${tags?`<div class="tags">${tags}</div>`:""}${hint}</div><div class="act">${btn}</div></div>`;
+}
+function learnTabHTML(p,left,ended){
+  const lock=ended||left<=0;
+  return `<div class="row" style="margin-bottom:8px"><b>👨‍🍳 學藝</b><span class="small muted">花 1 個行動學 1 種手路，學一次就永久會</span></div>
+  <div class="chefs">${CHEFS.map(c=>{const got=(p.techs||{})[c.tech]; return `<div class="chef ${got?"got":""}"><div class="h"><span class="av">${c.av}</span><div><b>${c.name}</b><div class="small">${TECH[c.tech].icon} ${TECH[c.tech].name}</div></div></div>
+    <div class="q">「${c.say}」</div><div class="small" style="margin-bottom:8px">${DISHES.filter(d=>d.tech===c.tech).map(d=>d.name).join("、")}</div>
+    ${got?`<span class="chip ok">✓ 已經學會</span>`:`<button class="btn sm block" data-act="learn" data-t="${c.tech}" ${lock?"disabled":""}>學藝（用 1 個行動）</button>`}</div>`}).join("")}</div>`;
+}
+function finishedHTML(p,cm){
+  const sc=scoreOf(p);
+  return p.completedRound ? `<div class="card" style="text-align:center;border:3px solid var(--green)"><div style="font-size:56px">🎉</div><h2 style="color:var(--green)">委託完成！</h2>
+    <p>你在第 ${p.completedRound} 回合完成「${cm.name}」</p>
+    <div class="row" style="justify-content:center"><span class="chip ok">完成委託 +5</span>${sc.bonus?`<span class="chip gold">🌟主家真歡喜 +1</span>`:""}${sc.early?`<span class="chip red">提早完成 +${sc.early}</span>`:""}</div>
+    <div style="font-size:40px;font-weight:900;color:var(--red);margin-top:8px">${sc.total} 聲望</div><p class="muted small">等其他人完成，第 ${ROUNDS} 回合結束後公布排名。</p></div>${myTableHTML(p)}`
+  : `<div class="card" style="text-align:center"><div style="font-size:56px">😢</div><h2>這次委託沒有完成</h2><p class="muted">出的菜已經到 ${cm.count} 道，但必要條件還不夠。下一局再挑戰！</p></div>${commHTML(p,cm,true)}`;
+}
+
+/* ---------- 結算 ---------- */
+function renderEnded(room, isHost, back=""){
+  const rk=ranking(room);
+  $app.innerHTML=`<div class="wrap ${isHost?"wide":""}">${back}<div class="hero"><div class="plate">🏆</div><h1 style="font-size:34px">辦桌結束</h1><p>聲望最高的就是今仔日的總舖師！</p></div>
+    ${rk.map(p=>{const cm=COMM[p.commission]; return `<div class="rank r${p.rank} ${p.id===S.me?"card":""}"><div class="no">${p.rank}</div>
+      <div><b>${esc(p.name)}</b>${p.id===S.me?" （你）":""}<div class="small muted">${cm?cm.name:""}・${p.completedRound?`第${p.completedRound}回合完成`:"未完成"}${p.sc.bonus?"・🌟":""}</div>
+      <div class="small muted">剩 ${p.left} 份食材・💰${p.money??0}</div></div><div class="sc">${p.sc.total}</div></div>`}).join("")}
+    <p class="small muted">同分時：剩餘食材較少者勝 → 剩餘箍錢較多者勝 → 仍相同則並列。</p>
+    <div style="text-align:center;margin-top:16px">${isHost?"":`<button class="btn ghost" data-act="leave">回首頁</button>`}</div></div>`;
+}
+/* =========================================================
+   ⑥ 玩家動作
+   ========================================================= */
+function me(){ return S.room.players[S.me] }
+async function act(fn){ if(S.busy) return; S.busy=true; try{ await fn() }catch(e){ console.error(e); toast("連線出了問題，再試一次") } finally{ S.busy=false } }
+function canAct(p){ const m=S.room.meta; return m.status==="playing" && !isFinished(p) && (p.endedRound||0)<m.round }
+function usedPatch(p){ const m=S.room.meta; const u=p.used||{}; return {round:m.round,n:(u.round===m.round?(u.n||0):0)+1} }
+
+async function pickChef(t){
+  const p=me(); if(p.chef) return;
+  await NET.update(S.code,{[`players/${S.me}/chef`]:t,[`players/${S.me}/techs/${t}`]:true});
+  S.tab="comm"; toast(`拜 ${CHEF_BY_TECH[t].name} 為師，學會 ${TECH[t].name}！`);
+}
+async function buy(){
+  const p=me(), m=S.room.meta; if(!canAct(p)||actionsLeft(p,m)<=0) return;
+  const cost=cartCost(S.cart,p,m); if(!cost.items.length) return;
+  if(cost.items.length>maxPerBuy(m)) return toast("買太多份了");
+  if(cost.total>p.money) return toast("箍錢不夠");
+  const patch={[`players/${S.me}/money`]:p.money-cost.total,[`players/${S.me}/used`]:usedPatch(p)};
+  for(const k of ING_KEYS) if(S.cart[k]) patch[`players/${S.me}/basket/${k}`]=((p.basket||{})[k]||0)+S.cart[k];
+  if(cost.useFirst) patch[`players/${S.me}/firstBuyRound`]=m.round;
+  await NET.update(S.code,patch);
+  toast(`買好了！付 ${cost.total} 箍`); S.cart={};
+}
+async function learn(t){
+  const p=me(), m=S.room.meta; if(!canAct(p)||actionsLeft(p,m)<=0||(p.techs||{})[t]) return;
+  if(!await ask(`向 ${CHEF_BY_TECH[t].name} 學藝？`,`會用掉 1 個行動，學會 ${TECH[t].icon} ${TECH[t].name}。`)) return;
+  await NET.update(S.code,{[`players/${S.me}/techs/${t}`]:true,[`players/${S.me}/used`]:usedPatch(p)});
+  toast(`學會 ${TECH[t].name}！`);
+}
+async function cook(id){
+  const p=me(), m=S.room.meta, cm=COMM[p.commission], d=DISH[id];
+  if(!canAct(p)) return;
+  const dishes=p.dishes||[];
+  if(dishes.includes(id)) return toast("同一道菜不能做兩次");
+  if(dishes.length>=cm.count) return toast("已經出滿了");
+  if(!canCook(p,d).ok) return toast("食材或手路還不夠");
+  const ids=[...dishes,id]; const last=ids.length===cm.count;
+  if(last && !reqMet(cm,ids,p.money)){
+    if(!await ask("⚠️ 這是最後一道菜","出了這道之後，委託的必要條件還沒達成，這局就<b>無法完成委託</b>（0 聲望）。<br>確定要出嗎？","還是要出","再想想")) return;
+  } else if(!await ask(`做 ${d.name}？`,`會用掉：${d.ing.map(k=>ING[k].icon+ING[k].name).join("、")}<br>出菜後不能更換。`,"做菜出菜！")) return;
+  const patch={[`players/${S.me}/dishes`]:ids};
+  for(const k of d.ing) patch[`players/${S.me}/basket/${k}`]=p.basket[k]-1;
+  if(last){
+    if(reqMet(cm,ids,p.money)){ patch[`players/${S.me}/completedRound`]=m.round; patch[`players/${S.me}/bonus`]=bonusMet(cm,ids,p.money) }
+    else patch[`players/${S.me}/failed`]=true;
+  }
+  await NET.update(S.code,patch);
+  toast(`🍽️ ${d.name} 出菜！`);
+}
+async function endRound(){
+  const p=me(), m=S.room.meta; if(!canAct(p)) return;
+  const left=actionsLeft(p,m);
+  if(left>0 && !await ask("結束這回合？",`你還有 ${left} 個行動沒用，結束後就不能再用了喔。`,"結束","再想想")) return;
+  await NET.update(S.code,{[`players/${S.me}/endedRound`]:m.round}); S.cart={};
+}
+
+/* ---------- 事件 ---------- */
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]"); if(!b||b.disabled) return;
+  const a=b.dataset.act, code=b.dataset.code;
+  if(a==="join") return act(joinRoom);
+  if(a==="create") return act(createFromHome);
+  if(a==="resume"){ const s=loadSession(); S.me=s.me; history.replaceState(null,"","?room="+s.code); return connect(s.code) }
+  if(a==="hostresume"){ const h=loadHost(); return hostOpen(h.me,h.codes) }
+  if(a==="leave"){ if(S.unsub) S.unsub(); S.unsub=null; S.code=null; S.room=null; clearSession(); history.replaceState(null,"",location.pathname); return render() }
+  if(a==="hostleave") return act(async()=>{ if(await ask("離開老師控制台？","各桌的遊戲會繼續進行。之後可以從首頁「回到老師畫面」回來。","離開")){ const keep=loadHost(); hostClose(); sSet("tsps_host",keep); history.replaceState(null,"",location.pathname); render() } });
+  if(a==="addtable") return act(addTable);
+  if(a==="removetable") return act(()=>removeTable(code));
+  if(a==="focus"){ S.focus=code; render(); return window.scrollTo(0,0) }
+  if(a==="unfocus"){ S.focus=null; return render() }
+  if(a==="lv") return act(()=>setLevel(b.dataset.v));
+  if(a==="kick") return act(async()=>{ if(await ask("移除這位玩家？","")) await NET.update(code,{[`players/${b.dataset.id}`]:null}) });
+  if(a==="start") return act(()=>startGame(code));
+  if(a==="startall") return act(async()=>{ for(const c of S.codes){ await startGame(c) } toast("全部開始！") });
+  if(a==="force") return act(async()=>{ const r=S.rooms[code]; if(r&&await ask("強制進入下一回合？","還沒按「結束這回合」的玩家，剩下的行動會作廢。")) await advance(code,r,r.meta.round) });
+  if(a==="again") return act(()=>playAgain(code));
+  if(a==="tab"){ S.tab=b.dataset.v; render(); return window.scrollTo(0,0) }
+  if(a==="filter"){ S.filter=b.dataset.v; return render() }
+  if(a==="cart"){ const k=b.dataset.k; S.cart[k]=Math.max(0,(S.cart[k]||0)+Number(b.dataset.d)); return render() }
+  if(a==="buy") return act(buy);
+  if(a==="learn") return act(()=>learn(b.dataset.t));
+  if(a==="pickchef") return act(()=>pickChef(b.dataset.t));
+  if(a==="cook") return act(()=>cook(b.dataset.id));
+  if(a==="endround") return act(endRound);
+});
+document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&(e.target.id==="jname"||e.target.id==="jcode")) act(joinRoom) });
+
+/* ---------- 啟動 ---------- */
+(async function boot(){
+  const cfg=window.FIREBASE_CONFIG||{};
+  if(cfg.apiKey&&cfg.databaseURL){
+    try{ NET=await makeFirebaseNet(cfg) }catch(e){ console.error(e); NET=LocalNet; NET_ERR="Firebase 連線失敗，暫時使用本機測試模式。請檢查設定碼與網路。" }
+  }
+  const qs=new URLSearchParams(location.search); const sess=loadSession(), hs=loadHost();
+  if(qs.get("teacher")&&hs&&hs.codes&&hs.codes.length) return hostOpen(hs.me,hs.codes);
+  if(sess&&sess.code&&qs.get("room")===sess.code){ S.me=sess.me; return connect(sess.code) }
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1628 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>正負數大富翁</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: square ring board (36 spaces on a 10×10 perimeter) on grid paper, with a ledger-style side panel for actions, players and the log. */
+:root{
+  --paper:#eef3f1; --grid:rgba(40,90,90,.09); --card:#ffffff; --card-2:#f6f8f7;
+  --ink:#1b2729; --ink-2:#4f5f62; --line:#cfdad7;
+  --pos:#1d63a8; --neg:#cc3a26; --accent:#e39a12; --accent-ink:#2a1c00;
+  --k-conv:#14907e; --k-book:#4b56b8; --k-drink:#e0782a; --k-chicken:#9a5a2b; --k-cram:#8a49b0; --k-cinema:#c23d78;
+  --s-chance:#d9a400; --s-fate:#d0516a; --s-school:#3f9a46; --s-zone:#6a7a7d; --s-start:#1b2729;
+  --shadow:0 1px 0 rgba(0,0,0,.04),0 6px 18px -10px rgba(20,50,50,.35);
+  --f-display:"LXGW WenKai TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111a1b; --grid:rgba(140,200,200,.06); --card:#1b2627; --card-2:#162021;
+  --ink:#e6eeec; --ink-2:#9fb0b2; --line:#2e3c3e;
+  --pos:#6cb2f5; --neg:#ff7a63; --accent:#f2b23a; --accent-ink:#241700;
+  --k-conv:#2fbca7; --k-book:#8790ec; --k-drink:#f39a52; --k-chicken:#c88a55; --k-cram:#b47be0; --k-cinema:#ec6fa3;
+  --s-chance:#e8bd2c; --s-fate:#ec7a8f; --s-school:#64be6b; --s-zone:#8b9c9f; --s-start:#e6eeec;
+  --shadow:0 6px 18px -10px rgba(0,0,0,.7); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111a1b; --grid:rgba(140,200,200,.06); --card:#1b2627; --card-2:#162021;
+  --ink:#e6eeec; --ink-2:#9fb0b2; --line:#2e3c3e;
+  --pos:#6cb2f5; --neg:#ff7a63; --accent:#f2b23a; --accent-ink:#241700;
+  --k-conv:#2fbca7; --k-book:#8790ec; --k-drink:#f39a52; --k-chicken:#c88a55; --k-cram:#b47be0; --k-cinema:#ec6fa3;
+  --s-chance:#e8bd2c; --s-fate:#ec7a8f; --s-school:#64be6b; --s-zone:#8b9c9f; --s-start:#e6eeec;
+  --shadow:0 6px 18px -10px rgba(0,0,0,.7); color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.pos{color:var(--pos)} .neg{color:var(--neg)}
+
+.app{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:18px;max-width:1400px;margin:0 auto;align-items:start}
+.board-wrap{min-width:0}
+.board{display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(10,1fr);gap:3px;aspect-ratio:1;
+  width:min(100%,calc(100vh - 28px));max-width:100%;margin:0 auto;font-size:clamp(7px,1.02vw,13px)}
+.cell{position:relative;background:var(--card);border:1px solid var(--line);border-radius:5px;overflow:hidden;
+  display:flex;flex-direction:column;padding:.35em .4em .3em;text-align:left;min-width:0;min-height:0;transition:transform .15s}
+.cell:hover{transform:translateY(-1px)}
+.cell .stripe{position:absolute;inset:0 0 auto 0;height:.42em;background:var(--kc,var(--s-zone))}
+.cell .idx{position:absolute;top:.5em;right:.4em;font-family:var(--f-num);font-size:.8em;color:var(--ink-2);opacity:.75}
+.cell .kind{margin-top:.45em;font-size:.82em;color:var(--kc,var(--ink-2));font-weight:700;letter-spacing:.04em;white-space:nowrap}
+.cell .nm{font-family:var(--f-display);font-weight:700;font-size:1.28em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell .sub{font-size:.8em;color:var(--ink-2);line-height:1.2;overflow:hidden}
+.cell .own{position:absolute;left:0;right:0;bottom:0;height:1.45em;background:var(--oc);color:#fff;font-size:.82em;font-weight:700;
+  display:flex;align-items:center;justify-content:flex-end;padding:0 .4em;font-family:var(--f-num)}
+.cell .toks{position:absolute;left:.25em;bottom:1.7em;display:flex;flex-wrap:wrap;gap:2px;max-width:calc(100% - .5em)}
+.cell.corner{background:var(--card-2)}
+.cell.here{box-shadow:0 0 0 3px var(--accent) inset}
+.tok{width:1.55em;height:1.55em;border-radius:50%;background:var(--pc);color:#fff;font-size:.85em;font-weight:900;display:grid;place-items:center;
+  border:2px solid var(--card);box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.tok.cur{animation:bob 1s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-3px)}}
+
+.center{grid-row:2/10;grid-column:2/10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8em;padding:1.2em;text-align:center;min-width:0;min-height:0;overflow:hidden}
+.center h1{font-family:var(--f-display);font-weight:700;font-size:4em;line-height:1;margin:0;letter-spacing:.04em;text-wrap:balance}
+.center h1 .pm{color:var(--neg)} .center h1 .pp{color:var(--pos)}
+.center .tag{font-size:1.1em;color:var(--ink-2);margin:0}
+.daybar{display:flex;gap:.35em;justify-content:center;flex-wrap:wrap}
+.daybar span{width:2.3em;height:2.3em;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-family:var(--f-num);font-size:1em;color:var(--ink-2);background:var(--card)}
+.daybar span.done{background:var(--ink-2);color:var(--card);border-color:var(--ink-2)}
+.daybar span.now{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.tray{display:flex;align-items:center;gap:.6em;min-height:4.4em;font-size:1.2em;flex-wrap:wrap;justify-content:center}
+.tray .expr{font-family:var(--f-num);font-size:1.25em}
+.lastlog{font-size:1.15em;max-width:36em;min-height:2.6em;color:var(--ink)}
+.center .buttons{display:flex;gap:.6em;flex-wrap:wrap;justify-content:center}
+.ghost{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:.35em 1em;font-size:1.05em}
+.ghost:hover{border-color:var(--ink-2)}
+
+/* dice */
+.die{width:2.6em;height:2.6em;border-radius:.5em;background:var(--card);border:2px solid var(--dc,var(--ink-2));display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:.3em;gap:1px;flex:none}
+.die i{border-radius:50%;margin:16%;}
+.die i.on{background:var(--dc,var(--ink))}
+.die.q{display:grid;place-items:center;font-family:var(--f-num);font-weight:600;color:var(--dc);grid-template:1fr/1fr}
+.d-move{--dc:var(--pos)} .d-pay{--dc:var(--neg)} .d-collect{--dc:var(--k-conv)} .d-plain{--dc:var(--ink-2)}
+.die.rolling{animation:shake .5s linear}
+@keyframes shake{20%{transform:rotate(-12deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-6deg)}80%{transform:rotate(4deg)}}
+
+/* side */
+.side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+.stage{padding:16px;min-height:220px}
+.stage h2{font-family:var(--f-display);font-size:1.45em;margin:0 0 .3em;line-height:1.25;text-wrap:balance}
+.stage .who{display:flex;align-items:center;gap:.5em;font-size:.9em;color:var(--ink-2);margin-bottom:.4em}
+.stage .who .tok{font-size:13px}
+.stage p{margin:.35em 0}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{border:1.5px solid var(--ink);background:var(--card);border-radius:8px;padding:.5em 1em;font-weight:700;font-size:1em;line-height:1.3}
+.btn:hover{background:var(--card-2)}
+.btn.main{background:var(--ink);color:var(--card)}
+.btn.main:hover{opacity:.9}
+.btn.alt{border-color:var(--line);font-weight:500}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn small{display:block;font-weight:400;font-size:.8em;opacity:.8}
+
+.cardface{border-radius:10px;border:2px solid var(--cc);padding:12px 14px;margin:8px 0;background:linear-gradient(var(--card),var(--card)) padding-box;position:relative}
+.cardface .ck{font-size:.8em;font-weight:700;color:var(--cc);letter-spacing:.12em}
+.cardface .cn{font-family:var(--f-display);font-size:1.5em;font-weight:700;line-height:1.2}
+.cardface .cd{color:var(--ink-2)}
+.c-chance{--cc:var(--s-chance)} .c-fate{--cc:var(--s-fate)} .c-ability{--cc:var(--k-cram)} .c-shop{--cc:var(--accent)}
+
+.calc{background:var(--card-2);border:1px dashed var(--line);border-radius:8px;padding:10px 12px;margin:8px 0;font-family:var(--f-num);font-size:.95em;line-height:1.9;overflow-x:auto}
+.calc .lab{font-family:var(--f-body);font-size:.85em;color:var(--ink-2)}
+.calc .res{font-size:1.25em;font-weight:600}
+
+/* builder */
+.bld{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.bld .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bld .diebtn{padding:0;border:none;background:none;border-radius:.6em;font-size:15px}
+.bld .diebtn:disabled{opacity:.25}
+.bld .op{min-width:2.6em;height:2.4em;border:1.5px solid var(--line);border-radius:8px;background:var(--card-2);font-family:var(--f-num);font-size:1.15em;font-weight:600}
+.bld .op:hover{border-color:var(--ink-2)}
+.bld .exprbox{min-height:2.4em;border:2px solid var(--ink);border-radius:8px;padding:.3em .6em;font-family:var(--f-num);font-size:1.3em;display:flex;align-items:center;flex-wrap:wrap;gap:.25em;background:var(--card)}
+.bld .exprbox .ph{color:var(--ink-2);font-family:var(--f-body);font-size:.75em}
+.bld .msg{font-size:.92em;min-height:1.4em}
+.bld .msg.err{color:var(--neg)}
+.adj{display:flex;flex-direction:column;align-items:center;gap:2px}
+.adj button{border:1px solid var(--line);background:var(--card-2);border-radius:6px;width:2.6em;font-size:.8em;line-height:1.5}
+
+/* questions & flow */
+.flow{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 8px;font-size:.78em}
+.flow span{padding:.1em .55em;border-radius:999px;border:1px solid var(--line);color:var(--ink-2)}
+.flow span.done{color:var(--ink-2);opacity:.6}
+.flow span.on{background:var(--ink);color:var(--card);border-color:var(--ink);font-weight:700}
+.qbox{border:2px solid var(--ink);border-radius:10px;padding:12px 14px;margin:10px 0;background:var(--card-2)}
+.qcat{display:inline-block;font-size:.75em;font-weight:700;letter-spacing:.1em;color:var(--ink-2);margin-bottom:2px}
+.qq{font-size:1.65em;font-weight:600;line-height:1.35;overflow-wrap:anywhere}
+.hintbox{border-left:4px solid var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);padding:8px 12px;border-radius:0 8px 8px 0;margin:8px 0}
+.hintbox b{display:block;font-size:.8em;letter-spacing:.1em}
+.msgline{min-height:1.4em;font-size:.95em}
+.okline{font-family:var(--f-display);font-size:1.6em;font-weight:700;margin:.2em 0}
+table.stats{min-width:760px}
+table.stats td,table.stats th{text-align:center}
+
+/* players */
+.players{padding:8px}
+.pl{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:8px;border-radius:8px}
+.pl.cur{background:var(--card-2);box-shadow:inset 3px 0 0 var(--pc)}
+.pl .tok{font-size:14px}
+.pl .pn{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl .pm{font-family:var(--f-num);font-weight:600;font-size:1.1em;text-align:right}
+.pl .meta{grid-column:2/4;display:flex;flex-wrap:wrap;gap:4px 10px;font-size:.8em;color:var(--ink-2)}
+.lv{display:inline-flex;align-items:center;gap:3px}
+.lv b{display:inline-block;width:7px;height:7px;border-radius:2px;background:var(--line)}
+.lv b.on{background:var(--dc)}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:0 .55em;font-size:.95em;background:var(--card)}
+.chip.z{border-color:var(--accent);color:var(--ink)}
+
+.log{padding:10px 14px;max-height:260px;overflow:auto;font-size:.88em}
+.log h3,.players h3{font-size:.78em;letter-spacing:.14em;color:var(--ink-2);margin:4px 0 6px;font-weight:700}
+.players h3{padding:0 8px}
+.log ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.log li{border-bottom:1px dashed var(--line);padding-bottom:4px}
+.log li .d{font-family:var(--f-num);color:var(--ink-2);margin-right:.4em;font-size:.9em}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(10,20,22,.55);display:grid;place-items:center;z-index:50;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.modal .box{background:var(--card);border-radius:14px;max-width:min(960px,100%);width:100%;max-height:100%;overflow:auto;padding:22px;box-shadow:0 20px 50px -10px rgba(0,0,0,.5)}
+.modal .box.narrow{max-width:560px}
+.modal h2{font-family:var(--f-display);font-size:1.8em;margin:0 0 .4em}
+.modal h3{font-size:1.05em;margin:1em 0 .3em}
+.field{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+.field label{font-size:.85em;color:var(--ink-2);font-weight:700}
+input[type=text],input[type=number],input.ans,select{font:inherit;border:1.5px solid var(--line);border-radius:7px;padding:.4em .6em;background:var(--card);color:var(--ink);min-width:0}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.pgrid .pin{display:flex;align-items:center;gap:6px}
+.pgrid .pin input{width:100%}
+.check{display:flex;gap:8px;align-items:flex-start;margin:8px 0}
+.check input{margin-top:.35em}
+
+.tblwrap{overflow-x:auto}
+table.ledger{border-collapse:collapse;width:100%;font-size:.92em;min-width:520px}
+table.ledger th,table.ledger td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left}
+table.ledger th{background:var(--card-2);font-size:.85em;letter-spacing:.06em}
+table.ledger td.n{font-family:var(--f-num);text-align:right;white-space:nowrap}
+table.ledger .ent{display:flex;justify-content:space-between;gap:10px}
+table.ledger .ent span:last-child{font-family:var(--f-num);white-space:nowrap}
+table.ledger tr.today{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tabs button{border:1.5px solid var(--line);border-radius:999px;padding:.25em .9em;background:var(--card)}
+.tabs button.on{border-color:var(--pc);box-shadow:inset 0 -3px 0 var(--pc);font-weight:700}
+
+.settle{display:flex;flex-direction:column;gap:10px}
+.srow{display:grid;grid-template-columns:150px minmax(0,1fr) 150px 150px 70px;gap:10px;align-items:start;border:1px solid var(--line);border-radius:10px;padding:10px}
+.srow .ents{font-size:.88em;display:flex;flex-direction:column;gap:2px}
+.srow .ents div{display:flex;justify-content:space-between;gap:8px}
+.srow .ents span:last-child{font-family:var(--f-num)}
+.srow input{width:100%;font-family:var(--f-num)}
+.srow .mark{font-size:1.3em;font-weight:900;text-align:center}
+.srow .hint{font-size:.8em;color:var(--ink-2)}
+.rank{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.rank div{display:grid;grid-template-columns:2.2em auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.rank .r{font-family:var(--f-display);font-size:1.6em;font-weight:700;text-align:center}
+.rank .m{font-family:var(--f-num);font-weight:600;font-size:1.2em}
+.rules ol{padding-left:1.3em} .rules li{margin:.3em 0}
+.shopinfo .calc input{width:4.2em;font-family:var(--f-num)}
+
+
+/* online play */
+.topbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;max-width:1400px;margin:0 auto 10px;padding:8px 12px;background:var(--card);border:1px solid var(--line);border-radius:10px}
+.topbar .code{font-family:var(--f-display);font-weight:700;font-size:1.2em}
+.topbar .tok{font-size:12px;display:inline-grid;vertical-align:middle}
+.topbar .grow{flex:1}
+.seatctl{display:flex;flex-wrap:wrap;gap:6px}
+.ghost.sm,.btn.sm{font-size:.85em;padding:.3em .8em}
+.spectbar{display:flex;align-items:center;gap:8px;padding:6px 10px;margin:-4px -4px 10px;border-radius:8px;background:var(--card-2);font-size:.95em}
+.spectbar .tok{font-size:13px}
+.spect{opacity:.85;pointer-events:none}
+.waitdots{display:flex;gap:6px;margin-top:10px}
+.waitdots i{width:9px;height:9px;border-radius:50%;background:var(--ink-2);animation:wd 1.2s infinite}
+.waitdots i:nth-child(2){animation-delay:.2s}.waitdots i:nth-child(3){animation-delay:.4s}
+@keyframes wd{50%{opacity:.2}}
+.homegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.homebtn{display:flex;flex-direction:column;gap:4px;text-align:left;padding:14px;border:1.5px solid var(--line);border-radius:12px;background:var(--card-2)}
+.homebtn:hover{border-color:var(--ink)}
+.homebtn b{font-family:var(--f-display);font-size:1.35em}
+.homebtn span{font-size:.85em;color:var(--ink-2)}
+.dash{max-width:1400px;margin:0 auto}
+.dashhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px}
+.dashhead h1{font-family:var(--f-display);font-size:2.2em;margin:0}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:14px}
+.tcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);min-width:0}
+.tcard header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tcard h3{font-family:var(--f-display);font-size:1.5em;margin:0}
+.tcard h3 .num{font-size:1.1em;letter-spacing:.06em}
+.tcard.playing{box-shadow:inset 0 3px 0 var(--pos),var(--shadow)}
+.tcard.over{opacity:.85}
+.qr{margin:10px 0;background:#fff;padding:6px;border-radius:6px;width:max-content}
+.qr img,.qr canvas{display:block}
+table.mini{width:100%;border-collapse:collapse;font-size:.9em}
+table.mini td{padding:4px 2px;border-bottom:1px dashed var(--line)}
+table.mini td.n{text-align:right;font-family:var(--f-num);white-space:nowrap}
+table.mini .tok{font-size:11px;display:inline-grid;vertical-align:middle}
+.warnline{border-left:4px solid var(--accent);padding:6px 10px;background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:0 8px 8px 0}
+.lobby{list-style:none;padding:0;display:flex;flex-direction:column;gap:6px}
+.lobby li{display:flex;align-items:center;gap:8px}
+.lobby .tok{font-size:13px}
+@media (max-width:1000px){
+  .app{display:flex;flex-direction:column}
+  .side{display:contents}
+  #stage{order:-1}
+}
+@media (max-width:1000px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .board{width:100%;font-size:clamp(5.5px,1.55vw,12px)}
+  .center h1{font-size:3.2em}
+}
+@media (max-width:640px){
+  .srow{grid-template-columns:1fr 1fr}
+  .srow .pname,.srow .ents{grid-column:1/3}
+  .srow .mark{grid-column:1/3;text-align:left}
+  .center .tag,.center .daybar{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .tok.cur,.die.rolling{animation:none}
+  .cell{transition:none}
+}
+</style>
+</head>
+<body>
+<div class="topbar" id="topbar" hidden></div>
+<div id="dash" class="dash" hidden></div>
+<div class="app" id="app">
+  <div class="board-wrap"><div class="board" id="board"></div></div>
+  <aside class="side">
+    <section class="panel stage" id="stage" aria-live="polite"></section>
+    <section class="panel players" id="players"></section>
+    <section class="panel log"><h3>事件紀錄</h3><ol id="log"></ol></section>
+  </aside>
+</div>
+<div class="modal" id="modal" hidden><div class="box" id="modalBox"></div></div>
+
+<script>
+"use strict";
+/* ---------------- data ---------------- */
+const KC={'便利商店':'--k-conv','書店':'--k-book','飲料店':'--k-drink','雞排店':'--k-chicken','補習班':'--k-cram','電影院':'--k-cinema'};
+const shop=(kind,name,A,B,C,k,min,max)=>({t:'shop',kind,name,f:{type:'exp',A,B,C,k},min,max});
+const pshop=(kind,name,k,min,max)=>({t:'shop',kind,name,f:{type:'pow',k},min,max});
+const SPACES=[
+  {t:'start',name:'起點'},
+  shop('便利商店','8-11',1,2,2,100,100,100000),
+  shop('書店','金石糖',1,1,1,100,100,100),
+  shop('飲料店','60藍',2,2,2,100,100,100000),
+  {t:'fate'},
+  shop('飲料店','親心',2,2,2,200,200,200000),
+  {t:'chance'},
+  shop('便利商店','你家',1,2,2,200,200,200000),
+  {t:'school',die:'move',bonus:1000},
+  {t:'gambler'},
+  {t:'gate',name:'圖書館門口',sub:'測試上進心',zone:'library',enterMax:2},
+  {t:'zone',zone:'library',name:'圖書館'},
+  shop('雞排店','派課',1,3,3,100,100,100000),
+  {t:'fate'},
+  shop('書店','成品',1,1,1,1000,1000,1000),
+  {t:'chance'},
+  {t:'school',die:'pay',bonus:1000},
+  {t:'gate',name:'網咖門口',sub:'考驗定力',zone:'netcafe',enterMax:3},
+  {t:'zone',zone:'netcafe',name:'網咖'},
+  shop('飲料店','GOGO',2,2,2,400,400,400000),
+  {t:'fate'},
+  shop('飲料店','頂樓沒蓋',2,2,2,800,800,800000),
+  shop('書店','杯具王',1,1,1,10000,10000,10000),
+  shop('便利商店','QK',1,2,2,300,300,300000),
+  {t:'gambler'},
+  {t:'school',die:'collect',bonus:2000},
+  shop('便利商店','來爾付',1,2,2,400,400,400000),
+  {t:'chance'},
+  {t:'gate',name:'運動場門口',sub:'測試耐力',zone:'stadium',enterMax:2},
+  {t:'zone',zone:'stadium',name:'運動場'},
+  shop('書店','博課來',1,1,1,100000,100000,100000),
+  {t:'fate'},
+  pshop('補習班','巨醬',500,500,500000),
+  {t:'chance'},
+  {t:'school',die:'any',bonus:3000},
+  pshop('電影院','威繡',100,100,100000),
+];
+const N=SPACES.length; // 36
+const ZONE={library:{idx:11,name:'圖書館'},netcafe:{idx:18,name:'網咖'},stadium:{idx:29,name:'運動場'}};
+const DIE={move:'前進骰子',pay:'付錢骰子',collect:'收錢骰子'};
+const COLORS=['#d1432f','#1d63a8','#2e9a4e','#c77d00','#8a49b0','#0f8a8a'];
+
+const CHANCE=[
+  {id:'lotto',n:'中樂透',d:'獲得 1000 × a 元（a：骰子點數）'},
+  {id:'scam',n:'被詐騙',d:'損失 100 × a 元（a：骰子點數）'},
+  {id:'invoice',n:'中發票',d:'獲得 100 × a 元（a：骰子點數）'},
+  {id:'invest',n:'投資失敗',d:'損失 1000 × a 元（a：骰子點數）'},
+  {id:'teacher',n:'巧遇老師',d:'任一骰子升級一次 或 得到 1000 元'},
+  {id:'skip',n:'翹課被抓到',d:'任一骰子降級一次 或 損失 1000 元'},
+  {id:'lightning',n:'被閃電打到',d:'得到一張特異功能卡 或 3000 元'},
+  {id:'curse',n:'沒收功就罵髒話',d:'失去一張特異功能卡 或 3000 元'},
+  {id:'robbed',n:'遇到流氓',d:'被某個人抽走一張特異功能卡 或 3000 元'},
+  {id:'rob',n:'假扮流氓',d:'抽走某個人一張特異功能卡 或 3000 元'},
+  {id:'q',math:'market',n:'夜市擺攤',d:'情境題：算對收支，還有答題獎勵'},
+  {id:'q',math:'groupbuy',n:'團購分攤',d:'情境題：算對收支，還有答題獎勵'},
+  {id:'q',math:'saving',n:'存錢計畫',d:'情境題：算對收支，還有答題獎勵'},
+  {id:'q',math:'stock',n:'投資模擬',d:'情境題：算對收支，還有答題獎勵'},
+];
+const FATE=[
+  {id:'family',n:'家人來電',d:'直接離開網咖（可保留）',keep:1},
+  {id:'family',n:'家人來電',d:'直接離開網咖（可保留）',keep:1},
+  {id:'drink',n:'飲料招待券',d:'路過飲料店免付費（可保留）',keep:1,kind:'飲料店'},
+  {id:'drink',n:'飲料招待券',d:'路過飲料店免付費（可保留）',keep:1,kind:'飲料店'},
+  {id:'conv',n:'便利商店禮券',d:'路過便利商店免付費（可保留）',keep:1,kind:'便利商店'},
+  {id:'conv',n:'便利商店禮券',d:'路過便利商店免付費（可保留）',keep:1,kind:'便利商店'},
+  {id:'m',n:'踩到口香糖撿到錢',d:'獲得 1000 元',v:1000},
+  {id:'m',n:'亂吐口香糖被抓到',d:'罰款 1000 元',v:-1000},
+  {id:'m',n:'踩到狗便便撿到錢',d:'獲得 10000 元',v:10000},
+  {id:'m',n:'亂丟狗便便被抓到',d:'罰款 10000 元',v:-10000},
+  {id:'q',math:'phone',n:'手機摔壞了',d:'情境題：算對收支，還有答題獎勵'},
+  {id:'q',math:'aircon',n:'冷氣電費',d:'情境題：算對收支，還有答題獎勵'},
+  {id:'q',math:'charity',n:'班級義賣',d:'情境題：算對收支，還有答題獎勵'},
+  {id:'q',math:'wallet',n:'錢包失而復得',d:'情境題：算對收支，還有答題獎勵'},
+];
+const ABILITY=[
+  {id:'negAll',n:'大家都是負翁',d:'每個人的資產都變成相反數'},
+  {id:'negOne',n:'你是負翁',d:'指定某個人的資產變成相反數'},
+  {id:'absAll',n:'絕對值得',d:'每個人的資產都加上絕對值'},
+  {id:'absOne',n:'你絕對值得',d:'指定某個人的資產加上絕對值'},
+  {id:'goldAll',n:'金店面王',d:'每個人的店面都升等成 6 級'},
+  {id:'goldOne',n:'你是金店面王',d:'指定某個人的店面都升等成 6 級'},
+  {id:'brokeAll',n:'破店面王',d:'每個人的店面都降等成 1 級'},
+  {id:'brokeOne',n:'你是破店面王',d:'指定某個人的店面都降等成 1 級'},
+  {id:'dblAll',n:'加倍的快樂',d:'每個人的資產都變成 2 倍'},
+  {id:'dblOne',n:'你加倍快樂',d:'指定某個人的資產變成 2 倍'},
+  {id:'busLib',n:'圖書館接駁車',d:'接送某人直達圖書館',zone:'library'},
+  {id:'busLib',n:'圖書館接駁車',d:'接送某人直達圖書館',zone:'library'},
+  {id:'busSta',n:'運動場接駁車',d:'接送某人直達運動場',zone:'stadium'},
+  {id:'busSta',n:'運動場接駁車',d:'接送某人直達運動場',zone:'stadium'},
+  {id:'busNet',n:'網咖接駁車',d:'接送某人直達網咖',zone:'netcafe'},
+  {id:'busNet',n:'網咖接駁車',d:'接送某人直達網咖',zone:'netcafe'},
+  {id:'invis',n:'你看不到我',d:'免付過路費（走到別人商店時使用）',reactive:1},
+  {id:'invis',n:'你看不到我',d:'免付過路費（走到別人商店時使用）',reactive:1},
+  {id:'swap',n:'乾坤大挪移',d:'和某個人交換一個商店'},
+  {id:'swap',n:'乾坤大挪移',d:'和某個人交換一個商店'},
+];
+
+// 題庫：加法 20、減法 20、乘除 20、混合運算 30（含提示與解題步驟）
+const BANK=[{"id":"add01","cat":"add","q":"(−21) + 19","a":-2,"hint":"異號相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。","steps":["兩數異號，絕對值大的減小的：21 − 19 = 2","21 的絕對值比較大，取負號 → −2"]},{"id":"add02","cat":"add","q":"(−20) + 23","a":3,"hint":"異號相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。","steps":["兩數異號，絕對值大的減小的：23 − 20 = 3","23 的絕對值比較大，取正號 → 3"]},{"id":"add03","cat":"add","q":"(−3) + 17","a":14,"hint":"異號相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。","steps":["兩數異號，絕對值大的減小的：17 − 3 = 14","17 的絕對值比較大，取正號 → 14"]},{"id":"add04","cat":"add","q":"(−28) + 10","a":-18,"hint":"異號相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。","steps":["兩數異號，絕對值大的減小的：28 − 10 = 18","28 的絕對值比較大，取負號 → −18"]},{"id":"add05","cat":"add","q":"(−16) + 9","a":-7,"hint":"異號相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。","steps":["兩數異號，絕對值大的減小的：16 − 9 = 7","16 的絕對值比較大，取負號 → −7"]},{"id":"add06","cat":"add","q":"(−20) + 29","a":9,"hint":"異號相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。","steps":["兩數異號，絕對值大的減小的：29 − 20 = 9","29 的絕對值比較大，取正號 → 9"]},{"id":"add07","cat":"add","q":"8 + (−16)","a":-8,"hint":"異號相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。","steps":["兩數異號，絕對值大的減小的：16 − 8 = 8","16 的絕對值比較大，取負號 → −8"]},{"id":"add08","cat":"add","q":"(−13) + 23","a":10,"hint":"異號相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。","steps":["兩數異號，絕對值大的減小的：23 − 13 = 10","23 的絕對值比較大，取正號 → 10"]},{"id":"add09","cat":"add","q":"(−8) + (−16)","a":-24,"hint":"同號相加：絕對值相加，符號不變。","steps":["兩數同號（都是負數），絕對值相加：8 + 16 = 24","符號跟著原來的負號 → −24"]},{"id":"add10","cat":"add","q":"(−4) + (−21)","a":-25,"hint":"同號相加：絕對值相加，符號不變。","steps":["兩數同號（都是負數），絕對值相加：4 + 21 = 25","符號跟著原來的負號 → −25"]},{"id":"add11","cat":"add","q":"(−8) + (−3)","a":-11,"hint":"同號相加：絕對值相加，符號不變。","steps":["兩數同號（都是負數），絕對值相加：8 + 3 = 11","符號跟著原來的負號 → −11"]},{"id":"add12","cat":"add","q":"(−23) + (−4)","a":-27,"hint":"同號相加：絕對值相加，符號不變。","steps":["兩數同號（都是負數），絕對值相加：23 + 4 = 27","符號跟著原來的負號 → −27"]},{"id":"add13","cat":"add","q":"(−8) + (−17)","a":-25,"hint":"同號相加：絕對值相加，符號不變。","steps":["兩數同號（都是負數），絕對值相加：8 + 17 = 25","符號跟著原來的負號 → −25"]},{"id":"add14","cat":"add","q":"(−3) + (−22)","a":-25,"hint":"同號相加：絕對值相加，符號不變。","steps":["兩數同號（都是負數），絕對值相加：3 + 22 = 25","符號跟著原來的負號 → −25"]},{"id":"add15","cat":"add","q":"15 + 3 + (−11)","a":7,"hint":"由左往右兩個兩個加。異號相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。","steps":["先算前兩個：15 + 3 = 18","再算：18 + (−11) = 7"]},{"id":"add16","cat":"add","q":"(−11) + (−11) + 6","a":-16,"hint":"由左往右兩個兩個加。異號相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。","steps":["先算前兩個：(−11) + (−11) = −22","再算：(−22) + 6 = −16"]},{"id":"add17","cat":"add","q":"(−9) + (−5) + 12","a":-2,"hint":"由左往右兩個兩個加。異號相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。","steps":["先算前兩個：(−9) + (−5) = −14","再算：(−14) + 12 = −2"]},{"id":"add18","cat":"add","q":"(−10) + (−5) + (−2)","a":-17,"hint":"由左往右兩個兩個加。異號相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。","steps":["先算前兩個：(−10) + (−5) = −15","再算：(−15) + (−2) = −17"]},{"id":"add19","cat":"add","q":"5 + 7 + (−1)","a":11,"hint":"由左往右兩個兩個加。異號相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。","steps":["先算前兩個：5 + 7 = 12","再算：12 + (−1) = 11"]},{"id":"add20","cat":"add","q":"4 + (−10) + (−6)","a":-12,"hint":"由左往右兩個兩個加。異號相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。","steps":["先算前兩個：4 + (−10) = −6","再算：(−6) + (−6) = −12"]},{"id":"sub01","cat":"sub","q":"5 − 12","a":-7,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 12 等於加上它的相反數 (−12)：5 − 12 = 5 + (−12)","兩數異號，絕對值大的減小的：12 − 5 = 7","12 的絕對值比較大，取負號 → −7"]},{"id":"sub02","cat":"sub","q":"12 − (−17)","a":29,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 (−17) 等於加上它的相反數 17：12 − (−17) = 12 + 17","兩數同號（都是正數），絕對值相加：12 + 17 = 29","符號跟著原來的正號 → 29"]},{"id":"sub03","cat":"sub","q":"(−15) − 25","a":-40,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 25 等於加上它的相反數 (−25)：(−15) − 25 = (−15) + (−25)","兩數同號（都是負數），絕對值相加：15 + 25 = 40","符號跟著原來的負號 → −40"]},{"id":"sub04","cat":"sub","q":"(−5) − (−4)","a":-1,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 (−4) 等於加上它的相反數 4：(−5) − (−4) = (−5) + 4","兩數異號，絕對值大的減小的：5 − 4 = 1","5 的絕對值比較大，取負號 → −1"]},{"id":"sub05","cat":"sub","q":"17 − 18","a":-1,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 18 等於加上它的相反數 (−18)：17 − 18 = 17 + (−18)","兩數異號，絕對值大的減小的：18 − 17 = 1","18 的絕對值比較大，取負號 → −1"]},{"id":"sub06","cat":"sub","q":"18 − (−11)","a":29,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 (−11) 等於加上它的相反數 11：18 − (−11) = 18 + 11","兩數同號（都是正數），絕對值相加：18 + 11 = 29","符號跟著原來的正號 → 29"]},{"id":"sub07","cat":"sub","q":"(−22) − 6","a":-28,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 6 等於加上它的相反數 (−6)：(−22) − 6 = (−22) + (−6)","兩數同號（都是負數），絕對值相加：22 + 6 = 28","符號跟著原來的負號 → −28"]},{"id":"sub08","cat":"sub","q":"(−3) − (−22)","a":19,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 (−22) 等於加上它的相反數 22：(−3) − (−22) = (−3) + 22","兩數異號，絕對值大的減小的：22 − 3 = 19","22 的絕對值比較大，取正號 → 19"]},{"id":"sub09","cat":"sub","q":"2 − 11","a":-9,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 11 等於加上它的相反數 (−11)：2 − 11 = 2 + (−11)","兩數異號，絕對值大的減小的：11 − 2 = 9","11 的絕對值比較大，取負號 → −9"]},{"id":"sub10","cat":"sub","q":"7 − (−18)","a":25,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 (−18) 等於加上它的相反數 18：7 − (−18) = 7 + 18","兩數同號（都是正數），絕對值相加：7 + 18 = 25","符號跟著原來的正號 → 25"]},{"id":"sub11","cat":"sub","q":"(−13) − 6","a":-19,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 6 等於加上它的相反數 (−6)：(−13) − 6 = (−13) + (−6)","兩數同號（都是負數），絕對值相加：13 + 6 = 19","符號跟著原來的負號 → −19"]},{"id":"sub12","cat":"sub","q":"(−11) − (−2)","a":-9,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 (−2) 等於加上它的相反數 2：(−11) − (−2) = (−11) + 2","兩數異號，絕對值大的減小的：11 − 2 = 9","11 的絕對值比較大，取負號 → −9"]},{"id":"sub13","cat":"sub","q":"5 − 10","a":-5,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 10 等於加上它的相反數 (−10)：5 − 10 = 5 + (−10)","兩數異號，絕對值大的減小的：10 − 5 = 5","10 的絕對值比較大，取負號 → −5"]},{"id":"sub14","cat":"sub","q":"14 − (−25)","a":39,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 (−25) 等於加上它的相反數 25：14 − (−25) = 14 + 25","兩數同號（都是正數），絕對值相加：14 + 25 = 39","符號跟著原來的正號 → 39"]},{"id":"sub15","cat":"sub","q":"(−15) − 12","a":-27,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 12 等於加上它的相反數 (−12)：(−15) − 12 = (−15) + (−12)","兩數同號（都是負數），絕對值相加：15 + 12 = 27","符號跟著原來的負號 → −27"]},{"id":"sub16","cat":"sub","q":"(−25) − (−20)","a":-5,"hint":"減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["減去 (−20) 等於加上它的相反數 20：(−25) − (−20) = (−25) + 20","兩數異號，絕對值大的減小的：25 − 20 = 5","25 的絕對值比較大，取負號 → −5"]},{"id":"sub17","cat":"sub","q":"7 − (−3) − 3","a":7,"hint":"由左往右算。減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["先算：7 − (−3) = 7 + 3 = 10","再算：10 − 3 = 10 + (−3) = 7"]},{"id":"sub18","cat":"sub","q":"10 − (−8) − (−4)","a":22,"hint":"由左往右算。減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["先算：10 − (−8) = 10 + 8 = 18","再算：18 − (−4) = 18 + 4 = 22"]},{"id":"sub19","cat":"sub","q":"5 − 13 − (−11)","a":3,"hint":"由左往右算。減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["先算：5 − 13 = 5 + (−13) = −8","再算：(−8) − (−11) = (−8) + 11 = 3"]},{"id":"sub20","cat":"sub","q":"(−15) − (−4) − 11","a":-22,"hint":"由左往右算。減去一個數，等於加上它的相反數。先把減法改成加法再算。","steps":["先算：(−15) − (−4) = (−15) + 4 = −11","再算：(−11) − 11 = (−11) + (−11) = −22"]},{"id":"md01","cat":"md","q":"(−9) × (−3)","a":27,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 2 個（偶數個）→ 結果是正的","9 × 3 = 27 → 27"]},{"id":"md02","cat":"md","q":"7 × (−11)","a":-77,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 1 個（奇數個）→ 結果是負的","7 × 11 = 77 → −77"]},{"id":"md03","cat":"md","q":"(−11) × 10","a":-110,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 1 個（奇數個）→ 結果是負的","11 × 10 = 110 → −110"]},{"id":"md04","cat":"md","q":"(−9) × 6","a":-54,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 1 個（奇數個）→ 結果是負的","9 × 6 = 54 → −54"]},{"id":"md05","cat":"md","q":"(−10) × (−6)","a":60,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 2 個（偶數個）→ 結果是正的","10 × 6 = 60 → 60"]},{"id":"md06","cat":"md","q":"11 × (−4)","a":-44,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 1 個（奇數個）→ 結果是負的","11 × 4 = 44 → −44"]},{"id":"md07","cat":"md","q":"(−4) × (−8)","a":32,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 2 個（偶數個）→ 結果是正的","4 × 8 = 32 → 32"]},{"id":"md08","cat":"md","q":"(−5) × (−6)","a":30,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 2 個（偶數個）→ 結果是正的","5 × 6 = 30 → 30"]},{"id":"md09","cat":"md","q":"(−5) × 3 × 3","a":-45,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 1 個（奇數個）→ 結果是負的","5 × 3 × 3 = 45 → −45"]},{"id":"md10","cat":"md","q":"(−5) × (−2) × (−4)","a":-40,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 3 個（奇數個）→ 結果是負的","5 × 2 × 4 = 40 → −40"]},{"id":"md11","cat":"md","q":"42 ÷ (−7)","a":-6,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 1 個（奇數個）→ 結果是負的","42 ÷ 7 = 6 → −6"]},{"id":"md12","cat":"md","q":"(−24) ÷ 6","a":-4,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 1 個（奇數個）→ 結果是負的","24 ÷ 6 = 4 → −4"]},{"id":"md13","cat":"md","q":"(−33) ÷ (−3)","a":11,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 2 個（偶數個）→ 結果是正的","33 ÷ 3 = 11 → 11"]},{"id":"md14","cat":"md","q":"(−96) ÷ 8","a":-12,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 1 個（奇數個）→ 結果是負的","96 ÷ 8 = 12 → −12"]},{"id":"md15","cat":"md","q":"(−54) ÷ (−9)","a":6,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 2 個（偶數個）→ 結果是正的","54 ÷ 9 = 6 → 6"]},{"id":"md16","cat":"md","q":"54 ÷ (−6)","a":-9,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 1 個（奇數個）→ 結果是負的","54 ÷ 6 = 9 → −9"]},{"id":"md17","cat":"md","q":"20 ÷ (−5)","a":-4,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 1 個（奇數個）→ 結果是負的","20 ÷ 5 = 4 → −4"]},{"id":"md18","cat":"md","q":"(−18) ÷ (−3)","a":6,"hint":"先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["負數有 2 個（偶數個）→ 結果是正的","18 ÷ 3 = 6 → 6"]},{"id":"md19","cat":"md","q":"8 × 6 ÷ 2","a":24,"hint":"由左往右算。先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["先算 8 × 6 = 48","再算 48 ÷ 2 = 24"]},{"id":"md20","cat":"md","q":"6 × (−4) ÷ 2","a":-12,"hint":"由左往右算。先看負號個數決定正負（同號得正、異號得負），再算數字部分。","steps":["先算 6 × (−4) = −24","再算 (−24) ÷ 2 = −12"]},{"id":"mix01","cat":"mix","q":"2 × (−8) + 11","a":-5,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：2 × (−8) = −16","再算加法：(−16) + 11 = −5"]},{"id":"mix02","cat":"mix","q":"(−12) − 8 × (−9)","a":60,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：8 × (−9) = −72","再算減法：(−12) − (−72) = (−12) + 72 = 60"]},{"id":"mix03","cat":"mix","q":"((−12) + 2) × 2","a":-20,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算括號：(−12) + 2 = −10","再算乘法：(−10) × 2 = −20"]},{"id":"mix04","cat":"mix","q":"((−7) − (−16)) ÷ 3","a":3,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算括號：(−7) − (−16) = (−7) + 16 = 9","再算除法：9 ÷ 3 = 3"]},{"id":"mix05","cat":"mix","q":"(−10) ÷ 2 + 2 × (−5)","a":-15,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算除法：(−10) ÷ 2 = −5","再算乘法：2 × (−5) = −10","最後相加：(−5) + (−10) = −15"]},{"id":"mix06","cat":"mix","q":"1 − (−7) × (−3)","a":-20,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：(−7) × (−3) = 21","再算減法：1 − 21 = 1 + (−21) = −20"]},{"id":"mix07","cat":"mix","q":"(−6) × (−5) + (−16)","a":14,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：(−6) × (−5) = 30","再算加法：30 + (−16) = 14"]},{"id":"mix08","cat":"mix","q":"5 − 4 × 4","a":-11,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：4 × 4 = 16","再算減法：5 − 16 = 5 + (−16) = −11"]},{"id":"mix09","cat":"mix","q":"((−3) + 1) × 4","a":-8,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算括號：(−3) + 1 = −2","再算乘法：(−2) × 4 = −8"]},{"id":"mix10","cat":"mix","q":"((−9) − 3) ÷ 3","a":-4,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算括號：(−9) − 3 = (−9) + (−3) = −12","再算除法：(−12) ÷ 3 = −4"]},{"id":"mix11","cat":"mix","q":"12 ÷ 2 + 4 × (−5)","a":-14,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算除法：12 ÷ 2 = 6","再算乘法：4 × (−5) = −20","最後相加：6 + (−20) = −14"]},{"id":"mix12","cat":"mix","q":"3 − 6 × 5","a":-27,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：6 × 5 = 30","再算減法：3 − 30 = 3 + (−30) = −27"]},{"id":"mix13","cat":"mix","q":"8 × 8 + (−17)","a":47,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：8 × 8 = 64","再算加法：64 + (−17) = 47"]},{"id":"mix14","cat":"mix","q":"3 − 9 × (−4)","a":39,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：9 × (−4) = −36","再算減法：3 − (−36) = 3 + 36 = 39"]},{"id":"mix15","cat":"mix","q":"((−2) + (−2)) × (−3)","a":12,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算括號：(−2) + (−2) = −4","再算乘法：(−4) × (−3) = 12"]},{"id":"mix16","cat":"mix","q":"((−7) − (−5)) ÷ (−2)","a":1,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算括號：(−7) − (−5) = (−7) + 5 = −2","再算除法：(−2) ÷ (−2) = 1"]},{"id":"mix17","cat":"mix","q":"24 ÷ 4 + (−3) × (−4)","a":18,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算除法：24 ÷ 4 = 6","再算乘法：(−3) × (−4) = 12","最後相加：6 + 12 = 18"]},{"id":"mix18","cat":"mix","q":"6 − 9 × (−9)","a":87,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：9 × (−9) = −81","再算減法：6 − (−81) = 6 + 81 = 87"]},{"id":"mix19","cat":"mix","q":"3 × (−5) + (−9)","a":-24,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：3 × (−5) = −15","再算加法：(−15) + (−9) = −24"]},{"id":"mix20","cat":"mix","q":"(−20) − 2 × (−2)","a":-16,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：2 × (−2) = −4","再算減法：(−20) − (−4) = (−20) + 4 = −16"]},{"id":"mix21","cat":"mix","q":"((−1) + (−9)) × 6","a":-60,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算括號：(−1) + (−9) = −10","再算乘法：(−10) × 6 = −60"]},{"id":"mix22","cat":"mix","q":"(14 − (−10)) ÷ 4","a":6,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算括號：14 − (−10) = 14 + 10 = 24","再算除法：24 ÷ 4 = 6"]},{"id":"mix23","cat":"mix","q":"(−18) ÷ 3 + 2 × (−3)","a":-12,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算除法：(−18) ÷ 3 = −6","再算乘法：2 × (−3) = −6","最後相加：(−6) + (−6) = −12"]},{"id":"mix24","cat":"mix","q":"6 − (−6) × 6","a":42,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：(−6) × 6 = −36","再算減法：6 − (−36) = 6 + 36 = 42"]},{"id":"mix25","cat":"mix","q":"9 × (−3) + 4","a":-23,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：9 × (−3) = −27","再算加法：(−27) + 4 = −23"]},{"id":"mix26","cat":"mix","q":"17 − (−6) × 4","a":41,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：(−6) × 4 = −24","再算減法：17 − (−24) = 17 + 24 = 41"]},{"id":"mix27","cat":"mix","q":"((−4) + (−12)) × (−2)","a":32,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算括號：(−4) + (−12) = −16","再算乘法：(−16) × (−2) = 32"]},{"id":"mix28","cat":"mix","q":"((−7) − (−1)) ÷ 6","a":-1,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算括號：(−7) − (−1) = (−7) + 1 = −6","再算除法：(−6) ÷ 6 = −1"]},{"id":"mix29","cat":"mix","q":"(−8) ÷ (−4) + 3 × (−5)","a":-13,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算除法：(−8) ÷ (−4) = 2","再算乘法：3 × (−5) = −15","最後相加：2 + (−15) = −13"]},{"id":"mix30","cat":"mix","q":"5 − 7 × (−4)","a":33,"hint":"運算順序：先算括號，再算乘除，最後算加減。每一步都要注意正負號。","steps":["先算乘法：7 × (−4) = −28","再算減法：5 − (−28) = 5 + 28 = 33"]}];
+const CAT_NAME={add:'加法',sub:'減法',md:'乘除',mix:'混合運算'};
+// 情境題卡片：數字每次抽到時隨機產生，算出來的答案就是這次的收支
+const hund=(lo,hi)=>100*(lo+Math.floor(Math.random()*(hi-lo+1)));
+const SITU={
+  market(){let A=hund(3,9),B=hund(2,9);while(B===A)B=hund(2,9);return {text:`夜市擺攤，上午賣飲料賺了 ${A} 元，下午進貨花了 ${B} 元。用「賺是正數、花是負數」算出今天的收支。`,
+    q:`(+${A}) + (−${B})`,a:A-B,hint:'異號相加：絕對值大的減小的，符號跟著絕對值大的。',steps:[`收入記 +${A}，支出記 −${B}`,`${Math.max(A,B)} − ${Math.min(A,B)} = ${Math.abs(A-B)}`,`${A>B?'收入':'支出'}比較多，答案是 ${sn(A-B)}`]};},
+  groupbuy(){const k=hund(2,6),N=4*k;return {text:`你們 4 個人一起團購，總共要付 ${N} 元，大家平均分攤。用負數表示付出去的錢，你的收支是多少？`,
+    q:`(−${N}) ÷ 4`,a:-k,hint:'負數除以正數，結果是負的。',steps:[`總共付出記為 −${N}`,`${N} ÷ 4 = ${k}`,`負 ÷ 正 = 負，答案是 −${k}`]};},
+  saving(){const A=hund(1,3),n=3+Math.floor(Math.random()*3),B=hund(2,9);return {text:`每天存 ${A} 元，連續存了 ${n} 天，最後買一本參考書花了 ${B} 元。這段時間的收支是多少？`,
+    q:`(+${A}) × ${n} + (−${B})`,a:A*n-B,hint:'先算乘法，再算加法。',steps:[`先算乘法：${A} × ${n} = ${A*n}`,`再算加法：${A*n} + (−${B}) = ${sn(A*n-B)}`]};},
+  stock(){const A=hund(2,8),B=hund(2,8),C=hund(2,8);return {text:`投資模擬遊戲：第一天賠 ${A} 元，第二天賺 ${B} 元，第三天又賠 ${C} 元。三天合計的收支是多少？`,
+    q:`(−${A}) + (+${B}) + (−${C})`,a:B-A-C,hint:'由左往右兩個兩個加，注意正負號。',steps:[`先算：(−${A}) + ${B} = ${sn(B-A)}`,`再算：${sn(B-A)} + (−${C}) = ${sn(B-A-C)}`]};},
+  phone(){const A=hund(5,9),B=hund(1,4);return {text:`手機摔壞了，修理費 ${A} 元，保險理賠 ${B} 元。這件事讓你的收支是多少？`,
+    q:`(−${A}) + (+${B})`,a:B-A,hint:'異號相加：絕對值大的減小的，符號跟著絕對值大的。',steps:[`修理費記 −${A}，理賠記 +${B}`,`${A} − ${B} = ${A-B}`,`支出比較多，答案是 −${A-B}`]};},
+  aircon(){const A=hund(1,3),n=2+Math.floor(Math.random()*4);return {text:`天氣太熱，冷氣每天多花 ${A} 元電費，連續開了 ${n} 天。用負數表示，總共的收支是多少？`,
+    q:`(−${A}) × ${n}`,a:-A*n,hint:'負數乘以正數，結果是負的。',steps:[`每天記 −${A}`,`${A} × ${n} = ${A*n}`,`負 × 正 = 負，答案是 −${A*n}`]};},
+  charity(){const d=200*(1+Math.floor(Math.random()*4)),B=hund(2,6),A=B+d;return {text:`班級義賣賺了 ${A} 元，扣掉材料費 ${B} 元後，賺到的錢和隔壁班平分。你們班分到多少？`,
+    q:`[(+${A}) + (−${B})] ÷ 2`,a:d/2,hint:'先算中括號裡面，再算除法。',steps:[`先算括號：${A} + (−${B}) = ${d}`,`再算除法：${d} ÷ 2 = ${d/2}`]};},
+  wallet(){const A=hund(5,9),B=hund(1,4);return {text:`錢包掉了，裡面有 ${A} 元（記為 −${A}）。後來找回一部分，等於減去了 ${B} 元的損失。最後的收支是多少？`,
+    q:`(−${A}) − (−${B})`,a:B-A,hint:'減去一個數，等於加上它的相反數。',steps:[`(−${A}) − (−${B}) = (−${A}) + ${B}`,`${A} − ${B} = ${A-B}，絕對值大的是負數`,`答案是 −${A-B}`]};},
+};
+
+/* ---------------- helpers ---------------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MINUS='−';
+const fmtN=v=>(v<0?MINUS:'')+Math.abs(v).toLocaleString('en-US');
+const fmtS=v=>(v>0?'+':'')+fmtN(v);
+const cls=v=>v>0?'pos':v<0?'neg':'';
+const money=v=>`<span class="num ${cls(v)}">${fmtS(v)}</span>`;
+const par=n=>n<0?`(${MINUS}${-n})`:String(n);
+const sn=n=>n<0?MINUS+(-n):String(n);
+const supN=n=>n<0?MINUS+(-n):String(n);
+const rnd=n=>1+Math.floor(Math.random()*n);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const reduced=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+const dieHTML=(v,t='plain',extra='')=>v==null?`<div class="die q d-${t} ${extra}">?</div>`:
+  `<div class="die d-${t} ${extra}" aria-label="${v} 點">${[...Array(9)].map((_,i)=>`<i class="${PIPS[v].includes(i)?'on':''}"></i>`).join('')}</div>`;
+const tokHTML=(p,cur)=>`<span class="tok ${cur?'cur':''}" style="--pc:${p.color}" title="${esc(p.name)}">${esc([...p.name.replace(/^第/,'')][0]||'?')}</span>`;
+const fmtBig=b=>{let neg=b<0n;let s=(neg?-b:b).toString();
+  if(s.length>13) return `${neg?MINUS:''}約 ${s[0]}.${s.slice(1,3)} × 10<sup>${s.length-1}</sup>`;
+  return (neg?MINUS:'')+BigInt(s).toLocaleString('en-US')};
+
+/* ---------------- state ---------------- */
+let G=null; // game state
+const SAVE_KEY='pnRichman.v2';
+function newGame(cfg){
+  const players=cfg.names.map((name,i)=>({name,color:COLORS[i],money:cfg.start,pos:0,lv:{move:1,pay:1,collect:1},ab:[],cp:[],zone:null,
+    ledger:Array.from({length:cfg.days},()=>[]),stats:{},mathGain:0}));
+  return {cfg,players,shops:{},day:1,turn:0,
+    decks:{chance:shuffle(CHANCE),fate:shuffle(FATE),ability:shuffle(ABILITY)},
+    discard:{chance:[],fate:[],ability:[]},log:[],tray:null,over:false,used:[],phase:0};
+}
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(G))}catch(e){}}
+function loadSave(){try{const s=localStorage.getItem(SAVE_KEY);return s?JSON.parse(s):null}catch(e){return null}}
+function clearSave(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}}
+const P=()=>G.players[Math.min(G.turn,G.players.length-1)];
+const pidx=p=>G.players.indexOf(p);
+
+function record(p,desc,v){
+  if(!v) return;
+  p.money+=v;
+  p.ledger[G.day-1].push({d:desc,v});
+}
+function setMoney(p,nv,desc){const v=(nv-p.money)||0; if(v) record(p,desc,v); p.money=nv===0?0:nv;}
+function log(html){G.log.push({day:G.day,html}); renderLog();}
+function draw(kind){
+  if(!G.decks[kind].length){G.decks[kind]=shuffle(G.discard[kind]);G.discard[kind]=[];}
+  if(!G.decks[kind].length){ // everything is held by players: fall back to a fresh copy
+    G.decks[kind]=shuffle({chance:CHANCE,fate:FATE,ability:ABILITY}[kind]);}
+  return G.decks[kind].shift();
+}
+const discard=(kind,c)=>G.discard[kind].push(c);
+const shopsOf=pi=>Object.keys(G.shops).map(Number).filter(i=>G.shops[i].owner===pi);
+
+/* ---------------- toll maths ---------------- */
+function tollCalc(sp,a,b,c){
+  const f=sp.f,steps=[];let val; // val: {big} or {num,den}
+  if(f.type==='exp'){
+    steps.push(`${f.A}<sup>${a}</sup> × ${f.B}<sup>${supN(b)}</sup> × ${f.C}<sup>${supN(c)}</sup> × ${f.k}`);
+    if(f.A===1&&f.B===1){steps.push(`1 的任何次方都是 1 → = 1 × 1 × 1 × ${f.k}`);val={big:BigInt(f.k)};}
+    else{
+      let base,e,ex;
+      if(f.A===f.B){base=f.A;e=a+b+c;ex=`${a}+${par(b)}+${par(c)}`;
+        steps.push(`同底數相乘，指數相加：${base}<sup>${ex}</sup> × ${f.k} = ${base}<sup>${supN(e)}</sup> × ${f.k}`);}
+      else{base=f.B;e=b+c;ex=`${par(b)}+${par(c)}`;
+        steps.push(`1<sup>${a}</sup> = 1；同底數相乘，指數相加：${base}<sup>${ex}</sup> × ${f.k} = ${base}<sup>${supN(e)}</sup> × ${f.k}`);}
+      if(e>=0){const p=BigInt(base)**BigInt(e);val={big:p*BigInt(f.k)};steps.push(`= ${fmtBig(p)} × ${f.k} = ${fmtBig(val.big)}`);}
+      else{const den=base**(-e);val={num:f.k,den};
+        steps.push(`負指數：${base}<sup>${supN(e)}</sup> = 1 ÷ ${base}<sup>${-e}</sup> = 1 ÷ ${den.toLocaleString('en-US')}`);
+        const q=f.k/den;steps.push(`= ${f.k} ÷ ${den.toLocaleString('en-US')} = ${Number.isInteger(q)?q:(q>=0.001?+q.toFixed(4):'不到 0.001')}`);}
+    }
+  }else{
+    steps.push(`${par(b)}<sup>${a}</sup> × ${par(c)}<sup>${a}</sup> × ${f.k}`);
+    const bc=b*c;
+    steps.push(`指數相同，底數相乘：(${par(b)} × ${par(c)})<sup>${a}</sup> × ${f.k} = ${par(bc)}<sup>${a}</sup> × ${f.k}`);
+    const p=BigInt(bc)**BigInt(a);val={big:p*BigInt(f.k)};
+    steps.push(`= ${fmtBig(p)} × ${f.k} = ${fmtBig(val.big)}`);
+  }
+  let toll,note='';
+  const lt=x=>val.big!==undefined?val.big<BigInt(x):(val.num/val.den)<x;
+  const gt=x=>val.big!==undefined?val.big>BigInt(x):(val.num/val.den)>x;
+  if(sp.min===sp.max){toll=sp.min;note=`固定收費 ${fmtN(sp.min)} 元`;}
+  else if(lt(sp.min)){toll=sp.min;note=`低於最低收費，收 ${fmtN(sp.min)} 元`;}
+  else if(gt(sp.max)){toll=sp.max;note=`超過最高收費，收 ${fmtN(sp.max)} 元`;}
+  else{toll=Number(val.big);note=`在 ${fmtN(sp.min)}～${fmtN(sp.max)} 之間，收 ${fmtN(toll)} 元`;}
+  return {steps,toll,note};
+}
+const formulaHTML=sp=>sp.f.type==='exp'?`${sp.f.A}<sup>a</sup> × ${sp.f.B}<sup>b</sup> × ${sp.f.C}<sup>c</sup> × ${sp.f.k}`:`b<sup>a</sup> × c<sup>a</sup> × ${sp.f.k}`;
+const rangeTxt=sp=>sp.min===sp.max?`(${fmtN(sp.min)})`:`(${fmtN(sp.min)}～${fmtN(sp.max)})`;
+
+/* ---------------- expression parsing (exact fractions) ---------------- */
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a||1};
+const fr=(n,d=1)=>{if(d<0){n=-n;d=-d}const g=gcd(n,d);return {n:n/g,d:d/g}};
+function evalTokens(toks){
+  let i=0;
+  const peek=()=>toks[i];
+  function factor(){const t=toks[i];
+    if(!t) throw '算式還沒完成';
+    if(t.t==='die'){i++;return fr(t.v);}
+    if(t.t==='('){i++;const v=expr();if(!toks[i]||toks[i].t!==')') throw '括號沒有成對';i++;return v;}
+    throw '算式的順序不對';}
+  function term(){let v=factor();
+    while(peek()&&peek().t==='op'&&(peek().v==='×'||peek().v==='÷')){const o=toks[i++].v;const w=factor();
+      if(o==='×') v=fr(v.n*w.n,v.d*w.d); else {if(w.n===0) throw '不能除以 0';v=fr(v.n*w.d,v.d*w.n);}}
+    return v;}
+  function expr(){let v=term();
+    while(peek()&&peek().t==='op'&&(peek().v==='+'||peek().v==='−')){const o=toks[i++].v;const w=term();
+      v=o==='+'?fr(v.n*w.d+w.n*v.d,v.d*w.d):fr(v.n*w.d-w.n*v.d,v.d*w.d);}
+    return v;}
+  const v=expr();
+  if(i<toks.length) throw toks[i].t===')'?'括號沒有成對':'算式的順序不對';
+  return v;
+}
+const tokStr=t=>t.t==='die'?String(t.v):t.t==='op'?` ${t.v} `:t.t;
+
+/* ---------------- rendering ---------------- */
+function posRC(i){if(i<=9)return[1,i+1];if(i<=17)return[i-8,10];if(i<=27)return[10,10-(i-18)];return[10-(i-27),1];}
+function cellInner(i){
+  const sp=SPACES[i];let kc='--s-zone',kind='',nm='',sub='';
+  switch(sp.t){
+    case 'start':kc='--s-start';kind='START';nm='起點';sub=`經過 +${fmtN(G?G.cfg.pass:5000)}<br>停留 ${MINUS}${fmtN(G?G.cfg.stay:1000)}`;break;
+    case 'shop':kc=KC[sp.kind];kind=sp.kind;nm=sp.name;sub=rangeTxt(sp);break;
+    case 'chance':kc='--s-chance';kind='機會';nm='機會 ?';sub='把握？浪費？';break;
+    case 'fate':kc='--s-fate';kind='命運';nm='命運 !';sub='只能接受！';break;
+    case 'school':kc='--s-school';kind='學校';nm='上學一天';sub=sp.die==='any'?'任一骰子升級':DIE[sp.die]+'升級';break;
+    case 'gambler':kc='--k-cram';kind='遇到賭聖';nm='偷學功能';sub='抽特異功能卡';break;
+    case 'gate':kind=sp.name.replace('門口','')+'門口';nm=sp.sub;sub='骰 '+sp.enterMax+' 以下進入';break;
+    case 'zone':kind={library:'每天抽卡',netcafe:'每天付錢',stadium:'每天領錢'}[sp.zone];nm=sp.name;sub={library:'4–6 離開',netcafe:'骰到 1 離開',stadium:'4–6 離開'}[sp.zone];break;
+  }
+  return {kc,html:`<span class="stripe"></span><span class="idx">${i}</span><span class="kind">${kind}</span><span class="nm">${nm}</span><span class="sub">${sub}</span><span class="toks"></span>`};
+}
+function buildBoard(){
+  const b=$('#board');b.innerHTML='';
+  for(let i=0;i<N;i++){
+    const [r,c]=posRC(i);const el=document.createElement('button');
+    el.className='cell'+([0,9,18,27].includes(i)?' corner':'');el.id='cell'+i;el.style.gridRow=r;el.style.gridColumn=c;
+    const {kc,html}=cellInner(i);el.style.setProperty('--kc',`var(${kc})`);el.innerHTML=html;
+    el.addEventListener('click',()=>showSpace(i));
+    b.appendChild(el);
+  }
+  const ctr=document.createElement('div');ctr.className='center';
+  ctr.innerHTML=`<h1><span class="pp">正</span><span class="pm">負</span>數大富翁</h1>
+    <p class="tag">四則運算 × 指數律</p>
+    <div class="daybar" id="daybar"></div>
+    <div class="tray" id="tray"></div>
+    <div class="lastlog" id="lastlog"></div>
+    <div class="buttons"><button class="ghost" id="bLedger">我的記帳本</button><button class="ghost" id="bRules">規則</button><button class="ghost" id="bNew">回首頁</button></div>`;
+  b.appendChild(ctr);
+  $('#bLedger').onclick=()=>G&&showLedger(NET.seat??G.turn);
+  $('#bRules').onclick=showRules;
+  $('#bNew').onclick=goHome;
+}
+function renderBoard(){
+  if(!G) return;
+  for(let i=0;i<N;i++){
+    const el=$('#cell'+i);el.querySelector('.own')?.remove();
+    const sh=G.shops[i];
+    if(sh){const o=G.players[sh.owner];const d=document.createElement('span');d.className='own';d.style.setProperty('--oc',o.color);
+      d.textContent=`${o.name.slice(0,4)} Lv.${sh.level}`;el.appendChild(d);}
+    const here=G.players.filter(p=>p.pos===i);
+    el.querySelector('.toks').innerHTML=here.map(p=>tokHTML(p,p===G.players[G.turn]&&!G.over)).join('');
+    el.classList.toggle('here',!G.over&&G.players[G.turn]?.pos===i);
+  }
+  $('#daybar').innerHTML=Array.from({length:G.cfg.days},(_,i)=>`<span class="${i+1<G.day?'done':i+1===G.day?'now':''}">${i+1}</span>`).join('');
+}
+function renderTray(){
+  const t=G&&G.tray;$('#tray').innerHTML=!t?'':
+    `${t.vals.map(v=>dieHTML(v,t.type)).join('')}<span class="expr">${esc(t.expr)} = <b class="${cls(t.v)}">${t.v<0?MINUS+(-t.v):t.v}</b></span>`;
+}
+function mathScore(p){let n=0,ok=0,first=0;for(const s of Object.values(p.stats||{})){n+=s.n;ok+=s.first+s.second;first+=s.first;}return {n,ok,first};}
+function statsTable(){
+  const srcs=Object.keys(STAT_SRC);
+  return `<div class="tblwrap"><table class="ledger stats"><thead><tr><th>組別</th>${srcs.map(k=>`<th>${STAT_SRC[k]}</th>`).join('')}<th>合計</th><th>一次答對</th><th>二次答對</th><th>沒答對</th><th>答題獎金</th></tr></thead><tbody>${
+    G.players.map(p=>{const m=mathScore(p);const t=Object.values(p.stats).reduce((a,s)=>({second:a.second+s.second,miss:a.miss+s.miss}),{second:0,miss:0});
+      return `<tr><td>${esc(p.name)}</td>${srcs.map(k=>`<td class="n">${p.stats[k]?p.stats[k].n:0}</td>`).join('')}<td class="n"><b>${m.n}</b></td><td class="n">${m.first}</td><td class="n">${t.second}</td><td class="n">${t.miss}</td><td class="n">${fmtN(p.mathGain)}</td></tr>`;}).join('')
+  }</tbody></table></div>`;
+}
+function renderPlayers(){
+  if(!G) return;
+  $('#players').innerHTML=`<h3>玩家・${G.over?'最後資產':G.day>1?`第 ${G.day-1} 天結算後的總資產`:'起始資產'}</h3>`+G.players.map((p,i)=>{
+    const lv=t=>`<span class="lv d-${t}" title="${DIE[t]} 第 ${p.lv[t]} 級">${DIE[t].slice(0,2)}<b class="on"></b><b class="${p.lv[t]>=2?'on':''}"></b><b class="${p.lv[t]>=3?'on':''}"></b></span>`;
+    const z=p.zone?`<span class="chip z">在${ZONE[p.zone].name}</span>`:'';
+    const cards=[...p.ab.map(c=>c.n),...p.cp.map(c=>c.n)];
+    return `<div class="pl ${i===G.turn&&!G.over?'cur':''}" style="--pc:${p.color}">${tokHTML(p)}<span class="pn">${esc(p.name)}</span><span class="pm ${cls(shownMoney(p))}">${fmtN(shownMoney(p))}</span>
+      <div class="meta">${lv('move')}${lv('pay')}${lv('collect')}<span>店面 ${shopsOf(i).length}</span><span title="數學題答對／題數">答對 ${mathScore(p).ok}/${mathScore(p).n}</span>${z}${cards.length?`<span title="${esc(cards.join('、'))}">卡片 ${cards.length}</span>`:''}</div></div>`;
+  }).join('');
+}
+function renderLog(){
+  if(!G) return;
+  $('#log').innerHTML=G.log.slice(-60).reverse().map(l=>`<li><span class="d">D${l.day}</span>${l.html}</li>`).join('');
+  const ll=$('#lastlog');if(ll) ll.innerHTML=G.log.length?G.log[G.log.length-1].html:'';
+}
+function renderAll(){if(!G)return;renderBoard();renderPlayers();renderLog();renderTray();renderTop();if(running)schedulePush();}
+
+/* ---------------- stage (async prompts) ---------------- */
+let stageResolve=null;
+function whoHTML(p){
+  if(!p) return '';
+  const flow=G.phase?`<div class="flow">${['數學挑戰','擲骰前進','棋盤事件','記帳換人'].map((t,i)=>`<span class="${G.phase===i+1?'on':G.phase>i+1?'done':''}">${'①②③④'[i]} ${t}</span>`).join('')}</div>`:'';
+  return `<div class="who">${tokHTML(p)}<span>${esc(p.name)}・第 ${G.day} 天</span></div>${flow}`;}
+function ask(p,title,body,buttons){
+  // buttons: [{label, v, kind:'main'|'alt', disabled, sub}]
+  $('#stage').innerHTML=`${whoHTML(p)}<h2>${title}</h2>${body||''}<div class="btns">${buttons.map((b,i)=>
+    `<button class="btn ${b.kind||''}" data-i="${i}" ${b.disabled?'disabled':''}>${b.label}${b.sub?`<small>${b.sub}</small>`:''}</button>`).join('')}</div>`;
+  const first=$('#stage .btn:not(:disabled)');
+  return new Promise(res=>{
+    $('#stage').onclick=e=>{const b=e.target.closest('[data-i]');if(!b||b.disabled)return;$('#stage').onclick=null;res(buttons[+b.dataset.i].v);};
+  });
+}
+const ok=(p,title,body,label='繼續')=>ask(p,title,body,[{label,v:1,kind:'main'}]);
+// ---- 題目：兩次機會。第一次錯給提示，第二次錯顯示解題步驟，遊戲照常繼續。
+const STAT_SRC={turn:'每回合挑戰',shop:'商店',card:'機會命運',toll:'過路費',dice:'骰子算式',settle:'記帳結算'};
+function statAdd(p,src,result){const s=p.stats[src]||(p.stats[src]={n:0,first:0,second:0,miss:0});s.n++;s[result]++;}
+function curLevel(){
+  if(G.cfg.level&&G.cfg.level!=='auto') return G.cfg.level;
+  const pr=(G.day-1)/G.cfg.days;return pr<0.2?'add':pr<0.4?'sub':pr<0.6?'md':'mix';
+}
+function drawQuestion(){
+  const order=['add','sub','md','mix'],L=curLevel(),used=new Set(G.used),li=order.indexOf(L);
+  let pool=BANK.filter(q=>q.cat===L&&!used.has(q.id));
+  for(let d=1;d<4&&!pool.length;d++) for(const k of [li-d,li+d]) if(!pool.length&&k>=0&&k<4) pool=BANK.filter(q=>q.cat===order[k]&&!used.has(q.id));
+  if(!pool.length) pool=BANK.filter(q=>q.cat===L);
+  const q=pool[Math.floor(Math.random()*pool.length)];G.used.push(q.id);return q;
+}
+function mathQ(p,q,o){
+  // q: {q (算式) | qhtml, a, hint, steps, cat}; o: {title, pre, label, reward, src, after, next}
+  return new Promise(res=>{
+    let attempt=1;
+    const head=`${whoHTML(p)}<h2>${o.title}</h2>${o.pre||''}`;
+    const qbox=q.q?`<div class="qbox">${q.cat?`<span class="qcat">${CAT_NAME[q.cat]}</span>`:''}<div class="qq num">${q.q} = ?</div></div>`:(q.qhtml?`<div class="qbox">${q.qhtml}</div>`:'');
+    const draw=hint=>{
+      $('#stage').innerHTML=head+qbox+(hint||'')+`<div class="field"><label for="mqIn">${o.label||'答案'}${attempt===2?'・第二次機會':''}</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><input class="ans num" id="mqIn" autocomplete="off" placeholder="負數加負號，例如 −12" style="flex:1;min-width:8em;font-size:1.25em"><button class="btn main" id="mqOk">送出</button></div></div><div id="mqMsg" class="msgline"></div>`;
+      const inp=$('#mqIn');try{inp.focus({preventScroll:true})}catch(e){}
+      $('#mqOk').onclick=check;inp.onkeydown=e=>{if(e.key==='Enter')check();};
+    };
+    const finish=result=>{
+      statAdd(p,o.src,result);
+      let gain=0;
+      if(o.reward){gain=result==='first'?300:result==='second'?100:0;
+        if(gain){record(p,`數學答對（${result==='first'?'第一次':'第二次'}）`,gain);p.mathGain+=gain;}}
+      renderAll();
+      const body=result==='miss'
+        ?`<p class="neg"><b>兩次都沒答對。</b>看看解題步驟：</p><div class="calc">${(q.steps||[]).map(x=>`<div>${x}</div>`).join('')}<div class="res">答案：${sn(q.a)}</div></div><p class="sub">${o.reward?'這題沒有獎勵，':''}遊戲繼續。</p>`
+        :`<p class="okline pos">答對了！${result==='second'?'（第二次）':''}</p>${gain?`<p>獲得答題獎勵 ${money(gain)} 元，記到記帳本。</p>`:''}${o.after||''}`;
+      $('#stage').innerHTML=head+qbox+body+`<div class="btns"><button class="btn main" id="mqNext">${o.next||'繼續'}</button></div>`;
+      $('#mqNext').onclick=()=>res(result);
+    };
+    function check(){
+      const v=parseNum($('#mqIn').value);
+      if(Number.isNaN(v)){$('#mqMsg').innerHTML='<span class="neg">請輸入整數，負數前面加負號，例如 −12。</span>';return;}
+      if(v===q.a){finish(attempt===1?'first':'second');return;}
+      if(attempt===1){attempt=2;draw(`<div class="hintbox"><b>提示</b>${q.hint||'再仔細算一次，注意正負號。'}</div>`);
+        $('#mqMsg').innerHTML='<span class="neg">答錯了，看看提示，再試一次。</span>';return;}
+      finish('miss');
+    }
+    draw();
+  });
+}
+async function askNumber(p,title,body,answer,label='答案',opt={}){
+  const r=await mathQ(p,{qhtml:opt.qhtml||'',a:answer,hint:opt.hint,steps:opt.steps||[`答案是 ${sn(answer)}`]},{title,pre:body,label,reward:false,src:opt.src||'card'});
+  return r!=='miss';
+}
+const cardHTML=(c,k)=>`<div class="cardface c-${k}"><div class="ck">${{chance:'機會？',fate:'命運！',ability:'特異功能'}[k]}</div><div class="cn">${esc(c.n)}</div><div class="cd">${esc(c.d)}</div></div>`;
+
+async function rollD6(p,title,body){
+  $('#stage').innerHTML=`${whoHTML(p)}<h2>${title}</h2>${body||''}<div class="tray" style="justify-content:flex-start;font-size:18px">${dieHTML(null,'plain')}</div><div class="btns"><button class="btn main" id="rb">擲骰子</button></div>`;
+  await new Promise(r=>{$('#rb').onclick=r});
+  const v=rnd(6);
+  const tr=$('#stage .tray');
+  if(!reduced()){for(let k=0;k<7;k++){tr.innerHTML=dieHTML(rnd(6),'plain','rolling');await sleep(65);}}
+  tr.innerHTML=dieHTML(v,'plain');
+  G.tray={vals:[v],type:'plain',expr:'一顆骰子',v};renderTray();
+  await sleep(250);
+  return v;
+}
+
+async function rollExpr(p,type,title,body,manual){
+  const level=p.lv[type],n=level;
+  $('#stage').innerHTML=`${whoHTML(p)}<h2>${title}</h2>${body||''}
+    <p class="sub">${DIE[type]}第 ${level} 級：${level===1?'骰一顆骰子。':level===2?'骰兩顆，可以加減，或只取其中一顆。':'骰三顆，可以四則運算（可加括號），或只取其中一顆。'}</p>
+    <div class="tray" id="rt" style="justify-content:flex-start;font-size:18px">${Array.from({length:n},()=>dieHTML(null,type)).join('')}</div>
+    <div class="btns"><button class="btn main" id="rb">${manual?'設定骰子點數':'擲骰子'}</button></div>`;
+  await new Promise(r=>{$('#rb').onclick=r});
+  let vals=Array.from({length:n},()=>rnd(6));
+  if(manual){
+    vals=vals.map(()=>6);
+    const rt=$('#rt');
+    const draw=()=>{rt.innerHTML=vals.map((v,i)=>`<div class="adj"><button data-a="${i}" data-d="1" aria-label="加一">▲</button>${dieHTML(v,type)}<button data-a="${i}" data-d="-1" aria-label="減一">▼</button></div>`).join('');};
+    draw();
+    $('#stage .btns').innerHTML=`<button class="btn main" id="rb2">就用這些點數</button>`;
+    $('#stage').querySelector('.sub').insertAdjacentHTML('afterend','<p><b>在運動場裡，可操控收錢骰子：</b>自己決定每顆骰子的點數。</p>');
+    rt.onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;const i=+b.dataset.a;vals[i]=((vals[i]-1+(+b.dataset.d)+6)%6)+1;draw();};
+    await new Promise(r=>{$('#rb2').onclick=r});
+    rt.onclick=null;
+  }else if(!reduced()){
+    const rt=$('#rt');
+    for(let k=0;k<7;k++){rt.innerHTML=vals.map(()=>dieHTML(rnd(6),type,'rolling')).join('');await sleep(65);}
+  }
+  $('#rt').innerHTML=vals.map(v=>dieHTML(v,type)).join('');
+  if(n===1){
+    G.tray={vals,type,expr:DIE[type],v:vals[0]};renderTray();
+    $('#stage .btns').innerHTML=`<button class="btn main" id="rb3">點數是 ${vals[0]}，確定</button>`;
+    await new Promise(r=>{$('#rb3').onclick=r});
+    return {v:vals[0],expr:String(vals[0]),vals,type,stat:null};
+  }
+  // expression builder: students build the expression AND compute its value themselves
+  const ops=level===2?['+','−']:['+','−','×','÷'];
+  const toks=[];let wrong=0,locked=false;
+  $('#stage .btns').remove();
+  $('#rt').insertAdjacentHTML('afterend',`<div class="bld">
+    <div class="row" id="bDice"></div>
+    <div class="row">${ops.map(o=>`<button class="op" data-op="${o}">${o}</button>`).join('')}${level===3?'<button class="op" data-par="(">(</button><button class="op" data-par=")">)</button>':''}<button class="op" data-back="1" aria-label="退一格">⌫</button><button class="op" data-clr="1" style="font-size:.9em">清除</button></div>
+    <div class="exprbox" id="bExpr"></div>
+    <div class="row"><span class="num" style="font-size:1.3em;font-weight:600">=</span><input class="ans num" id="bAns" autocomplete="off" placeholder="自己算出答案" style="flex:1;min-width:7em;font-size:1.15em"></div>
+    <div class="msg" id="bMsg"></div>
+    <div class="btns" style="margin-top:0"><button class="btn main" id="bOk">確定</button><button class="btn main" id="bTeach" hidden>繼續</button></div></div>`);
+  $('#rt').hidden=true;
+  const setMsg=(m,err)=>{$('#bMsg').className='msg'+(err?' err':'');$('#bMsg').innerHTML=m;};
+  const update=()=>{
+    const used=new Set(toks.filter(t=>t.t==='die').map(t=>t.i));
+    $('#bDice').innerHTML=vals.map((v,i)=>`<button class="diebtn" data-die="${i}" ${used.has(i)?'disabled':''} aria-label="骰子 ${v}">${dieHTML(v,type)}</button>`).join('')+
+      `<span style="font-size:.85em;color:var(--ink-2)">點骰子放進算式</span>`;
+    $('#bExpr').innerHTML=toks.length?toks.map(t=>`<span>${t.t==='die'?t.v:t.t==='op'?t.v:t.t}</span>`).join(''):'<span class="ph">例如：6 − 4　或　(5 + 3) ÷ 2　或只放一顆</span>';
+    setMsg('',false);
+  };
+  const evalChecked=()=>{
+    if(!toks.length) throw '先點骰子組出算式';
+    const used=new Set(toks.filter(t=>t.t==='die').map(t=>t.i));
+    const v=evalTokens(toks);
+    if(used.size!==1&&used.size!==n) throw `要用全部 ${n} 顆骰子，或只取其中一顆`;
+    if(v.d!==1) throw '這個算式算出來不是整數，換一個算式';
+    return v.n;
+  };
+  update();
+  return new Promise(res=>{
+    const finish=(v,stat)=>{
+      $('#stage').onclick=null;
+      const expr=toks.map(tokStr).join('').replace(/\s+/g,' ').trim();
+      G.tray={vals,type,expr,v};renderTray();
+      res({v,expr,vals,type,stat});
+    };
+    $('#stage').onclick=e=>{
+      const b=e.target.closest('button');if(!b||b.disabled)return;
+      if(b.id==='bOk'||b.id==='bTeach'){
+        let v;try{v=evalChecked();}catch(err){setMsg(typeof err==='string'?err:'算式的順序不對',true);return;}
+        if(b.id==='bTeach'){finish(v,'miss');return;}
+        const a=parseNum($('#bAns').value);
+        if(Number.isNaN(a)){setMsg('在「=」後面填上你算出來的答案（負數加負號）',true);return;}
+        if(a!==v){wrong++;
+          if(wrong===1){setMsg('算錯了。提示：先算括號，再乘除，最後加減；注意正負號。再試一次。',true);return;}
+          locked=true;setMsg(`還是不對，${esc(toks.map(tokStr).join('').replace(/\s+/g,' ').trim())} = <b>${sn(v)}</b>。`,true);
+          $('#bOk').hidden=true;$('#bTeach').hidden=false;$('#bTeach').textContent=`用 ${sn(v)} 繼續`;return;}
+        finish(v,wrong?'second':'first');return;
+      }
+      if(locked) return;
+      if(b.dataset.die!=null){const i=+b.dataset.die;toks.push({t:'die',i,v:vals[i]});}
+      else if(b.dataset.op){toks.push({t:'op',v:b.dataset.op});}
+      else if(b.dataset.par){toks.push({t:b.dataset.par});}
+      else if(b.dataset.back){toks.pop();}
+      else if(b.dataset.clr){toks.length=0;}
+      else return;
+      update();
+    };
+    $('#bAns').onkeydown=e=>{if(e.key==='Enter')$('#bOk').click();};
+  });
+}
+
+/* ---------------- pickers ---------------- */
+function pickPlayer(p,title,filter=()=>true,body=''){
+  const opts=G.players.map((q,i)=>({q,i})).filter(o=>filter(o.q,o.i));
+  return ask(p,title,body,opts.map(o=>({label:`<span style="color:${o.q.color}">●</span> ${esc(o.q.name)}${o.q===p?'（自己）':''}`,v:o.i})));
+}
+function pickShop(p,title,list,body=''){
+  return ask(p,title,body,list.map(i=>({label:`${SPACES[i].kind}・${SPACES[i].name}`,sub:`Lv.${G.shops[i].level} ${rangeTxt(SPACES[i])}`,v:i})));
+}
+function pickDie(p,title,filter,body=''){
+  return ask(p,title,body,['move','pay','collect'].filter(filter).map(t=>({label:DIE[t],sub:`目前第 ${p.lv[t]} 級`,v:t})));
+}
+
+/* ---------------- turn engine ---------------- */
+async function actionPrompt(p,title,mainLabel,body=''){
+  for(;;){
+    const usable=p.ab.filter(c=>!c.reactive);
+    const v=await ask(p,title,body,[{label:mainLabel,v:'go',kind:'main'},
+      {label:`使用特異功能卡（${p.ab.length}）`,v:'card',kind:'alt',disabled:!usable.length}]);
+    if(v==='go') return;
+    await useCardMenu(p);
+    renderAll();
+  }
+}
+async function useCardMenu(p){
+  const v=await ask(p,'要使用哪一張特異功能卡？','<p class="sub">特異功能卡只能在自己的回合使用。</p>',
+    [...p.ab.map((c,i)=>({label:esc(c.n),sub:esc(c.d),v:i,disabled:!!c.reactive})),{label:'先不用',v:-1,kind:'alt'}]);
+  if(v===-1) return;
+  const c=p.ab[v];
+  const done=await applyAbility(p,c);
+  if(done!==false){p.ab.splice(p.ab.indexOf(c),1);discard('ability',c);}
+}
+async function applyAbility(p,c){
+  const all=G.players,nm=`【${c.n}】`;
+  const pickAny=t=>pickPlayer(p,t);
+  const fx={
+    neg:q=>setMoney(q,0-q.money,`${nm}資產變相反數`),
+    abs:q=>setMoney(q,Math.abs(q.money),`${nm}資產加上絕對值`),
+    dbl:q=>setMoney(q,q.money*2,`${nm}資產變 2 倍`),
+  };
+  const opName={neg:'變成相反數',abs:'加上絕對值',dbl:'變成 2 倍'};
+  const calcFx={neg:m=>(0-m)||0,abs:m=>Math.abs(m),dbl:m=>m*2};
+  const transform=async(kind,targets)=>{for(const q of targets){const nv=calcFx[kind](q.money);
+    await askNumber(p,`${nm}${esc(q.name)} 的資產${opName[kind]}`,`<p>${esc(q.name)} 現在的資產是 <b class="num">${fmtN(q.money)}</b> 元，${opName[kind]}之後是多少元？</p>`,nv,'新的資產（元）',{src:'card',hint:{neg:'相反數：正變負、負變正，0 還是 0。',abs:'絕對值是和 0 的距離，一定不是負數。',dbl:'乘以 2：負數乘 2 還是負數。'}[kind],steps:[`${opName[kind]}：${sn(q.money)} → ${sn(nv)}`]});
+    setMoney(q,nv,`${nm}資產${opName[kind]}`);renderAll();}};
+  const before=all.map(q=>q.money);
+  const moneyReport=()=>all.map((q,i)=>q.money!==before[i]?`${esc(q.name)}：${fmtN(before[i])} → <b class="${cls(q.money)}">${fmtN(q.money)}</b>`:'').filter(Boolean).join('<br>')||'沒有人的資產改變（0 的相反數、絕對值、2 倍都還是 0）。';
+  switch(c.id){
+    case 'negAll':await transform('neg',all);break;
+    case 'absAll':await transform('abs',all);break;
+    case 'dblAll':await transform('dbl',all);break;
+    case 'negOne':case 'absOne':case 'dblOne':{const t=await pickAny(`${c.n}：指定誰？`);await transform(c.id.slice(0,3),[all[t]]);break;}
+    case 'goldAll':case 'brokeAll':{const L=c.id==='goldAll'?6:1;Object.values(G.shops).forEach(s=>s.level=L);
+      log(`${esc(p.name)} 使用 ${nm}：所有店面變成 ${L} 級`);renderAll();await ok(p,`${c.n}！`,`<p>所有店面都變成 ${L} 級。</p>`);return;}
+    case 'goldOne':case 'brokeOne':{const L=c.id==='goldOne'?6:1;const t=await pickAny(`${c.n}：指定誰？`);
+      shopsOf(t).forEach(i=>G.shops[i].level=L);
+      log(`${esc(p.name)} 使用 ${nm}：${esc(all[t].name)} 的店面都變成 ${L} 級`);renderAll();
+      await ok(p,`${c.n}！`,`<p>${esc(all[t].name)} 的 ${shopsOf(t).length} 間店面都變成 ${L} 級。</p>`);return;}
+    case 'busLib':case 'busSta':case 'busNet':{const t=await pickAny(`${c.n}：要接送誰？`);const q=all[t];
+      q.zone=c.zone;q.pos=ZONE[c.zone].idx;
+      log(`${esc(p.name)} 使用 ${nm}：${esc(q.name)} 直達${ZONE[c.zone].name}`);renderAll();
+      await ok(p,`${esc(q.name)} 直達${ZONE[c.zone].name}`,`<p>${zoneRule(c.zone)}</p>`);return;}
+    case 'swap':{
+      const mine=shopsOf(pidx(p));
+      if(!mine.length){await ok(p,'你還沒有商店','<p>乾坤大挪移要拿自己的一間商店去交換，等有商店再用吧。</p>','知道了');return false;}
+      const others=all.map((q,i)=>i).filter(i=>i!==pidx(p)&&shopsOf(i).length);
+      if(!others.length){await ok(p,'沒有人可以交換','<p>其他人都還沒有商店。</p>','知道了');return false;}
+      const t=await pickPlayer(p,'乾坤大挪移：和誰交換？',(q,i)=>others.includes(i));
+      const a=await pickShop(p,'拿出你的哪一間商店？',mine);
+      const b=await pickShop(p,`換 ${esc(all[t].name)} 的哪一間商店？`,shopsOf(t));
+      G.shops[a].owner=t;G.shops[b].owner=pidx(p);
+      log(`${esc(p.name)} 使用 ${nm}：用 ${SPACES[a].name} 換 ${esc(all[t].name)} 的 ${SPACES[b].name}`);renderAll();
+      await ok(p,'交換完成',`<p>${SPACES[a].name}（Lv.${G.shops[a].level}）↔ ${SPACES[b].name}（Lv.${G.shops[b].level}）</p>`);return;}
+  }
+  log(`${esc(p.name)} 使用 ${nm}`);renderAll();
+  await ok(p,`${c.n}！`,`<p>${moneyReport()}</p>`);
+}
+function zoneRule(z){return {library:'在圖書館裡：每天可以抽 1 張特異功能卡、營業收入變 2 倍；骰到 4、5、6 才能離開。',
+  netcafe:'在網咖裡：每天要付 1000 元、不能開店營業；骰到 1 才能離開。',
+  stadium:'在運動場裡：每天可以領 3000 元獎勵、可操控收錢骰子；骰到 4、5、6 才能離開。'}[z];}
+
+async function playTurn(){
+  const p=P();
+  G.tray=null;G.phase=1;renderAll();
+  await mathQ(p,drawQuestion(),{title:'① 數學挑戰',pre:'<p class="sub">第一次答對 +300 元，第二次答對 +100 元。答錯也可以繼續玩。</p>',reward:true,src:'turn',next:'下一步：擲骰前進 →'});
+  G.phase=2;renderAll();
+  if(p.zone){const left=await zoneTurn(p);renderAll();if(!left){await endTurn(p);return;}}
+  await actionPrompt(p,`② ${esc(p.name)} 擲骰前進`,'擲前進骰子',`<p>現在在 <b>${spaceName(p.pos)}</b>。</p>`);
+  const r=await rollExpr(p,'move',`${esc(p.name)} 擲前進骰子`,'<p class="sub">結果是負數就往回走。</p>');
+  if(r.stat) statAdd(p,'dice',r.stat);
+  await moveBy(p,r.v,r.expr);
+  G.phase=3;
+  await resolveSpace(p);
+  renderAll();
+  await endTurn(p);
+}
+const spaceName=i=>{const s=SPACES[i];return s.t==='shop'?`${s.kind}・${s.name}`:s.name||{chance:'機會',fate:'命運',school:'學校',gambler:'遇到賭聖'}[s.t];};
+async function endTurn(p){
+  const last=G.turn===G.players.length-1;G.phase=4;
+  await actionPrompt(p,`④ ${esc(p.name)} 的回合結束`,last?`結束第 ${G.day} 天 →`:`換 ${esc(G.players[G.turn+1].name)} →`,'<p>把這回合的答題獎勵和收支寫進記帳本，然後換下一組。</p>');
+}
+async function zoneTurn(p){
+  const z=p.zone,zn=ZONE[z].name;
+  if(z==='netcafe'){
+    record(p,'網咖每天付 1000 元',-1000);log(`${esc(p.name)} 在網咖，付 1000 元`);renderAll();
+    const fi=p.cp.findIndex(c=>c.id==='family');
+    if(fi>=0){const u=await ask(p,'你在網咖',`<p>今天付了 1000 元。你有「家人來電」卡，可以直接離開網咖。</p>`,[{label:'使用家人來電，離開網咖',v:1,kind:'main'},{label:'先保留，用骰的',v:0,kind:'alt'}]);
+      if(u){const c=p.cp.splice(fi,1)[0];discard('fate',c);p.zone=null;log(`${esc(p.name)} 用「家人來電」離開網咖`);renderAll();return true;}}
+    await actionPrompt(p,`${esc(p.name)} 在網咖`,'擲骰看能不能離開',`<p>今天付了 1000 元。骰到 <b>1</b> 才能離開網咖。</p>`);
+    const v=await rollD6(p,'骰到 1 才能離開網咖');
+    if(v===1){p.zone=null;log(`${esc(p.name)} 骰到 1，離開網咖`);await ok(p,'骰到 1，離開網咖！','<p>接著擲前進骰子。</p>');return true;}
+    log(`${esc(p.name)} 骰到 ${v}，還在網咖`);await ok(p,`骰到 ${v}，還離不開網咖`,'<p>這回合結束。</p>');return false;
+  }
+  let body;
+  if(z==='library'){const c=draw('ability');p.ab.push(c);log(`${esc(p.name)} 在圖書館抽到特異功能卡「${esc(c.n)}」`);renderAll();
+    body=`<p>今天在圖書館抽到一張特異功能卡：</p>${cardHTML(c,'ability')}<p>骰到 4、5、6 會離開圖書館。</p>`;}
+  else{record(p,'運動場每天獎勵 3000 元',3000);log(`${esc(p.name)} 在運動場，領 3000 元`);renderAll();
+    body=`<p>今天在運動場領到 ${money(3000)} 元獎勵。骰到 4、5、6 會離開運動場。</p>`;}
+  await actionPrompt(p,`${esc(p.name)} 在${zn}`,'擲骰看能不能離開',body);
+  const v=await rollD6(p,`骰到 4、5、6 會離開${zn}`);
+  if(v>=4){p.zone=null;log(`${esc(p.name)} 骰到 ${v}，離開${zn}`);await ok(p,`骰到 ${v}，離開${zn}！`,'<p>接著擲前進骰子。</p>');return true;}
+  log(`${esc(p.name)} 骰到 ${v}，留在${zn}`);await ok(p,`骰到 ${v}，留在${zn}`,'<p>這回合結束。</p>');return false;
+}
+async function moveBy(p,n,expr){
+  if(n===0){log(`${esc(p.name)} 算出 0，原地不動`);return;}
+  const steps=Math.abs(n),dir=Math.sign(n);let passes=0;
+  const delay=reduced()?0:Math.max(10,Math.min(170,2200/steps));
+  for(let s=0;s<steps;s++){
+    p.pos=(p.pos+dir+N)%N;
+    if(dir>0&&p.pos===0&&s<steps-1) passes++;
+    if(delay){renderBoard();if(running)schedulePush();await sleep(delay);}
+  }
+  renderBoard();
+  log(`${esc(p.name)} ${esc(expr)} = ${n<0?MINUS+steps:n}，${n>0?'前進':'後退'} ${steps} 步到 ${spaceName(p.pos)}`);
+  if(passes){const v=passes*G.cfg.pass;record(p,`經過起點${passes>1?` ${passes} 次`:''}，車馬費`,v);
+    log(`${esc(p.name)} 經過起點${passes>1?` ${passes} 次`:''}，得 ${fmtN(v)} 元`);renderAll();
+    await ok(p,`經過起點${passes>1?` ${passes} 次`:''}！`,`<p>得到車馬費 ${money(v)} 元。</p>`);}
+}
+async function resolveSpace(p){
+  const i=p.pos,sp=SPACES[i];renderAll();
+  switch(sp.t){
+    case 'start':record(p,'停在起點，住宿費',-G.cfg.stay);log(`${esc(p.name)} 停在起點，付住宿費 ${fmtN(G.cfg.stay)} 元`);renderAll();
+      await ok(p,'停在起點',`<p>要付住宿費 ${money(-G.cfg.stay)} 元。</p>`);break;
+    case 'shop':await landShop(p,i);break;
+    case 'chance':await doChance(p);break;
+    case 'fate':await doFate(p);break;
+    case 'school':await doSchool(p,sp);break;
+    case 'gambler':{const c=draw('ability');p.ab.push(c);log(`${esc(p.name)} 遇到賭聖，抽到「${esc(c.n)}」`);renderAll();
+      await ok(p,'遇到賭聖，偷學特異功能',`${cardHTML(c,'ability')}<p class="sub">特異功能卡不一定要馬上用，但要輪到自己時才能使用。</p>`);break;}
+    case 'gate':{const zn=ZONE[sp.zone].name;
+      const v=await rollD6(p,`${sp.name}：${sp.sub}`,`<p>骰到 ${sp.enterMax} 以下，${sp.zone==='netcafe'?'不由自主走進':'立刻衝進'}${zn}；骰到 ${sp.enterMax+1} 以上${sp.zone==='netcafe'?'，沒事':'，轉頭就走'}。</p>`);
+      if(v<=sp.enterMax){p.zone=sp.zone;p.pos=ZONE[sp.zone].idx;renderAll();log(`${esc(p.name)} 骰到 ${v}，進了${zn}`);
+        await ok(p,`骰到 ${v}，進了${zn}！`,`<p>${zoneRule(sp.zone)}</p>`);}
+      else{log(`${esc(p.name)} 骰到 ${v}，沒進${zn}`);await ok(p,`骰到 ${v}，${sp.zone==='netcafe'?'定力夠，沒事':'轉頭就走'}`,'');}
+      break;}
+    case 'zone':await ok(p,`路過${sp.name}`,`<p>${sp.name}要從門口進，直接走到這格只是路過。</p>`);break;
+  }
+}
+async function landShop(p,i){
+  const sp=SPACES[i],pi=pidx(p),sh=G.shops[i];
+  if(!sh){
+    const deed=`<div class="cardface c-shop"><div class="ck">營業證明</div><div class="cn">${sp.kind}・${sp.name}</div><div class="cd">過路費 ${formulaHTML(sp)} 元　${rangeTxt(sp)}</div></div>`;
+    const res=await mathQ(p,drawQuestion(),{title:`想取得${sp.kind}「${sp.name}」？先答一題`,pre:deed+`<p class="sub">答對（有兩次機會）免費取得；沒答對可以付 ${fmtN(G.cfg.price)} 元買下，或放棄。</p>`,reward:false,src:'shop',after:'<p>店面免費歸你！</p>'});
+    if(res==='miss'){
+      const v=await ask(p,`要買下「${sp.name}」嗎？`,deed,[{label:`付 ${fmtN(G.cfg.price)} 元買下`,v:1,kind:'main'},{label:'放棄',v:0,kind:'alt'}]);
+      if(!v){log(`${esc(p.name)} 放棄了「${sp.name}」`);return;}
+      record(p,`購買${sp.kind}「${sp.name}」`,-G.cfg.price);
+    }
+    G.shops[i]={owner:pi,level:1};log(`${esc(p.name)} ${res==='miss'?`花 ${fmtN(G.cfg.price)} 元買下`:'答對題目，免費取得'}${sp.kind}「${sp.name}」`);renderAll();
+    await ok(p,`${sp.kind}「${sp.name}」歸你了！`,deed+'<p>店面 1 級。之後再走到自己的店，店面升一級。</p>');return;}
+  if(sh.owner===pi){
+    sh.level++;log(`${esc(p.name)} 把「${sp.name}」升到 ${sh.level} 級`);renderAll();
+    await ok(p,`「${sp.name}」升到 ${sh.level} 級`,`<p>走到自己的店，店面升一級。${sp.f.type==='exp'&&sp.f.A===1?'<br><span class="sub">（這家店的公式是 1<sup>a</sup>，升級不會改變過路費，想想看為什麼？）</span>':''}</p>`);return;}
+  await payToll(p,i);
+}
+async function payToll(p,i){
+  const sp=SPACES[i],sh=G.shops[i],o=G.players[sh.owner];
+  if(o.zone==='netcafe'){log(`${esc(p.name)} 到「${sp.name}」，${esc(o.name)} 在網咖沒開店，免付`);
+    await ok(p,`${esc(o.name)} 在網咖，沒開店`,'<p>在網咖裡不能開店營業，這次免付過路費。</p>');return;}
+  const opts=[];
+  p.cp.forEach((c,k)=>{if(c.kind===sp.kind) opts.push({label:`使用「${c.n}」`,sub:c.d,v:{src:'cp',c}});});
+  const inv=p.ab.find(c=>c.id==='invis');if(inv) opts.push({label:'使用「你看不到我」',sub:'免付過路費',v:{src:'ab',c:inv}});
+  if(opts.length){
+    const u=await ask(p,`走到 ${esc(o.name)} 的「${sp.name}」`,'<p>你有可以免付過路費的卡片，要用嗎？</p>',[...opts,{label:'不用，照常付費',v:null,kind:'alt'}]);
+    if(u){const arr=u.src==='cp'?p.cp:p.ab;arr.splice(arr.indexOf(u.c),1);discard(u.src==='cp'?'fate':'ability',u.c);
+      log(`${esc(p.name)} 用「${esc(u.c.n)}」免付「${sp.name}」過路費`);renderAll();
+      await ok(p,'免付過路費！',`<p>用掉了「${esc(u.c.n)}」。</p>`);return;}
+  }
+  const head=`<p>公式：<span class="num">${formulaHTML(sp)}</span> 元 ${rangeTxt(sp)}<br><span class="sub">a = 店面等級（${sh.level}）、b = 顧客點數、c = 主人點數</span></p>`;
+  const b=await rollExpr(p,'pay',`付過路費：${esc(p.name)} 擲付錢骰子`,head+'<p class="sub">b 越小，付得越少。</p>');
+  if(b.stat) statAdd(p,'dice',b.stat);
+  const c=await asSeat(sh.owner,'rollExpr',[sh.owner,'collect',`收過路費：主人 ${esc(o.name)} 擲收錢骰子`,head+`<p>${esc(p.name)} 算出 b = <b>${par(b.v)}</b>。c 越大，收得越多。</p>`,o.zone==='stadium']);
+  if(c.stat) statAdd(o,'dice',c.stat);
+  G.tray={vals:c.vals,type:'collect',expr:c.expr,v:c.v};renderAll();
+  const r=tollCalc(sp,sh.level,b.v,c.v);
+  const given=`<div class="calc"><div class="lab">a = ${sh.level}，b = ${par(b.v)}，c = ${par(c.v)}</div><div>過路費 = ${formulaHTML(sp)} 元　${rangeTxt(sp)}</div><div>代入：${r.steps[0]}</div></div><p class="sub">把 a、b、c 代進公式算出來，記得看括號裡的最小值和最大值。</p>`;
+  const right=await askNumber(p,'過路費是多少元？',given,r.toll,'過路費（元）',{src:'toll',hint:'1 的任何次方都是 1；同底數相乘，指數相加；指數相同，底數相乘。算完要和括號裡的最小值、最大值比較。',steps:[...r.steps,r.note]});
+  let toll=r.toll,extra='';
+  if(o.zone==='library'){
+    await askNumber(p,`${esc(o.name)} 在圖書館，營業收入變 2 倍`,`<p>過路費是 ${fmtN(r.toll)} 元，變成 2 倍是多少元？</p>`,r.toll*2,'實際過路費（元）',{src:'toll',steps:[`${fmtN(r.toll)} × 2 = ${fmtN(r.toll*2)}`]});
+    toll*=2;extra=`<div>${esc(o.name)} 在圖書館，營業收入變 2 倍：${fmtN(r.toll)} × 2 = ${fmtN(toll)}</div>`;}
+  record(p,`付過路費給${o.name}（${sp.name}）`,-toll);
+  record(o,`收過路費（${sp.name}，${p.name}付）`,toll);
+  log(`${esc(p.name)} 付給 ${esc(o.name)}「${sp.name}」過路費 ${fmtN(toll)} 元`);renderAll();
+  await ok(p,`${right?'算對了！':''}過路費 ${fmtN(toll)} 元`,`<div class="calc"><div class="lab">計算過程</div><div>a = ${sh.level}，b = ${par(b.v)}，c = ${par(c.v)}</div>${r.steps.map(x=>`<div>${x}</div>`).join('')}<div class="lab">${r.note}</div>${extra}</div><p class="sub">${esc(p.name)} 和 ${esc(o.name)} 都要記到記帳本裡。</p>`);
+}
+async function doSchool(p,sp){
+  const types=['move','pay','collect'];
+  if(sp.die==='any'){
+    const can=types.filter(t=>p.lv[t]<3);
+    if(!can.length){record(p,'上學一天（骰子已滿級）',sp.bonus);log(`${esc(p.name)} 骰子都滿級，得 ${fmtN(sp.bonus)} 元`);renderAll();
+      await ok(p,'上學一天',`<p>骰子都已經滿級，得到 ${money(sp.bonus)} 元。</p>`);return;}
+    const t=await pickDie(p,'上學一天：要升級哪一種骰子？',t=>p.lv[t]<3);
+    p.lv[t]++;log(`${esc(p.name)} 的${DIE[t]}升到 ${p.lv[t]} 級`);renderAll();
+    await ok(p,`${DIE[t]}升到 ${p.lv[t]} 級`,'');return;
+  }
+  const t=sp.die;
+  if(p.lv[t]>=3){record(p,`上學一天（${DIE[t]}已滿級）`,sp.bonus);log(`${esc(p.name)} 的${DIE[t]}已滿級，得 ${fmtN(sp.bonus)} 元`);renderAll();
+    await ok(p,'上學一天',`<p>${DIE[t]}已經滿級，得到 ${money(sp.bonus)} 元。</p>`);return;}
+  p.lv[t]++;log(`${esc(p.name)} 的${DIE[t]}升到 ${p.lv[t]} 級`);renderAll();
+  await ok(p,`上學一天：${DIE[t]}升到 ${p.lv[t]} 級`,`<p>${p.lv[t]===2?'現在骰兩顆，可以加減，或只取其中一顆。':'現在骰三顆，可以四則運算，或只取其中一顆。'}</p>`);
+}
+async function doChance(p){
+  const c=draw('chance');discard('chance',c);
+  log(`${esc(p.name)} 抽到機會卡「${esc(c.n)}」`);
+  if(c.math){await doSituation(p,c,'chance');return;}
+  const card=cardHTML(c,'chance');
+  const types=['move','pay','collect'];
+  const others=(q,i)=>q!==p;
+  switch(c.id){
+    case 'lotto':case 'scam':case 'invoice':case 'invest':{
+      const mult={lotto:1000,scam:-100,invoice:100,invest:-1000}[c.id];
+      await ok(p,`機會：${c.n}`,card,'擲骰決定 a');
+      const a=await rollD6(p,`${c.n}：a = ?`,card);
+      const v=mult*a;
+      await askNumber(p,`${c.n}：${mult>0?'獲得':'損失'}多少元？`,`<div class="calc">${Math.abs(mult)} × a，a = ${a}</div>`,Math.abs(v),`${mult>0?'獲得':'損失'}（元）`,{src:'card',steps:[`${Math.abs(mult)} × ${a} = ${Math.abs(v)}`]});
+      record(p,c.n,v);log(`${esc(p.name)} ${c.n}：${Math.abs(mult)} × ${a} = ${fmtN(Math.abs(v))}`);renderAll();return;}
+    case 'teacher':{
+      const can=types.filter(t=>p.lv[t]<3);
+      const v=await ask(p,`機會：${c.n}`,card,[...can.map(t=>({label:`${DIE[t]}升一級`,sub:`第 ${p.lv[t]} → ${p.lv[t]+1} 級`,v:t})),{label:'得到 1000 元',v:'m'}]);
+      if(v==='m'){record(p,c.n,1000);}else{p.lv[v]++;}
+      log(`${esc(p.name)} 選擇${v==='m'?'得到 1000 元':DIE[v]+'升級'}`);renderAll();return;}
+    case 'skip':{
+      const can=types.filter(t=>p.lv[t]>1);
+      const v=await ask(p,`機會：${c.n}`,card,[...can.map(t=>({label:`${DIE[t]}降一級`,sub:`第 ${p.lv[t]} → ${p.lv[t]-1} 級`,v:t})),{label:'損失 1000 元',v:'m'}]);
+      if(v==='m'){record(p,c.n,-1000);}else{p.lv[v]--;}
+      log(`${esc(p.name)} 選擇${v==='m'?'損失 1000 元':DIE[v]+'降級'}`);renderAll();return;}
+    case 'lightning':{
+      const v=await ask(p,`機會：${c.n}`,card,[{label:'抽一張特異功能卡',v:'c'},{label:'得到 3000 元',v:'m'}]);
+      if(v==='m'){record(p,c.n,3000);log(`${esc(p.name)} 選擇 3000 元`);renderAll();return;}
+      const k=draw('ability');p.ab.push(k);log(`${esc(p.name)} 抽到「${esc(k.n)}」`);renderAll();
+      await ok(p,'抽到特異功能卡',cardHTML(k,'ability'));return;}
+    case 'curse':{
+      if(!p.ab.length){record(p,c.n,-3000);log(`${esc(p.name)} 沒有特異功能卡，損失 3000 元`);renderAll();
+        await ok(p,`機會：${c.n}`,card+`<p>你沒有特異功能卡，只好損失 ${money(-3000)} 元。</p>`);return;}
+      const v=await ask(p,`機會：${c.n}`,card,[...p.ab.map((k,i)=>({label:`丟掉「${esc(k.n)}」`,v:i})),{label:'損失 3000 元',v:'m'}]);
+      if(v==='m'){record(p,c.n,-3000);log(`${esc(p.name)} 損失 3000 元`);}
+      else{const k=p.ab.splice(v,1)[0];discard('ability',k);log(`${esc(p.name)} 丟掉「${esc(k.n)}」`);}
+      renderAll();return;}
+    case 'robbed':case 'rob':{
+      const robbed=c.id==='robbed';
+      const ti=await pickPlayer(p,robbed?`${c.n}：被誰抽走？`:`${c.n}：要抽誰的？`,others,card+(robbed?'<p class="sub">由大家決定哪一位當流氓。</p>':''));
+      const thief=robbed?G.players[ti]:p,victim=robbed?p:G.players[ti];
+      let v='m';
+      if(victim.ab.length){v=await asSeat(pidx(thief),'ask',[pidx(thief),`${esc(thief.name)} 要拿什麼？`,`<p>${esc(victim.name)} 有 ${victim.ab.length} 張特異功能卡（看不到內容，隨機抽一張）。</p>`,
+        [{label:'抽走一張特異功能卡',v:'c'},{label:'拿走 3000 元',v:'m'}]]);}
+      if(v==='m'){record(victim,`${c.n}（被${thief.name}拿走）`,-3000);record(thief,`${c.n}（拿${victim.name}的）`,3000);
+        log(`${esc(thief.name)} 拿走 ${esc(victim.name)} 3000 元`);renderAll();
+        await ok(p,`${esc(thief.name)} 拿走 ${esc(victim.name)} 3000 元`,`<p>${esc(victim.name)} ${money(-3000)}　${esc(thief.name)} ${money(3000)}</p>`);}
+      else{const k=victim.ab.splice(Math.floor(Math.random()*victim.ab.length),1)[0];thief.ab.push(k);
+        log(`${esc(thief.name)} 抽走 ${esc(victim.name)} 一張特異功能卡`);renderAll();
+        await ok(p,`${esc(thief.name)} 抽走一張特異功能卡`,cardHTML(k,'ability'));}
+      return;}
+  }
+}
+async function doSituation(p,c,kind){
+  const s=SITU[c.math]();
+  await mathQ(p,s,{title:`${kind==='chance'?'機會':'命運'}：${c.n}`,pre:cardHTML(c,kind)+`<p>${s.text}</p>`,label:'收支（元）：賺用正數，花用負數',reward:true,src:'card'});
+  record(p,c.n,s.a);log(`${esc(p.name)}「${c.n}」收支 ${fmtS(s.a)}`);renderAll();
+  await ok(p,`${c.n}：${s.a>=0?'收入':'支出'} ${fmtN(Math.abs(s.a))} 元`,`<p>${money(s.a)} 元，記到記帳本。</p>`);
+}
+async function doFate(p){
+  const c=draw('fate');
+  log(`${esc(p.name)} 抽到命運卡「${esc(c.n)}」`);
+  if(c.math){discard('fate',c);await doSituation(p,c,'fate');return;}
+  if(c.keep){p.cp.push(c);renderAll();await ok(p,`命運：${c.n}`,cardHTML(c,'fate')+'<p class="sub">這張卡可以保留，需要時再用。</p>');return;}
+  discard('fate',c);record(p,c.n,c.v);renderAll();
+  await ok(p,`命運：${c.n}`,cardHTML(c,'fate')+`<p>${money(c.v)} 元</p>`);
+}
+
+/* ---------------- day end / settlement ---------------- */
+const shownMoney=p=>G.over?p.money:G.day>1?totalAt(p,G.day-2):G.cfg.start;
+const daySum=(p,d)=>p.ledger[d].reduce((s,e)=>s+e.v,0);
+const totalAt=(p,d)=>G.cfg.start+p.ledger.slice(0,d+1).reduce((s,l)=>s+l.reduce((a,e)=>a+e.v,0),0);
+const parseNum=s=>{s=String(s).trim().replace(/[,，\s]/g,'').replace(/[−－–—]/g,'-').replace(/^＋|^\+/,'');if(!/^-?\d+$/.test(s))return NaN;return Number(s);};
+function modal(html,narrow){$('#modalBox').className='box'+(narrow?' narrow':'');$('#modalBox').innerHTML=html;$('#modal').hidden=false;}
+function closeModal(){$('#modal').hidden=true;$('#modalBox').innerHTML='';}
+function settleModal(idxs,d){
+  return new Promise(resolve=>{
+    const rows=idxs.map(i=>{const p=G.players[i];const ents=p.ledger[d];
+      return `<div class="srow" style="--pc:${p.color}">
+      <div class="pname">${tokHTML(p)} <b>${esc(p.name)}</b><div class="hint">昨天總資產 ${fmtN(d?totalAt(p,d-1):G.cfg.start)}</div></div>
+      <div class="ents">${ents.length?ents.map(e=>`<div><span>${esc(e.d)}</span><span class="${cls(e.v)}">${fmtS(e.v)}</span></div>`).join(''):'<div><span class="sub">今天沒有收支</span><span>0</span></div>'}</div>
+      <label class="field" style="margin:0"><span class="hint">單日結算</span><input class="ans" id="sd${i}" autocomplete="off"></label>
+      <label class="field" style="margin:0"><span class="hint">總資產</span><input class="ans" id="st${i}" autocomplete="off"></label>
+      <div class="mark" id="sm${i}"></div></div>`;}).join('');
+    modal(`<h2>第 ${d+1} 天結束：記帳本結算</h2>
+      <p class="sub">把今天的收支加起來填入「單日結算」，再算出「總資產」（昨天總資產 + 單日結算）。負數請加負號，例如 −3000。每格有兩次機會。</p>
+      <div class="settle">${rows}</div>
+      <div class="btns"><button class="btn" id="sCheck">核對答案</button><button class="btn main" id="sNext" disabled>完成結算</button></div>`);
+    const wrongs={},res={};
+    const refresh=()=>{$('#sNext').disabled=!idxs.every(i=>res[i]);};
+    const lock=(i,r)=>{res[i]=r;$('#sd'+i).disabled=$('#st'+i).disabled=true;$('#sm'+i).innerHTML=r==='miss'?'<span class="sub">已看答案</span>':'<span class="pos">✓</span>';};
+    $('#sCheck').onclick=()=>{idxs.forEach(i=>{
+      if(res[i]) return;const p=G.players[i];
+      const a=parseNum($('#sd'+i).value),b=parseNum($('#st'+i).value);
+      const okA=a===daySum(p,d),okB=b===totalAt(p,d);
+      if(okA&&okB){lock(i,wrongs[i]?'second':'first');return;}
+      wrongs[i]=(wrongs[i]||0)+1;
+      if(wrongs[i]>=2){$('#sd'+i).value=fmtS(daySum(p,d));$('#st'+i).value=fmtN(totalAt(p,d));lock(i,'miss');
+        $('#sm'+i).innerHTML='<span class="neg">✗</span><div class="hint" style="font-weight:400">已填上正確答案，對照看看哪裡算錯</div>';return;}
+      $('#sm'+i).innerHTML=`<span class="neg">✗</span><div class="hint" style="font-weight:400">${okA?'':'單日結算再算一次'}${!okA&&!okB?'、':''}${okB?'':'總資產再算一次'}</div>`;
+    });refresh();};
+    $('#sNext').onclick=()=>{closeModal();resolve(res);};
+  });
+}
+async function endOfDayAll(){
+  const d=G.day-1,local=[],remote=[];
+  G.players.forEach((p,i)=>(mine(i)?local:remote).push(i));
+  await pushNow();
+  const results={};
+  const waitTxt=()=>{const left=G.players.filter((p,i)=>!results[i]).map(p=>esc(p.name));
+    stageWait(`第 ${G.day} 天結束：記帳結算`,left.length?`<p>等待完成記帳結算：${left.join('、')}</p>`:'<p>全部完成！</p>');};
+  waitTxt();
+  const jobs=remote.map(i=>asSeat(i,'settle',[i,d],true).then(r=>{results[i]=r;waitTxt();}));
+  if(local.length) jobs.push(settleModal(local,d).then(r=>{Object.assign(results,r);waitTxt();}));
+  await Promise.all(jobs);
+  G.players.forEach((p,i)=>statAdd(p,'settle',results[i]||'miss'));
+  (G.dayEnd||(G.dayEnd=[]))[d]=Date.now();
+}
+function showFinal(){
+  const order=G.players.map((p,i)=>({p,i})).sort((a,b)=>b.p.money-a.p.money);
+  modal(`<h2>最後排名</h2><div class="rank">${order.map((o,k)=>`<div><span class="r">${k+1}</span>${tokHTML(o.p)}<b>${esc(o.p.name)}</b><span class="m ${cls(o.p.money)}">${fmtN(o.p.money)}</span></div>`).join('')}</div>
+    <h3>答題紀錄</h3>${statsTable()}<div class="btns"><button class="btn" id="rkL">看記帳本</button><button class="btn main" id="rkC">關閉</button></div>`);
+  $('#rkC').onclick=closeModal;$('#rkL').onclick=()=>showLedger(NET.seat??order[0].i);
+}
+
+/* ---------------- info modals ---------------- */
+function showLedger(pi){
+  if(!G) return;if(pi==null||!G.players[pi])pi=0;
+  const p=G.players[pi];
+  let run=G.cfg.start;
+  const rows=p.ledger.map((l,d)=>{
+    const done=d<G.day-1||G.over,today=d===G.day-1&&!G.over;
+    const sum=l.reduce((s,e)=>s+e.v,0);run+=sum;
+    return `<tr class="${today?'today':''}"><td class="n">${d+1}</td><td>${l.map(e=>`<div class="ent"><span>${esc(e.d)}</span><span class="${cls(e.v)}">${fmtS(e.v)}</span></div>`).join('')||(d<G.day?'<span class="sub">—</span>':'')}</td>
+      <td class="n ${done?cls(sum):''}">${done?fmtS(sum):today?'<span class="sub">今天</span>':''}</td><td class="n ${done?cls(run):''}">${done?fmtN(run):''}</td></tr>`;}).join('');
+  modal(`<h2>我的記帳本</h2>
+    <div class="tabs">${G.players.map((q,i)=>`<button style="--pc:${q.color}" class="${i===pi?'on':''}" data-lp="${i}">${esc(q.name)}</button>`).join('')}</div>
+    <p class="sub">起始資產 ${fmtN(G.cfg.start)}。所有玩家都擲完一次骰子，代表一天。</p>
+    <div class="tblwrap"><table class="ledger"><thead><tr><th style="width:4em">天數</th><th>收支紀錄</th><th style="width:8em">單日結算</th><th style="width:9em">總資產</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="btns"><button class="btn main" id="mClose">關閉</button></div>`);
+  $('#modalBox').querySelectorAll('[data-lp]').forEach(b=>b.onclick=()=>showLedger(+b.dataset.lp));
+  $('#mClose').onclick=closeModal;
+}
+function showSpace(i){
+  const sp=SPACES[i];
+  if(sp.t!=='shop'){
+    const txt={start:`若經過起點，得 ${fmtN(G?G.cfg.pass:5000)} 元車馬費；若停在起點，要付 ${fmtN(G?G.cfg.stay:1000)} 元住宿費。`,
+      chance:'抽機會卡一張：把握？浪費？',fate:'抽命運卡一張：只能接受！',
+      school:sp.die==='any'?`任一骰子升一級；若已經滿級，則得到 ${fmtN(sp.bonus)} 元。`:`${DIE[sp.die]}升一級；若已經滿級，則得到 ${fmtN(sp.bonus)} 元。`,
+      gambler:'偷學特異功能：抽特異功能卡 1 張。',
+      gate:sp.t==='gate'?`骰一顆骰子：${sp.enterMax} 以下進入${ZONE[sp.zone].name}，${sp.enterMax+1} 以上沒事。`:'',
+      zone:sp.t==='zone'?zoneRule(sp.zone)+` ${sp.name}要從門口進，直接到這格只是路過。`:''}[sp.t];
+    modal(`<h2>${i}・${spaceName(i)}</h2><p>${txt}</p><div class="btns"><button class="btn main" id="mClose">關閉</button></div>`,true);
+    $('#mClose').onclick=closeModal;return;
+  }
+  const sh=G&&G.shops[i];
+  modal(`<div class="shopinfo"><h2>${sp.kind}・${sp.name}</h2>
+    <p>過路費：<span class="num">${formulaHTML(sp)}</span> 元　${rangeTxt(sp)}<br><span class="sub">a：店鋪等級　b：顧客付錢點數　c：主人收錢點數</span></p>
+    <p>${sh?`主人：<b style="color:${G.players[sh.owner].color}">${esc(G.players[sh.owner].name)}</b>，店面 ${sh.level} 級`:'還沒有主人，第一個走到的人直接成為主人。'}</p>
+    <h3>試算看看</h3>
+    <div class="calc"><label>a <input type="number" id="ta" value="${sh?sh.level:1}" min="1" step="1"></label>　<label>b <input type="number" id="tb" value="3" step="1"></label>　<label>c <input type="number" id="tc" value="5" step="1"></label><div id="tout"></div></div>
+    <div class="btns"><button class="btn main" id="mClose">關閉</button></div></div>`,true);
+  const upd=()=>{const a=Math.max(1,parseInt($('#ta').value)||1),b=parseInt($('#tb').value)||0,c=parseInt($('#tc').value)||0;
+    if(Math.abs(b)>500||Math.abs(c)>500||a>50){$('#tout').innerHTML='<div class="lab">數字太大了，換小一點試試。</div>';return;}
+    const r=tollCalc(sp,a,b,c);$('#tout').innerHTML=r.steps.map(s=>`<div>${s}</div>`).join('')+`<div class="lab">${r.note}</div><div class="res">${fmtN(r.toll)} 元</div>`;};
+  ['ta','tb','tc'].forEach(id=>$('#'+id).oninput=upd);upd();
+  $('#mClose').onclick=closeModal;
+}
+function showRules(){
+  modal(`<div class="rules"><h2>遊戲規則</h2>
+  <ol>
+    <li>所有玩家都骰過一次骰子，稱為一天，遊戲在 ${G?G.cfg.days:10} 天後結束，資產最多的人獲勝。</li>
+    <li>每組的回合流程：① 數學挑戰 → ② 擲骰前進 → ③ 棋盤事件 → ④ 記帳換人。</li>
+    <li>數學題都有兩次機會：第一次答對 +300 元；答錯會看到提示，第二次答對 +100 元；第二次還是錯，會顯示解題步驟，沒有獎勵，但遊戲照常繼續。（商店題、過路費等不另發獎金。）</li>
+    <li>所有收支都登記在「我的記帳本」中，需每日結算。資產可以是負數。</li>
+    <li>走到沒有主人的商店，先答一題：答對免費成為主人；沒答對可以付購買費用買下，或放棄。之後每一次再走到自己的店，就可以將店面升一級。</li>
+    <li>機會、命運卡裡有情境題：算出來的答案就是這次的收支，答對另有答題獎勵。</li>
+    <li>骰子分三類：<b>前進骰子</b>決定行走的步數（負數就往回走）；<b>付錢骰子</b>走到別人的商店時決定付多少（b）；<b>收錢骰子</b>別人走到自己的商店時決定收多少（c）。</li>
+    <li>各類骰子分三級。第一級：骰一顆。第二級：骰兩顆，可以加減，或只取其中一顆。第三級：骰三顆，可以四則運算（可加括號），或只取其中一顆。算出來要是整數，答案要自己算好再輸入。</li>
+    <li>特異功能卡抽到後，不一定要馬上使用，但要輪到自己時才能使用。</li>
+    <li>走到別人的商店，要依公式付過路費：a 是商店等級、b 是顧客骰出的點數、c 是主人骰出的點數。過路費要自己算出來，系統只負責核對。</li>
+    <li>各商店的收費有最小值和最大值，記錄在括號中。例如：你家便利商店（200～200000）代表最少收 200 元，最多收 200000 元。</li>
+    <li>圖書館、網咖、運動場都要從門口進，直接走到那一格只是路過。</li>
+  </ol>
+  <p class="sub">點地圖上任何一格，可以看那一格的說明；商店還可以試算過路費。</p>
+  <div class="btns"><button class="btn main" id="mClose">關閉</button></div></div>`);
+  $('#mClose').onclick=closeModal;
+}
+/* ================= 連線設定 =================
+   要讓學生用自己的平板連線，把 Firebase 網頁應用程式的設定值貼在下面（可以和《總舖師》共用同一個專案）。
+   databaseURL 一定要有。全部留空 = 本機測試模式（同一台電腦的不同分頁之間可以連線）。 */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCwWWNly7V-ORMbTFBVcN_ZQ_zdZ-4L5Ik",
+  authDomain: "tsongposai.firebaseapp.com",
+  databaseURL: "https://tsongposai-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "tsongposai",
+  storageBucket: "tsongposai.firebasestorage.app",
+  messagingSenderId: "340842053383",
+  appId: "1:340842053383:web:9f2a6f1654dfc1ddcbcfa2"
+};
+const ROOT='rooms', PREFIX='pm';   // 資料放在 rooms/pm1234，房號只輸入 1234
+
+/* ---------------- 資料庫：Firebase 或本機測試 ---------------- */
+const DEV=(()=>{const mk=()=>'d'+Math.random().toString(36).slice(2,10);
+  try{let d=sessionStorage.getItem('pmDev');if(!d){d=mk();sessionStorage.setItem('pmDev',d);}return d;}catch(e){return mk();}})();
+const ss={get(k){try{return JSON.parse(sessionStorage.getItem(k))}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
+const ls={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+function makeLocalDB(){
+  // 本機測試：資料拆成很多小格（最多 4 層路徑一格）存在 localStorage，分頁之間用 BroadcastChannel 通知。
+  const PFX='pmdb|',DEPTH=4;
+  const parts=p=>p.split('/').filter(Boolean);
+  const keys=()=>{const out=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith(PFX))out.push(k.slice(PFX.length));}}catch(e){}return out;};
+  const rd=b=>{try{const v=localStorage.getItem(PFX+b);return v==null?undefined:JSON.parse(v)}catch(e){return undefined}};
+  const wr=(b,v)=>{try{if(v===undefined||v===null)localStorage.removeItem(PFX+b);else localStorage.setItem(PFX+b,JSON.stringify(v))}catch(e){}};
+  function getAt(p){const ps=parts(p);
+    if(ps.length>=DEPTH){let v=rd(ps.slice(0,DEPTH).join('/'));for(const k of ps.slice(DEPTH)){if(v==null)return undefined;v=v[k];}return v;}
+    const own=rd(ps.join('/'));if(own!==undefined)return own;
+    const pre=ps.join('/')+'/';let obj;
+    for(const b of keys()){if(!b.startsWith(pre))continue;const rest=b.slice(pre.length).split('/');obj=obj||{};let o=obj;
+      for(let i=0;i<rest.length-1;i++){o[rest[i]]=o[rest[i]]&&typeof o[rest[i]]==='object'?o[rest[i]]:{};o=o[rest[i]];}o[rest[rest.length-1]]=rd(b);}
+    return obj;}
+  function setAt(p,v){const ps=parts(p);
+    if(ps.length>DEPTH){const b=ps.slice(0,DEPTH).join('/');let root=rd(b);if(root==null||typeof root!=='object')root={};let o=root;const rest=ps.slice(DEPTH);
+      for(let i=0;i<rest.length-1;i++){if(o[rest[i]]==null||typeof o[rest[i]]!=='object')o[rest[i]]={};o=o[rest[i]];}
+      if(v==null)delete o[rest[rest.length-1]];else o[rest[rest.length-1]]=JSON.parse(JSON.stringify(v));wr(b,root);return;}
+    const base=ps.join('/');
+    for(const b of keys()) if(b===base||b.startsWith(base+'/')) wr(b,null);
+    for(let i=1;i<ps.length;i++) if(rd(ps.slice(0,i).join('/'))!==undefined) wr(ps.slice(0,i).join('/'),null);
+    const put=(path,val,depth)=>{if(val==null)return;if(depth<DEPTH&&typeof val==='object'&&!Array.isArray(val)){for(const k in val)put(path+'/'+k,val[k],depth+1);}else wr(path,val);};
+    put(base,v,ps.length);}
+  const subs=new Set();
+  function notify(){for(const s of [...subs]){const v=getAt(s.path);const j=JSON.stringify(v??null);if(j!==s.last){s.last=j;try{s.cb(v??null)}catch(e){console.error(e)}}}}
+  let bc=null;try{bc=new BroadcastChannel('pmdb');bc.onmessage=()=>notify();}catch(e){}
+  window.addEventListener('storage',e=>{if(e.key&&e.key.startsWith(PFX))notify();});
+  setInterval(notify,1500);
+  const changed=()=>{try{bc&&bc.postMessage(1)}catch(e){}setTimeout(notify,0);};
+  return {local:true,
+    async get(p){return getAt(p)??null},
+    async set(p,v){setAt(p,v);changed()},
+    async update(p,o){for(const k in o)setAt(p+'/'+k,o[k]);changed()},
+    async remove(p){setAt(p,null);changed()},
+    async txn(p,fn){const nv=fn(getAt(p)??null);if(nv===undefined)return {committed:false,value:getAt(p)??null};setAt(p,nv);changed();return {committed:true,value:nv}},
+    on(p,cb){const s={path:p,cb,last:undefined};subs.add(s);setTimeout(()=>{if(!subs.has(s))return;const v=getAt(p);s.last=JSON.stringify(v??null);cb(v??null)},0);return ()=>subs.delete(s)},
+  };
+}
+function loadScript(src){return new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=src;sc.onload=res;sc.onerror=rej;document.head.appendChild(sc);});}
+async function makeFirebaseDB(){
+  await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+  await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');
+  if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  const db=firebase.database(),r=p=>db.ref(p);
+  return {local:false,
+    async get(p){return (await r(p).get()).val()},
+    set:(p,v)=>r(p).set(v),update:(p,o)=>r(p).update(o),remove:p=>r(p).remove(),
+    async txn(p,fn){const x=await r(p).transaction(cur=>fn(cur));return {committed:x.committed,value:x.snapshot.val()}},
+    on(p,cb){const h=sn=>cb(sn.val());r(p).on('value',h);return ()=>r(p).off('value',h)},
+  };
+}
+let DB=null,DBMODE='local';
+async function initDB(){
+  if(FIREBASE_CONFIG.databaseURL){try{DB=await makeFirebaseDB();DBMODE='firebase';return;}catch(e){console.warn('Firebase 載入失敗，改用本機測試模式',e);}}
+  DB=makeLocalDB();DBMODE='local';
+}
+
+/* ---------------- 一桌（房間）的連線狀態 ---------------- */
+const NET={code:null,role:null,seat:null,seats:{},meta:null,offs:[],handled:new Set(),finalShown:false};
+const rp=x=>`${ROOT}/${PREFIX}${NET.code}${x?'/'+x:''}`;
+const mine=i=>!!(NET.seats[i]&&NET.seats[i].ctrl===DEV);
+const ABORT={abort:true};
+let running=false,responding=0,runToken=0,waitingRemote=false,pushTimer=null;
+function schedulePush(){if(pushTimer)return;pushTimer=setTimeout(()=>{pushTimer=null;pushNow().catch(()=>{});},180);}
+async function pushNow(){
+  if(!running||!NET.code||!G) return;
+  if(!mine(NET.runSeat)) throw ABORT;
+  await DB.set(rp('state'),JSON.stringify(G));
+}
+function stageWait(title,body){
+  $('#stage').innerHTML=`${whoHTML(P())}<h2>${title}</h2>${body||''}<div class="waitdots" aria-hidden="true"><i></i><i></i><i></i></div>`;
+}
+const LOCAL={
+  rollExpr:(pi,...a)=>rollExpr(G.players[pi],...a),
+  ask:(pi,...a)=>ask(G.players[pi],...a),
+  settle:(pi,d)=>settleModal([pi],d).then(r=>r[pi]),
+};
+async function asSeat(i,kind,args,quiet){
+  if(mine(i)) return LOCAL[kind](...args);
+  await pushNow();
+  const id='q'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  await DB.set(rp('req/'+id),{to:i,kind,args:JSON.stringify(args)});
+  if(!quiet){stageWait(`等 ${esc(G.players[i].name)} 操作`,`<p>請 <b>${esc(G.players[i].name)}</b> 在自己的裝置上完成這一步。</p>`);}
+  waitingRemote=true;
+  try{
+    return await new Promise(res=>{
+      let done=false;
+      const offR=DB.on(rp('resp/'+id),v=>{if(v==null||done)return;done=true;offR();offS();DB.remove(rp('req/'+id));DB.remove(rp('resp/'+id));res(JSON.parse(v));});
+      const offS=onSeats(()=>{if(done||!mine(i))return;done=true;offR();offS();DB.remove(rp('req/'+id));Promise.resolve(LOCAL[kind](...args)).then(res);});
+    });
+  }finally{waitingRemote=false;}
+}
+const seatSubs=new Set();
+function onSeats(fn){seatSubs.add(fn);return ()=>seatSubs.delete(fn);}
+
+function leaveRoom(){NET.offs.forEach(f=>f());NET.offs=[];NET.code=null;NET.seat=null;NET.seats={};NET.meta=null;NET.handled=new Set();
+  runToken++;running=false;responding=0;G=null;NET.finalShown=false;}
+function enterRoom(code,role){
+  leaveRoom();NET.code=code;NET.role=role;
+  $('#dash').hidden=true;$('#app').hidden=false;closeModal();
+  buildBoard();
+  $('#stage').innerHTML='<h2>連線中…</h2>';
+  NET.offs.push(DB.on(rp('meta'),m=>{NET.meta=m;if(!m){roomGone();return;}renderTop();afterSync();}));
+  NET.offs.push(DB.on(rp('seats'),v=>{NET.seats=v||{};
+    NET.seat=null;for(const k in NET.seats) if(NET.seats[k].dev===DEV&&NET.role==='student') NET.seat=+k;
+    if(NET.role==='solo') NET.seat=null;
+    if(running&&G&&!mine(NET.runSeat)){runToken++;running=false;$('#stage').innerHTML='<h2>這一回合已經交給別的裝置</h2><p class="sub">老師接手或學生重新連線了。</p>';}
+    seatSubs.forEach(f=>f());renderTop();afterSync();}));
+  NET.offs.push(DB.on(rp('state'),str=>{if(!str||running)return;G=JSON.parse(str);renderAll();afterSync();}));
+  NET.offs.push(DB.on(rp('req'),reqs=>handleReqs(reqs||{})));
+  NET.offs.push(DB.on(rp('live'),lv=>{NET.live=lv;showSpectator();}));
+  // 把自己舞台上的畫面同步給同桌的人看
+  if(!window.__mo){window.__mo=new MutationObserver(()=>{if(!NET.code)return;if((running&&!waitingRemote)||responding){clearTimeout(window.__lt);
+    window.__lt=setTimeout(()=>{if(NET.code&&((running&&!waitingRemote)||responding))DB.set(rp('live'),{by:DEV,html:$('#stage').innerHTML}).catch(()=>{});},250);}});
+    window.__mo.observe($('#stage'),{childList:true,subtree:true,characterData:true});}
+}
+function roomGone(){if(!NET.code)return;const r=NET.role;leaveRoom();modal(`<h2>這一桌已經關閉</h2><p>老師可能刪除了這一桌。</p><div class="btns"><button class="btn main" id="gH">回首頁</button></div>`,true);$('#gH').onclick=goHome;}
+async function handleReqs(reqs){
+  for(const id of Object.keys(reqs)){
+    const q=reqs[id];if(NET.handled.has(id)||!mine(q.to)||running)continue;
+    NET.handled.add(id);responding++;
+    try{const v=await LOCAL[q.kind](...JSON.parse(q.args));await DB.set(rp('resp/'+id),JSON.stringify(v));}
+    catch(e){console.error(e);}
+    finally{responding--;}
+    afterSync();
+  }
+}
+function showSpectator(){
+  if(running||responding||!G||!NET.code) return;
+  if(G.over){return;}
+  const cur=G.players[G.turn];
+  const lv=NET.live&&NET.live.by!==DEV?NET.live.html:'';
+  $('#stage').innerHTML=`<div class="spectbar">${tokHTML(cur)} 現在輪到 <b>${esc(cur.name)}</b>${mine(G.turn)?'':'，請看他的操作'}</div><div class="spect" inert>${lv||`<h2>${esc(cur.name)} 的回合</h2>`}</div>`;
+}
+function showLobby(){
+  if(!NET.meta||G) return;
+  const seats=Object.values(NET.seats||{});
+  $('#stage').innerHTML=`<h2>${NET.role==='teacher'?'':'已加入'}第 ${NET.code} 桌</h2><p>等老師按「開始」…</p>
+    <ul class="lobby">${seats.map((s,i)=>`<li><span class="tok" style="--pc:${COLORS[i]}">${esc([...s.name.replace(/^第/,'')][0]||'?')}</span>${esc(s.name)}${s.dev===DEV?'（你）':''}</li>`).join('')}</ul>
+    <p class="sub">每桌 2–6 人。重新整理或斷線後，用同樣的名字再加入就能回到原位。</p>`;
+}
+function afterSync(){
+  if(NET.code&&!G){showLobby();return;}
+  if(!G||!NET.code) return;
+  if(G.over){
+    $('#stage').innerHTML=`<h2>遊戲結束</h2><p>${G.cfg.days} 天過去了，看看誰是大富翁、誰是「負」翁。</p><div class="btns"><button class="btn main" id="goRank">看排名與答題紀錄</button></div>`;
+    $('#goRank').onclick=showFinal;
+    if(!NET.finalShown){NET.finalShown=true;showFinal();}
+    return;
+  }
+  if(!running&&!responding&&NET.meta&&NET.meta.status==='playing'&&mine(G.turn)) runTurnStep();
+  else showSpectator();
+}
+async function runTurnStep(){
+  running=true;const tok=++runToken;
+  try{
+    const key=`${G.day}-${G.turn}`;NET.runSeat=G.turn;
+    const ck=await DB.get(rp('ck'));
+    if(ck&&JSON.parse(ck).key===key) G=JSON.parse(ck).g;
+    else await DB.set(rp('ck'),JSON.stringify({key,g:G}));
+    await DB.remove(rp('req'));await DB.remove(rp('resp'));
+    if(tok!==runToken) return;
+    (G.turnStart||(G.turnStart={}))[key]=Date.now();
+    renderAll();
+    await playTurn();
+    if(tok!==runToken) return;
+    if(G.turn===G.players.length-1){
+      G.phase=0;
+      await endOfDayAll();
+      if(tok!==runToken) return;
+      G.day++;G.turn=0;G.tray=null;
+      if(G.day>G.cfg.days){G.day=G.cfg.days;G.over=true;log('遊戲結束！');}
+      else log(`—— 第 ${G.day} 天開始 ——`);
+    }else G.turn++;
+    G.phase=0;
+    await pushNow();
+    if(G.over) await DB.update(rp('meta'),{status:'over'});
+  }catch(e){if(e!==ABORT) console.error(e);}
+  finally{if(tok===runToken){running=false;afterSync();}}
+}
+function renderTop(){
+  const t=$('#topbar');if(!t)return;
+  if(!NET.code){t.hidden=true;return;}
+  t.hidden=false;
+  const me=NET.seat!=null&&G?G.players[NET.seat]:null;
+  const who=NET.role==='solo'?'同一台裝置輪流玩':NET.role==='teacher'?'老師檢視':(me?`你是 ${tokHTML(me)} <b>${esc(me.name)}</b>`:'已加入');
+  const ctl=NET.role==='teacher'&&G?`<span class="seatctl">${G.players.map((p,i)=>{const s=NET.seats[i]||{};const t=s.ctrl===DEV;
+    return `<button class="ghost sm" data-take="${i}" title="${t?'把操作還給學生':'學生斷線時由老師代為操作'}">${esc(p.name)}：${t?'老師操作中・還給學生':'由老師接手'}</button>`;}).join('')}</span>`:'';
+  t.innerHTML=`<span class="code">${NET.role==='solo'?'單機':'第 '+NET.code+' 桌'}</span><span>${who}</span>${ctl}<span class="grow"></span>${NET.role==='teacher'?'<button class="ghost sm" id="tBack">← 回老師控制台</button>':''}`;
+  t.querySelectorAll('[data-take]').forEach(b=>b.onclick=async()=>{const i=+b.dataset.take,s=NET.seats[i];
+    await DB.update(rp('seats/'+i),{ctrl:s.ctrl===DEV?(s.dev||DEV):DEV});});
+  const bb=$('#tBack');if(bb) bb.onclick=()=>{leaveRoom();openDashboard();};
+}
+
+/* ---------------- 首頁 ---------------- */
+function goHome(){
+  leaveRoom();ss.del('pmJoin');
+  $('#dash').hidden=true;$('#app').hidden=false;buildBoard();renderTop();
+  $('#stage').innerHTML='<h2>正負數大富翁</h2><p>選擇遊戲方式。</p>';
+  const t=ls.get('pmTeacher'),solo=ls.get('pmSolo');
+  modal(`<h2>正負數大富翁</h2>
+    <p>玩法類似大富翁，所有設定都和「正負數四則運算」以及「指數律」有關。</p>
+    <div class="homegrid">
+      <button class="homebtn" id="hJoin"><b>學生加入</b><span>輸入老師給的 4 位數房號</span></button>
+      <button class="homebtn" id="hTeach"><b>老師開桌</b><span>一次開好幾桌，每桌 2–6 人，各用自己的裝置</span></button>
+      <button class="homebtn" id="hSolo"><b>同一台裝置輪流玩</b><span>投影或一台平板，不用連線</span></button>
+    </div>
+    ${t&&t.rooms&&t.rooms.length?'<div class="btns"><button class="btn" id="hDash">回到老師控制台</button></div>':''}
+    ${solo?'<div class="btns"><button class="btn" id="hSoloGo">繼續上次的單機遊戲</button></div>':''}
+    <p class="sub">連線方式：${DBMODE==='firebase'?'Firebase 線上連線':'本機測試模式（還沒設定 Firebase，只能在這台電腦的不同分頁之間連線）'}</p>
+    <div class="btns"><button class="btn alt" id="hRules">看規則</button></div>`,true);
+  $('#hJoin').onclick=()=>joinForm();
+  $('#hTeach').onclick=teacherForm;
+  $('#hSolo').onclick=soloSetup;
+  if($('#hDash')) $('#hDash').onclick=openDashboard;
+  if($('#hSoloGo')) $('#hSoloGo').onclick=async()=>{NET.code=solo.code;const seats=await DB.get(rp('seats'));
+    if(!seats){NET.code=null;ls.set('pmSolo',null);goHome();return;}
+    const up={};for(const k in seats) up[k+'/ctrl']=DEV,up[k+'/dev']=DEV;await DB.update(rp('seats'),up);NET.code=null;enterRoom(solo.code,'solo');};
+  $('#hRules').onclick=()=>{showRules();$('#mClose').onclick=goHome;};
+}
+function settingsFields(){
+  return `<div class="pgrid">
+      <div class="field"><label for="sStart">起始資產</label><input type="number" id="sStart" value="0" step="100"></div>
+      <div class="field"><label for="sPass">經過起點車馬費</label><input type="number" id="sPass" value="5000" step="1000"></div>
+      <div class="field"><label for="sStay">停在起點住宿費</label><input type="number" id="sStay" value="1000" step="500"></div>
+      <div class="field"><label for="sDays">天數</label><input type="number" id="sDays" value="10" min="1" max="30"></div>
+      <div class="field"><label for="sPrice">商店購買費用</label><input type="number" id="sPrice" value="2000" step="500"></div>
+      <div class="field"><label for="sLevel">題目難度</label><select id="sLevel"><option value="auto">依天數逐步加深</option><option value="add">只出加法</option><option value="sub">只出減法</option><option value="md">只出乘除</option><option value="mix">只出混合運算</option></select></div>
+    </div>
+    <p class="sub">逐步加深（10 天）：第 1–2 天加法、第 3–4 天減法、第 5–6 天乘除、第 7–10 天混合運算。同一場盡量不重複出題。</p>`;
+}
+function readSettings(){return {start:parseInt($('#sStart').value)||0,pass:parseInt($('#sPass').value)||0,stay:parseInt($('#sStay').value)||0,
+  days:Math.min(30,Math.max(1,parseInt($('#sDays').value)||10)),check:true,price:parseInt($('#sPrice').value)||0,level:$('#sLevel').value};}
+
+/* ---------------- 單機（同一台裝置輪流） ---------------- */
+function soloSetup(){
+  const names=['甲','乙','丙','丁','戊','己'];
+  modal(`<h2>同一台裝置輪流玩</h2>
+    <div class="field"><label for="sN">玩家人數</label><select id="sN">${[2,3,4,5,6].map(n=>`<option ${n===4?'selected':''}>${n}</option>`).join('')}</select></div>
+    <div class="field"><label>玩家（或組別）名稱</label><div class="pgrid" id="sNames"></div></div>
+    ${settingsFields()}
+    <div class="btns"><button class="btn main" id="sGo">開始遊戲</button><button class="btn alt" id="sBack">返回</button></div>`);
+  const drawNames=()=>{const n=+$('#sN').value;const cur=[...document.querySelectorAll('#sNames input')].map(x=>x.value);
+    $('#sNames').innerHTML=Array.from({length:n},(_,i)=>`<div class="pin"><span class="tok" style="--pc:${COLORS[i]};font-size:13px">${i+1}</span><input type="text" id="sName${i}" value="${esc(cur[i]||names[i]+'組')}" maxlength="8"></div>`).join('');};
+  $('#sN').onchange=drawNames;drawNames();
+  $('#sBack').onclick=goHome;
+  $('#sGo').onclick=async()=>{
+    const n=+$('#sN').value;
+    const cfg={...readSettings(),names:Array.from({length:n},(_,i)=>($('#sName'+i).value.trim()||`玩家${i+1}`))};
+    const code='S'+DEV;
+    const seats={};cfg.names.forEach((nm,i)=>seats[i]={name:nm,dev:DEV,ctrl:DEV});
+    NET.code=code;
+    await DB.set(rp(),{meta:{status:'playing',created:Date.now(),code},seats,state:JSON.stringify(newGame(cfg))});
+    ls.set('pmSolo',{code});NET.code=null;
+    enterRoom(code,'solo');
+  };
+}
+
+/* ---------------- 學生加入 ---------------- */
+function joinForm(prefill,msg){
+  const q=new URLSearchParams(location.search).get('room')||'';
+  modal(`<h2>學生加入</h2>
+    <div class="field"><label for="jCode">房號（4 位數）</label><input type="text" id="jCode" inputmode="numeric" maxlength="4" value="${esc(prefill||q)}" style="font-family:var(--f-num);font-size:1.6em;letter-spacing:.2em;max-width:7em"></div>
+    <div class="field"><label for="jName">你的名字或組名</label><input type="text" id="jName" maxlength="8" value="${esc((ls.get('pmName')||''))}"></div>
+    <div id="jMsg" class="msgline neg">${msg||''}</div>
+    <div class="btns"><button class="btn main" id="jGo">加入</button><button class="btn alt" id="jBack">返回</button></div>`,true);
+  $('#jBack').onclick=goHome;
+  $('#jGo').onclick=async()=>{
+    const code=$('#jCode').value.trim(),name=$('#jName').value.trim();
+    if(!/^\d{4}$/.test(code)){$('#jMsg').textContent='房號是 4 位數字。';return;}
+    if(!name){$('#jMsg').textContent='請輸入名字或組名。';return;}
+    $('#jGo').disabled=true;
+    const r=await joinRoom(code,name);
+    if(r!==true){$('#jMsg').textContent=r;$('#jGo').disabled=false;return;}
+  };
+}
+async function joinRoom(code,name){
+  NET.code=code;const meta=await DB.get(rp('meta'));NET.code=null;
+  if(!meta) return `找不到第 ${code} 桌，請確認房號。`;
+  NET.code=code;
+  let err='';
+  const res=await DB.txn(rp('seats'),cur=>{
+    cur=cur||{};err='';
+    const keys=Object.keys(cur);
+    const same=keys.find(k=>cur[k].name===name);
+    if(same!=null){const s=cur[same];const teacherHas=s.ctrl!==s.dev;cur[same]={...s,dev:DEV,ctrl:teacherHas?s.ctrl:DEV};return cur;}
+    if(meta.status!=='lobby'){err='這一桌已經開始了。重新連線請輸入和原本一樣的名字。';return;}
+    if(keys.length>=6){err='這一桌已經坐滿 6 人了。';return;}
+    cur[keys.length]={name,dev:DEV,ctrl:DEV};return cur;
+  });
+  NET.code=null;
+  if(err) return err;
+  if(!res.committed) return '加入失敗，請再試一次。';
+  ls.set('pmName',name);ss.set('pmJoin',{code,name});
+  enterRoom(code,'student');
+  return true;
+}
+
+/* ---------------- 老師控制台 ---------------- */
+function teacherForm(){
+  modal(`<h2>老師開桌</h2>
+    <div class="field"><label for="tN">要開幾桌（每桌 2–6 人）</label><input type="number" id="tN" value="3" min="1" max="12" style="max-width:6em"></div>
+    ${settingsFields()}
+    <div class="btns"><button class="btn main" id="tGo">開桌</button><button class="btn alt" id="tBack">返回</button></div>`);
+  $('#tBack').onclick=goHome;
+  $('#tGo').onclick=async()=>{
+    const n=Math.min(12,Math.max(1,parseInt($('#tN').value)||1));const cfg=readSettings();
+    $('#tGo').disabled=true;
+    const rooms=[];for(let k=0;k<n;k++) rooms.push(await createRoom(cfg));
+    ls.set('pmTeacher',{rooms,cfg});
+    openDashboard();
+  };
+}
+async function createRoom(cfg){
+  for(let tries=0;tries<50;tries++){
+    const code=String(1000+Math.floor(Math.random()*9000));
+    const ex=await DB.get(`${ROOT}/${PREFIX}${code}/meta`);
+    if(ex&&Date.now()-ex.created<86400000) continue;
+    await DB.set(`${ROOT}/${PREFIX}${code}`,{meta:{status:'lobby',created:Date.now(),code,cfg:JSON.stringify(cfg)}});
+    return code;
+  }
+  throw new Error('no code');
+}
+const DASH={offs:[],data:{}};
+function closeDash(){DASH.offs.forEach(f=>f());DASH.offs=[];}
+function openDashboard(){
+  leaveRoom();closeModal();closeDash();
+  const T=ls.get('pmTeacher')||{rooms:[]};
+  $('#app').hidden=true;$('#dash').hidden=false;
+  DASH.data={};
+  T.rooms.forEach(code=>{DASH.data[code]={};
+    ['meta','seats','state'].forEach(k=>DASH.offs.push(DB.on(`${ROOT}/${PREFIX}${code}/${k}`,v=>{DASH.data[code][k]=v;renderDash();})));});
+  renderDash();
+}
+const joinURL=code=>{const u=new URL(location.href);u.search='?room='+code;u.hash='';return u.toString();};
+function renderDash(){
+  const T=ls.get('pmTeacher')||{rooms:[]};
+  const cards=T.rooms.map(code=>{
+    const d=DASH.data[code]||{},m=d.meta;
+    if(!m) return `<article class="tcard"><h3>第 ${code} 桌</h3><p class="sub">讀取中或已刪除</p><div class="btns"><button class="btn alt sm" data-del="${code}">從清單移除</button></div></article>`;
+    const seats=d.seats||{},n=Object.keys(seats).length,g=d.state?JSON.parse(d.state):null;
+    let body='';
+    if(m.status==='lobby'){
+      body=`<div class="qr" id="qr${code}"></div><p>已入座 ${n} / 6：${Object.values(seats).map(s=>esc(s.name)).join('、')||'<span class="sub">還沒有人</span>'}</p>`;
+    }else if(g){
+      const cur=g.players[g.turn];
+      const mins=g.turnStart?Math.round((Date.now()-Math.min(...Object.values(g.turnStart)))/60000):0;
+      body=`<p>${g.over?'<b>已結束</b>':`第 <b>${g.day}</b> / ${g.cfg.days} 天・輪到 <b>${esc(cur.name)}</b>`}<span class="sub">・已進行 ${mins} 分鐘</span></p>
+        <table class="mini"><tbody>${g.players.map((p,i)=>{const sc=mathScore(p);const s=seats[i]||{};
+          return `<tr><td>${tokHTML(p)} ${esc(p.name)}${s.ctrl&&s.ctrl!==s.dev?' <span class="chip">老師操作</span>':''}</td><td class="n ${cls(p.money)}">${g.over?fmtN(p.money):''}</td><td class="n">答對 ${sc.ok}/${sc.n}</td></tr>`;}).join('')}</tbody></table>`;
+    }
+    return `<article class="tcard ${m.status}"><header><h3>第 <span class="num">${code}</span> 桌</h3><span class="chip">${{lobby:'等待中',playing:'進行中',over:'已結束'}[m.status]}</span></header>${body}
+      <div class="btns">${m.status==='lobby'?`<button class="btn main sm" data-start="${code}" ${n<2?'disabled':''}>開始</button>`:''}<button class="btn sm" data-view="${code}">放大／投影</button><button class="btn alt sm" data-del="${code}">刪除</button></div></article>`;
+  }).join('');
+  $('#dash').innerHTML=`<div class="dashhead"><h1>老師控制台</h1><span class="sub">學生打開這個網頁，選「學生加入」，輸入房號；或掃各桌的 QR Code。</span></div>
+    <div class="btns"><button class="btn main" id="dAll">全部開始</button><button class="btn" id="dAdd">＋ 再開一桌</button><button class="btn" id="dStats">全班答題統計</button><button class="btn alt" id="dHome">回首頁</button></div>
+    ${DBMODE==='local'?'<p class="warnline">本機測試模式：學生要在這台電腦的其他分頁加入。要讓平板連線，請先設定 Firebase。</p>':''}
+    <div class="tgrid">${cards||'<p>還沒有開桌。</p>'}</div>`;
+  T.rooms.forEach(code=>{const el=document.getElementById('qr'+code);if(el&&window.QRCode&&!el.dataset.done){el.dataset.done=1;try{new QRCode(el,{text:joinURL(code),width:120,height:120,correctLevel:QRCode.CorrectLevel.M});}catch(e){}}});
+  const D=$('#dash');
+  D.querySelectorAll('[data-start]').forEach(b=>b.onclick=()=>startRoom(b.dataset.start));
+  D.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{closeDash();enterRoom(b.dataset.view,'teacher');});
+  D.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delRoom(b.dataset.del));
+  $('#dAll').onclick=()=>T.rooms.forEach(c=>{const d=DASH.data[c];if(d&&d.meta&&d.meta.status==='lobby'&&Object.keys(d.seats||{}).length>=2)startRoom(c);});
+  $('#dAdd').onclick=async()=>{const code=await createRoom(T.cfg||{});T.rooms.push(code);ls.set('pmTeacher',T);openDashboard();};
+  $('#dStats').onclick=classStats;
+  $('#dHome').onclick=()=>{closeDash();goHome();};
+}
+async function startRoom(code){
+  const d=DASH.data[code];if(!d||!d.meta||d.meta.status!=='lobby')return;
+  const seats=d.seats||{};const keys=Object.keys(seats).sort((a,b)=>a-b);
+  if(keys.length<2) return;
+  const cfg={...JSON.parse(d.meta.cfg||'{}'),names:keys.map(k=>seats[k].name)};
+  const g=newGame(cfg);
+  await DB.update(`${ROOT}/${PREFIX}${code}`,{state:JSON.stringify(g),'meta/status':'playing'});
+}
+async function delRoom(code){
+  const T=ls.get('pmTeacher')||{rooms:[]};
+  modal(`<h2>刪除第 ${code} 桌？</h2><p>這一桌的遊戲進度會被清除，學生的畫面也會關閉。</p><div class="btns"><button class="btn main" id="dY">刪除</button><button class="btn alt" id="dN">取消</button></div>`,true);
+  $('#dN').onclick=closeModal;
+  $('#dY').onclick=async()=>{closeModal();await DB.remove(`${ROOT}/${PREFIX}${code}`);T.rooms=T.rooms.filter(c=>c!==code);ls.set('pmTeacher',T);openDashboard();};
+}
+function classStats(){
+  const T=ls.get('pmTeacher')||{rooms:[]};const srcs=Object.keys(STAT_SRC);const rows=[];const tot={n:0,first:0,second:0,miss:0};
+  T.rooms.forEach(code=>{const d=DASH.data[code];if(!d||!d.state)return;const g=JSON.parse(d.state);
+    g.players.forEach(p=>{const sc=mathScore(p);let sec=0,miss=0;Object.values(p.stats||{}).forEach(s=>{sec+=s.second;miss+=s.miss;tot.n+=s.n;tot.first+=s.first;tot.second+=s.second;tot.miss+=s.miss;});
+      rows.push(`<tr><td>${code}</td><td>${esc(p.name)}</td>${srcs.map(k=>`<td class="n">${p.stats&&p.stats[k]?p.stats[k].n:0}</td>`).join('')}<td class="n"><b>${sc.n}</b></td><td class="n">${sc.first}</td><td class="n">${sec}</td><td class="n">${miss}</td><td class="n">${fmtN(p.mathGain||0)}</td></tr>`);});});
+  modal(`<h2>全班答題統計</h2><p class="sub">各來源的題數；「骰子算式」與「記帳結算」另外列出。合計 ${tot.n} 題，一次答對 ${tot.first}、二次答對 ${tot.second}、沒答對 ${tot.miss}。</p>
+    <div class="tblwrap"><table class="ledger stats"><thead><tr><th>桌</th><th>組別</th>${srcs.map(k=>`<th>${STAT_SRC[k]}</th>`).join('')}<th>合計</th><th>一次答對</th><th>二次答對</th><th>沒答對</th><th>答題獎金</th></tr></thead><tbody>${rows.join('')||'<tr><td colspan="13">還沒有資料</td></tr>'}</tbody></table></div>
+    <div class="btns"><button class="btn main" id="mClose">關閉</button></div>`);
+  $('#mClose').onclick=closeModal;
+}
+
+/* ---------------- 啟動 ---------------- */
+window.__test={get G(){return G},tollCalc,evalTokens,SPACES,NET,get DB(){return DB}};
+async function start(){
+  buildBoard();
+  $('#stage').innerHTML='<h2>載入中…</h2>';
+  await initDB();
+  const j=ss.get('pmJoin');
+  if(j&&(await joinRoom(j.code,j.name))===true) return;
+  const q=new URLSearchParams(location.search).get('room');
+  if(q){joinForm(q);return;}
+  goHome();
+}
+start();
+
+</script>
+
+</body>
+</html>
