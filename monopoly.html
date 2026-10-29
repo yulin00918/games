@@ -91,6 +91,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .die i{border-radius:50%;margin:16%;}
 .die i.on{background:var(--dc,var(--ink))}
 .die.q{display:grid;place-items:center;font-family:var(--f-num);font-weight:600;color:var(--dc);grid-template:1fr/1fr}
+.die.sgn{display:grid;place-items:center;grid-template:1fr/1fr;font-size:1.5em;font-weight:900;color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
 .d-move{--dc:var(--pos)} .d-pay{--dc:var(--neg)} .d-collect{--dc:var(--k-conv)} .d-plain{--dc:var(--ink-2)}
 .die.rolling{animation:shake .5s linear}
 @keyframes shake{20%{transform:rotate(-12deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-6deg)}80%{transform:rotate(4deg)}}
@@ -276,6 +277,7 @@ table.mini .tok{font-size:11px;display:inline-grid;vertical-align:middle}
   .cell{transition:none}
 }
 </style>
+<style>body{margin:0}</style>
 </head>
 <body>
 <div class="topbar" id="topbar" hidden></div>
@@ -294,45 +296,44 @@ table.mini .tok{font-size:11px;display:inline-grid;vertical-align:middle}
 "use strict";
 /* ---------------- data ---------------- */
 const KC={'便利商店':'--k-conv','書店':'--k-book','飲料店':'--k-drink','雞排店':'--k-chicken','補習班':'--k-cram','電影院':'--k-cinema'};
-const shop=(kind,name,A,B,C,k,min,max)=>({t:'shop',kind,name,f:{type:'exp',A,B,C,k},min,max});
-const pshop=(kind,name,k,min,max)=>({t:'shop',kind,name,f:{type:'pow',k},min,max});
+const shop=(kind,name,base)=>({t:'shop',kind,name,base});
 const SPACES=[
   {t:'start',name:'起點'},
-  shop('便利商店','8-11',1,2,2,100,100,100000),
-  shop('書店','金石糖',1,1,1,100,100,100),
-  shop('飲料店','60藍',2,2,2,100,100,100000),
+  shop('便利商店','8-11',100),
+  shop('書店','金石糖',100),
+  shop('飲料店','60藍',100),
   {t:'fate'},
-  shop('飲料店','親心',2,2,2,200,200,200000),
+  shop('飲料店','親心',200),
   {t:'chance'},
-  shop('便利商店','你家',1,2,2,200,200,200000),
+  shop('便利商店','你家',200),
   {t:'school',die:'move',bonus:1000},
   {t:'gambler'},
   {t:'gate',name:'圖書館門口',sub:'測試上進心',zone:'library',enterMax:2},
   {t:'zone',zone:'library',name:'圖書館'},
-  shop('雞排店','派課',1,3,3,100,100,100000),
+  shop('雞排店','派課',100),
   {t:'fate'},
-  shop('書店','成品',1,1,1,1000,1000,1000),
+  shop('書店','成品',200),
   {t:'chance'},
   {t:'school',die:'pay',bonus:1000},
   {t:'gate',name:'網咖門口',sub:'考驗定力',zone:'netcafe',enterMax:3},
   {t:'zone',zone:'netcafe',name:'網咖'},
-  shop('飲料店','GOGO',2,2,2,400,400,400000),
+  shop('飲料店','GOGO',300),
   {t:'fate'},
-  shop('飲料店','頂樓沒蓋',2,2,2,800,800,800000),
-  shop('書店','杯具王',1,1,1,10000,10000,10000),
-  shop('便利商店','QK',1,2,2,300,300,300000),
+  shop('飲料店','頂樓沒蓋',400),
+  shop('書店','杯具王',300),
+  shop('便利商店','QK',200),
   {t:'gambler'},
   {t:'school',die:'collect',bonus:2000},
-  shop('便利商店','來爾付',1,2,2,400,400,400000),
+  shop('便利商店','來爾付',300),
   {t:'chance'},
   {t:'gate',name:'運動場門口',sub:'測試耐力',zone:'stadium',enterMax:2},
   {t:'zone',zone:'stadium',name:'運動場'},
-  shop('書店','博課來',1,1,1,100000,100000,100000),
+  shop('書店','博課來',500),
   {t:'fate'},
-  pshop('補習班','巨醬',500,500,500000),
+  shop('補習班','巨醬',500),
   {t:'chance'},
   {t:'school',die:'any',bonus:3000},
-  pshop('電影院','威繡',100,100,100000),
+  shop('電影院','威繡',200),
 ];
 const N=SPACES.length; // 36
 const ZONE={library:{idx:11,name:'圖書館'},netcafe:{idx:18,name:'網咖'},stadium:{idx:29,name:'運動場'}};
@@ -475,39 +476,16 @@ const shopsOf=pi=>Object.keys(G.shops).map(Number).filter(i=>G.shops[i].owner===
 
 /* ---------------- toll maths ---------------- */
 function tollCalc(sp,a,b,c){
-  const f=sp.f,steps=[];let val; // val: {big} or {num,den}
-  if(f.type==='exp'){
-    steps.push(`${f.A}<sup>${a}</sup> × ${f.B}<sup>${supN(b)}</sup> × ${f.C}<sup>${supN(c)}</sup> × ${f.k}`);
-    if(f.A===1&&f.B===1){steps.push(`1 的任何次方都是 1 → = 1 × 1 × 1 × ${f.k}`);val={big:BigInt(f.k)};}
-    else{
-      let base,e,ex;
-      if(f.A===f.B){base=f.A;e=a+b+c;ex=`${a}+${par(b)}+${par(c)}`;
-        steps.push(`同底數相乘，指數相加：${base}<sup>${ex}</sup> × ${f.k} = ${base}<sup>${supN(e)}</sup> × ${f.k}`);}
-      else{base=f.B;e=b+c;ex=`${par(b)}+${par(c)}`;
-        steps.push(`1<sup>${a}</sup> = 1；同底數相乘，指數相加：${base}<sup>${ex}</sup> × ${f.k} = ${base}<sup>${supN(e)}</sup> × ${f.k}`);}
-      if(e>=0){const p=BigInt(base)**BigInt(e);val={big:p*BigInt(f.k)};steps.push(`= ${fmtBig(p)} × ${f.k} = ${fmtBig(val.big)}`);}
-      else{const den=base**(-e);val={num:f.k,den};
-        steps.push(`負指數：${base}<sup>${supN(e)}</sup> = 1 ÷ ${base}<sup>${-e}</sup> = 1 ÷ ${den.toLocaleString('en-US')}`);
-        const q=f.k/den;steps.push(`= ${f.k} ÷ ${den.toLocaleString('en-US')} = ${Number.isInteger(q)?q:(q>=0.001?+q.toFixed(4):'不到 0.001')}`);}
-    }
-  }else{
-    steps.push(`${par(b)}<sup>${a}</sup> × ${par(c)}<sup>${a}</sup> × ${f.k}`);
-    const bc=b*c;
-    steps.push(`指數相同，底數相乘：(${par(b)} × ${par(c)})<sup>${a}</sup> × ${f.k} = ${par(bc)}<sup>${a}</sup> × ${f.k}`);
-    const p=BigInt(bc)**BigInt(a);val={big:p*BigInt(f.k)};
-    steps.push(`= ${fmtBig(p)} × ${f.k} = ${fmtBig(val.big)}`);
-  }
-  let toll,note='';
-  const lt=x=>val.big!==undefined?val.big<BigInt(x):(val.num/val.den)<x;
-  const gt=x=>val.big!==undefined?val.big>BigInt(x):(val.num/val.den)>x;
-  if(sp.min===sp.max){toll=sp.min;note=`固定收費 ${fmtN(sp.min)} 元`;}
-  else if(lt(sp.min)){toll=sp.min;note=`低於最低收費，收 ${fmtN(sp.min)} 元`;}
-  else if(gt(sp.max)){toll=sp.max;note=`超過最高收費，收 ${fmtN(sp.max)} 元`;}
-  else{toll=Number(val.big);note=`在 ${fmtN(sp.min)}～${fmtN(sp.max)} 之間，收 ${fmtN(toll)} 元`;}
+  // 過路費 = 基本價 × (等級 + c − b)；算出負數代表店家倒貼顧客
+  const x=a+c-b,toll=sp.base*x;
+  const steps=[`${sp.base} × (${a} + ${par(c)} − ${par(b)})`,
+    `先算括號：${a} + ${par(c)} − ${par(b)} = ${a+c} + ${par(-b)} = ${sn(x)}`,
+    `再乘基本價：${sp.base} × ${par(x)} = ${sn(toll)}`];
+  const note=toll>0?`顧客付給店家 ${fmtN(toll)} 元`:toll<0?`答案是負數：店家倒貼顧客 ${fmtN(-toll)} 元`:'答案是 0：不用付錢';
   return {steps,toll,note};
 }
-const formulaHTML=sp=>sp.f.type==='exp'?`${sp.f.A}<sup>a</sup> × ${sp.f.B}<sup>b</sup> × ${sp.f.C}<sup>c</sup> × ${sp.f.k}`:`b<sup>a</sup> × c<sup>a</sup> × ${sp.f.k}`;
-const rangeTxt=sp=>sp.min===sp.max?`(${fmtN(sp.min)})`:`(${fmtN(sp.min)}～${fmtN(sp.max)})`;
+const formulaHTML=sp=>`${sp.base} × (a + c − b)`;
+const rangeTxt=sp=>`基本價 ${fmtN(sp.base)}`;
 
 /* ---------------- expression parsing (exact fractions) ---------------- */
 const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a||1};
@@ -561,7 +539,7 @@ function buildBoard(){
   }
   const ctr=document.createElement('div');ctr.className='center';
   ctr.innerHTML=`<h1><span class="pp">正</span><span class="pm">負</span>數大富翁</h1>
-    <p class="tag">四則運算 × 指數律</p>
+    <p class="tag">正負數四則運算</p>
     <div class="daybar" id="daybar"></div>
     <div class="tray" id="tray"></div>
     <div class="lastlog" id="lastlog"></div>
@@ -696,6 +674,20 @@ async function rollD6(p,title,body){
   return v;
 }
 
+const signDie=(sg,extra='')=>`<div class="die sgn ${extra}" aria-label="${sg==null?'正負號骰子':sg>0?'正號':'負號'}">${sg==null?'±':sg>0?'＋':'－'}</div>`;
+async function rollSign(p,r){
+  $('#stage').innerHTML=`${whoHTML(p)}<h2>擲正負號骰子</h2><p>前進骰子算出 <b>${sn(r.v)}</b>。再擲正負號骰子（4 面＋、2 面－），決定往前還是往後。</p>
+    <div class="tray" id="sgT" style="justify-content:flex-start;font-size:18px">${signDie(null)}</div><div class="btns"><button class="btn main" id="sgB">擲正負號骰子</button></div>`;
+  await new Promise(res=>{$('#sgB').onclick=res});
+  const sg=Math.random()<4/6?1:-1;
+  if(!reduced()){for(let k=0;k<7;k++){$('#sgT').innerHTML=signDie(k%2?1:-1,'rolling');await sleep(70);}}
+  $('#sgT').innerHTML=signDie(sg);
+  const n=sg*r.v;
+  G.tray={vals:r.vals,type:'move',expr:`${sg>0?'＋':'－'} 與 ${r.expr}`,v:n};renderAll();
+  $('#stage .btns').innerHTML=`<p style="margin:0 0 8px">${sg>0?'正':'負'}號，${sg>0?'正':'負'} × ${sn(r.v)} 的${r.v<0?'（負負得正）':''}結果是 <b class="${cls(n)}">${sn(n)}</b>：${n>0?'往前':n<0?'往後':'不動'} ${Math.abs(n)} 步</p><button class="btn main" id="sgGo">${n>0?'往前走':n<0?'往後退':'原地不動'}</button>`;
+  await new Promise(res=>{$('#sgGo').onclick=res});
+  return sg;
+}
 async function rollExpr(p,type,title,body,manual){
   const level=p.lv[type],n=level;
   $('#stage').innerHTML=`${whoHTML(p)}<h2>${title}</h2>${body||''}
@@ -874,9 +866,10 @@ async function playTurn(){
   G.phase=2;renderAll();
   if(p.zone){const left=await zoneTurn(p);renderAll();if(!left){await endTurn(p);return;}}
   await actionPrompt(p,`② ${esc(p.name)} 擲骰前進`,'擲前進骰子',`<p>現在在 <b>${spaceName(p.pos)}</b>。</p>`);
-  const r=await rollExpr(p,'move',`${esc(p.name)} 擲前進骰子`,'<p class="sub">結果是負數就往回走。</p>');
+  const r=await rollExpr(p,'move',`${esc(p.name)} 擲前進骰子`,'<p class="sub">算完後還要擲一顆正負號骰子，決定往前或往後。</p>');
   if(r.stat) statAdd(p,'dice',r.stat);
-  await moveBy(p,r.v,r.expr);
+  const sg=await rollSign(p,r);
+  await moveBy(p,sg*r.v,`(${sg>0?'+':MINUS}1) × ${par(r.v)}`);
   G.phase=3;
   await resolveSpace(p);
   renderAll();
@@ -947,7 +940,7 @@ async function resolveSpace(p){
 async function landShop(p,i){
   const sp=SPACES[i],pi=pidx(p),sh=G.shops[i];
   if(!sh){
-    const deed=`<div class="cardface c-shop"><div class="ck">營業證明</div><div class="cn">${sp.kind}・${sp.name}</div><div class="cd">過路費 ${formulaHTML(sp)} 元　${rangeTxt(sp)}</div></div>`;
+    const deed=`<div class="cardface c-shop"><div class="ck">營業證明</div><div class="cn">${sp.kind}・${sp.name}</div><div class="cd">過路費 = ${formulaHTML(sp)}</div></div>`;
     const res=await mathQ(p,drawQuestion(),{title:`想取得${sp.kind}「${sp.name}」？先答一題`,pre:deed+`<p class="sub">答對（有兩次機會）免費取得；沒答對可以付 ${fmtN(G.cfg.price)} 元買下，或放棄。</p>`,reward:false,src:'shop',after:'<p>店面免費歸你！</p>'});
     if(res==='miss'){
       const v=await ask(p,`要買下「${sp.name}」嗎？`,deed,[{label:`付 ${fmtN(G.cfg.price)} 元買下`,v:1,kind:'main'},{label:'放棄',v:0,kind:'alt'}]);
@@ -958,7 +951,7 @@ async function landShop(p,i){
     await ok(p,`${sp.kind}「${sp.name}」歸你了！`,deed+'<p>店面 1 級。之後再走到自己的店，店面升一級。</p>');return;}
   if(sh.owner===pi){
     sh.level++;log(`${esc(p.name)} 把「${sp.name}」升到 ${sh.level} 級`);renderAll();
-    await ok(p,`「${sp.name}」升到 ${sh.level} 級`,`<p>走到自己的店，店面升一級。${sp.f.type==='exp'&&sp.f.A===1?'<br><span class="sub">（這家店的公式是 1<sup>a</sup>，升級不會改變過路費，想想看為什麼？）</span>':''}</p>`);return;}
+    await ok(p,`「${sp.name}」升到 ${sh.level} 級`,`<p>走到自己的店，店面升一級。等級越高，過路費括號裡的數就越大。</p>`);return;}
   await payToll(p,i);
 }
 async function payToll(p,i){
@@ -974,23 +967,23 @@ async function payToll(p,i){
       log(`${esc(p.name)} 用「${esc(u.c.n)}」免付「${sp.name}」過路費`);renderAll();
       await ok(p,'免付過路費！',`<p>用掉了「${esc(u.c.n)}」。</p>`);return;}
   }
-  const head=`<p>公式：<span class="num">${formulaHTML(sp)}</span> 元 ${rangeTxt(sp)}<br><span class="sub">a = 店面等級（${sh.level}）、b = 顧客點數、c = 主人點數</span></p>`;
+  const head=`<p>過路費 = <span class="num">${formulaHTML(sp)}</span><br><span class="sub">a = 店面等級（${sh.level}）、b = 顧客點數、c = 主人點數</span></p>`;
   const b=await rollExpr(p,'pay',`付過路費：${esc(p.name)} 擲付錢骰子`,head+'<p class="sub">b 越小，付得越少。</p>');
   if(b.stat) statAdd(p,'dice',b.stat);
   const c=await asSeat(sh.owner,'rollExpr',[sh.owner,'collect',`收過路費：主人 ${esc(o.name)} 擲收錢骰子`,head+`<p>${esc(p.name)} 算出 b = <b>${par(b.v)}</b>。c 越大，收得越多。</p>`,o.zone==='stadium']);
   if(c.stat) statAdd(o,'dice',c.stat);
   G.tray={vals:c.vals,type:'collect',expr:c.expr,v:c.v};renderAll();
   const r=tollCalc(sp,sh.level,b.v,c.v);
-  const given=`<div class="calc"><div class="lab">a = ${sh.level}，b = ${par(b.v)}，c = ${par(c.v)}</div><div>過路費 = ${formulaHTML(sp)} 元　${rangeTxt(sp)}</div><div>代入：${r.steps[0]}</div></div><p class="sub">把 a、b、c 代進公式算出來，記得看括號裡的最小值和最大值。</p>`;
-  const right=await askNumber(p,'過路費是多少元？',given,r.toll,'過路費（元）',{src:'toll',hint:'1 的任何次方都是 1；同底數相乘，指數相加；指數相同，底數相乘。算完要和括號裡的最小值、最大值比較。',steps:[...r.steps,r.note]});
+  const given=`<div class="calc"><div class="lab">a = ${sh.level}，b = ${par(b.v)}，c = ${par(c.v)}</div><div>過路費 = ${formulaHTML(sp)}</div><div>代入：${r.steps[0]}</div></div><p class="sub">先算括號，再乘基本價。算出負數代表店家要倒貼你。</p>`;
+  const right=await askNumber(p,'過路費是多少元？',given,r.toll,'過路費（元）',{src:'toll',hint:'先算括號：等級 + c − b。減去一個負數等於加上正數。再乘以基本價，注意正負號。',steps:[...r.steps,r.note]});
   let toll=r.toll,extra='';
   if(o.zone==='library'){
     await askNumber(p,`${esc(o.name)} 在圖書館，營業收入變 2 倍`,`<p>過路費是 ${fmtN(r.toll)} 元，變成 2 倍是多少元？</p>`,r.toll*2,'實際過路費（元）',{src:'toll',steps:[`${fmtN(r.toll)} × 2 = ${fmtN(r.toll*2)}`]});
     toll*=2;extra=`<div>${esc(o.name)} 在圖書館，營業收入變 2 倍：${fmtN(r.toll)} × 2 = ${fmtN(toll)}</div>`;}
-  record(p,`付過路費給${o.name}（${sp.name}）`,-toll);
-  record(o,`收過路費（${sp.name}，${p.name}付）`,toll);
-  log(`${esc(p.name)} 付給 ${esc(o.name)}「${sp.name}」過路費 ${fmtN(toll)} 元`);renderAll();
-  await ok(p,`${right?'算對了！':''}過路費 ${fmtN(toll)} 元`,`<div class="calc"><div class="lab">計算過程</div><div>a = ${sh.level}，b = ${par(b.v)}，c = ${par(c.v)}</div>${r.steps.map(x=>`<div>${x}</div>`).join('')}<div class="lab">${r.note}</div>${extra}</div><p class="sub">${esc(p.name)} 和 ${esc(o.name)} 都要記到記帳本裡。</p>`);
+  record(p,toll>=0?`付過路費給${o.name}（${sp.name}）`:`${o.name}的${sp.name}倒貼`,-toll);
+  record(o,toll>=0?`收過路費（${sp.name}，${p.name}付）`:`${sp.name}倒貼給${p.name}`,toll);
+  log(toll>=0?`${esc(p.name)} 付給 ${esc(o.name)}「${sp.name}」過路費 ${fmtN(toll)} 元`:`${esc(o.name)} 的「${sp.name}」倒貼 ${esc(p.name)} ${fmtN(-toll)} 元`);renderAll();
+  await ok(p,`${right?'算對了！':''}過路費 ${sn(toll)} 元`,`<div class="calc"><div class="lab">計算過程</div><div>a = ${sh.level}，b = ${par(b.v)}，c = ${par(c.v)}</div>${r.steps.map(x=>`<div>${x}</div>`).join('')}<div class="lab">${r.note}</div>${extra}</div><p class="sub">${esc(p.name)} 和 ${esc(o.name)} 都要記到記帳本裡。</p>`);
 }
 async function doSchool(p,sp){
   const types=['move','pay','collect'];
@@ -1165,13 +1158,13 @@ function showSpace(i){
   }
   const sh=G&&G.shops[i];
   modal(`<div class="shopinfo"><h2>${sp.kind}・${sp.name}</h2>
-    <p>過路費：<span class="num">${formulaHTML(sp)}</span> 元　${rangeTxt(sp)}<br><span class="sub">a：店鋪等級　b：顧客付錢點數　c：主人收錢點數</span></p>
+    <p>過路費 = <span class="num">${formulaHTML(sp)}</span><br><span class="sub">a：店鋪等級　b：顧客付錢點數　c：主人收錢點數。算出負數代表店家倒貼顧客。</span></p>
     <p>${sh?`主人：<b style="color:${G.players[sh.owner].color}">${esc(G.players[sh.owner].name)}</b>，店面 ${sh.level} 級`:'還沒有主人，第一個走到的人直接成為主人。'}</p>
     <h3>試算看看</h3>
     <div class="calc"><label>a <input type="number" id="ta" value="${sh?sh.level:1}" min="1" step="1"></label>　<label>b <input type="number" id="tb" value="3" step="1"></label>　<label>c <input type="number" id="tc" value="5" step="1"></label><div id="tout"></div></div>
     <div class="btns"><button class="btn main" id="mClose">關閉</button></div></div>`,true);
   const upd=()=>{const a=Math.max(1,parseInt($('#ta').value)||1),b=parseInt($('#tb').value)||0,c=parseInt($('#tc').value)||0;
-    if(Math.abs(b)>500||Math.abs(c)>500||a>50){$('#tout').innerHTML='<div class="lab">數字太大了，換小一點試試。</div>';return;}
+    if(Math.abs(b)>999||Math.abs(c)>999||a>99){$('#tout').innerHTML='<div class="lab">數字太大了，換小一點試試。</div>';return;}
     const r=tollCalc(sp,a,b,c);$('#tout').innerHTML=r.steps.map(s=>`<div>${s}</div>`).join('')+`<div class="lab">${r.note}</div><div class="res">${fmtN(r.toll)} 元</div>`;};
   ['ta','tb','tc'].forEach(id=>$('#'+id).oninput=upd);upd();
   $('#mClose').onclick=closeModal;
@@ -1185,11 +1178,10 @@ function showRules(){
     <li>所有收支都登記在「我的記帳本」中，需每日結算。資產可以是負數。</li>
     <li>走到沒有主人的商店，先答一題：答對免費成為主人；沒答對可以付購買費用買下，或放棄。之後每一次再走到自己的店，就可以將店面升一級。</li>
     <li>機會、命運卡裡有情境題：算出來的答案就是這次的收支，答對另有答題獎勵。</li>
-    <li>骰子分三類：<b>前進骰子</b>決定行走的步數（負數就往回走）；<b>付錢骰子</b>走到別人的商店時決定付多少（b）；<b>收錢骰子</b>別人走到自己的商店時決定收多少（c）。</li>
+    <li>骰子分三類：<b>前進骰子</b>決定步數，再擲一顆<b>正負號骰子</b>（4 面＋、2 面－）決定往前或往後；<b>付錢骰子</b>走到別人的商店時決定付多少（b）；<b>收錢骰子</b>別人走到自己的商店時決定收多少（c）。</li>
     <li>各類骰子分三級。第一級：骰一顆。第二級：骰兩顆，可以加減，或只取其中一顆。第三級：骰三顆，可以四則運算（可加括號），或只取其中一顆。算出來要是整數，答案要自己算好再輸入。</li>
     <li>特異功能卡抽到後，不一定要馬上使用，但要輪到自己時才能使用。</li>
-    <li>走到別人的商店，要依公式付過路費：a 是商店等級、b 是顧客骰出的點數、c 是主人骰出的點數。過路費要自己算出來，系統只負責核對。</li>
-    <li>各商店的收費有最小值和最大值，記錄在括號中。例如：你家便利商店（200～200000）代表最少收 200 元，最多收 200000 元。</li>
+    <li>走到別人的商店，過路費 = 基本價 × (a + c − b)：a 是店面等級、b 是顧客骰出的點數、c 是主人骰出的點數。算出負數代表店家倒貼顧客。過路費要自己算，系統只負責核對。</li>
     <li>圖書館、網咖、運動場都要從門口進，直接走到那一格只是路過。</li>
   </ol>
   <p class="sub">點地圖上任何一格，可以看那一格的說明；商店還可以試算過路費。</p>
@@ -1266,9 +1258,9 @@ async function makeFirebaseDB(){
     on(p,cb){const h=sn=>cb(sn.val());r(p).on('value',h);return ()=>r(p).off('value',h)},
   };
 }
-let DB=null,DBMODE='local';
+let DB=null,DBMODE='local',DBFAIL=false;
 async function initDB(){
-  if(FIREBASE_CONFIG.databaseURL){try{DB=await makeFirebaseDB();DBMODE='firebase';return;}catch(e){console.warn('Firebase 載入失敗，改用本機測試模式',e);}}
+  if(FIREBASE_CONFIG.databaseURL){try{DB=await makeFirebaseDB();DBMODE='firebase';return;}catch(e){DBFAIL=true;console.warn('Firebase 載入失敗，改用本機測試模式',e);}}
   DB=makeLocalDB();DBMODE='local';
 }
 
@@ -1416,7 +1408,7 @@ function goHome(){
   $('#stage').innerHTML='<h2>正負數大富翁</h2><p>選擇遊戲方式。</p>';
   const t=ls.get('pmTeacher'),solo=ls.get('pmSolo');
   modal(`<h2>正負數大富翁</h2>
-    <p>玩法類似大富翁，所有設定都和「正負數四則運算」以及「指數律」有關。</p>
+    <p>玩法類似大富翁，所有設定都和「正負數四則運算」有關。</p>
     <div class="homegrid">
       <button class="homebtn" id="hJoin"><b>學生加入</b><span>輸入老師給的 4 位數房號</span></button>
       <button class="homebtn" id="hTeach"><b>老師開桌</b><span>一次開好幾桌，每桌 2–6 人，各用自己的裝置</span></button>
@@ -1424,7 +1416,7 @@ function goHome(){
     </div>
     ${t&&t.rooms&&t.rooms.length?'<div class="btns"><button class="btn" id="hDash">回到老師控制台</button></div>':''}
     ${solo?'<div class="btns"><button class="btn" id="hSoloGo">繼續上次的單機遊戲</button></div>':''}
-    <p class="sub">連線方式：${DBMODE==='firebase'?'Firebase 線上連線':'本機測試模式（還沒設定 Firebase，只能在這台電腦的不同分頁之間連線）'}</p>
+    <p class="sub">連線方式：${DBMODE==='firebase'?'Firebase 線上連線':DBFAIL?'<b class="neg">連不上 Firebase</b>（請檢查網路，或確認網址是 GitHub Pages 的網址），目前是本機測試模式':'本機測試模式（還沒設定 Firebase，只能在這台電腦的不同分頁之間連線）'}</p>
     <div class="btns"><button class="btn alt" id="hRules">看規則</button></div>`,true);
   $('#hJoin').onclick=()=>joinForm();
   $('#hTeach').onclick=teacherForm;
