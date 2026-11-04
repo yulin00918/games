@@ -548,6 +548,7 @@ function renderHome(){
       <h3>🙋 我是學生：加入遊戲</h3>
       <label for="jcode">房號</label><input id="jcode" inputmode="numeric" maxlength="4" placeholder="4 位數字" value="${esc(pre)}">
       <label for="jname">你的名字</label><input id="jname" maxlength="10" placeholder="例如：小明">
+      <p class="small muted" style="margin:6px 0 0">不小心跳出去了？輸入同一個房號和<b>一模一樣的名字</b>，就能回到原本的位置。</p>
       <button class="btn block" style="margin-top:14px" data-act="join">加入</button>
     </div>
     <div class="card" style="margin-top:14px">
@@ -592,9 +593,16 @@ async function joinRoom(){
   const ps=playerList(room);
   const sess=loadSession();
   if(sess&&sess.code===code&&room.players&&room.players[sess.me]){ S.me=sess.me; connect(code); return }
-  if(room.meta.status!=="lobby") return toast("這桌已經開始了，請跟老師說");
+  // 跳出去、換瀏覽器或按了離開：輸入同一個名字就回到原本的位置（食材、錢、出的菜都保留）
+  const norm=x=>String(x||"").replace(/\s+/g,"").toLowerCase();
+  const same=ps.find(p=>norm(p.name)===norm(name));
+  if(same){
+    if(!await ask("回到原本的位置？",`這一桌已經有「<b>${esc(same.name)}</b>」。<br>如果你就是 ${esc(same.name)}，剛剛不小心跳出去，按「是我」就能回到原本的位置。<br>不是的話，請換一個名字。`,"是我，回到位置","換名字")) return;
+    S.me=same.id; S.code=code; saveSession(); history.replaceState(null,"","?room="+code); connect(code);
+    return toast(`歡迎回來，${same.name}！`);
+  }
+  if(room.meta.status!=="lobby") return toast("這桌已經開始了。如果你剛剛跳出去，請輸入跟原本一模一樣的名字");
   if(ps.length>=MAX_PLAYERS) return toast(`這桌已經滿 ${MAX_PLAYERS} 人了`);
-  if(ps.some(p=>p.name===name)) return toast("這個名字有人用了，換一個吧");
   const me=uid();
   await NET.update(code,{[`players/${me}`]:{name,joinedAt:Date.now()}});
   S.me=me; S.code=code; saveSession(); history.replaceState(null,"","?room="+code); connect(code);
@@ -964,7 +972,10 @@ document.addEventListener("click",e=>{
   if(a==="create") return act(createFromHome);
   if(a==="resume"){ const s=loadSession(); S.me=s.me; history.replaceState(null,"","?room="+s.code); return connect(s.code) }
   if(a==="hostresume"){ const h=loadHost(); return hostOpen(h.me,h.codes) }
-  if(a==="leave"){ if(S.unsub) S.unsub(); S.unsub=null; S.code=null; S.room=null; clearSession(); history.replaceState(null,"",location.pathname); return render() }
+  if(a==="leave") return act(async()=>{
+    const p=S.room&&S.room.players&&S.room.players[S.me];
+    if(p&&S.room.meta.status!=="ended"&&!await ask("離開這一桌？",`你的位置會保留。想回來的話，輸入同一個房號和名字「<b>${esc(p.name)}</b>」就可以了。`,"離開","留下來")) return;
+    if(S.unsub) S.unsub(); S.unsub=null; S.code=null; S.room=null; clearSession(); history.replaceState(null,"",location.pathname); render() });
   if(a==="hostleave") return act(async()=>{ if(await ask("離開老師控制台？","各桌的遊戲會繼續進行。之後可以從首頁「回到老師畫面」回來。","離開")){ const keep=loadHost(); hostClose(); sSet("tsps_host",keep); history.replaceState(null,"",location.pathname); render() } });
   if(a==="addtable") return act(addTable);
   if(a==="removetable") return act(()=>removeTable(code));
