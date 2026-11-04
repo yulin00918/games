@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>正負數加減 100 題</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: a number-line strip on top, level picker, then one big question card with an on-screen keypad (tablet first). */
+:root{
+  --paper:#f1f5f3; --card:#ffffff; --card-2:#f5f8f7; --ink:#1b2729; --ink-2:#56666a; --line:#d3ddda;
+  --pos:#1d63a8; --neg:#cc3a26; --ok:#2e8a4e; --accent:#e39a12; --accent-ink:#2a1c00;
+  --f-display:"LXGW WenKai TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111a1b; --card:#1b2627; --card-2:#162021; --ink:#e6eeec; --ink-2:#a2b2b4; --line:#2f3d3f;
+  --pos:#6cb2f5; --neg:#ff7a63; --ok:#5fc27f; --accent:#f2b23a; --accent-ink:#241700; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111a1b; --card:#1b2627; --card-2:#162021; --ink:#e6eeec; --ink-2:#a2b2b4; --line:#2f3d3f;
+  --pos:#6cb2f5; --neg:#ff7a63; --ok:#5fc27f; --accent:#f2b23a; --accent-ink:#241700; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 28px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.pos{color:var(--pos)} .neg{color:var(--neg)} .okc{color:var(--ok)}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-size:2em;line-height:1.1;margin:0;letter-spacing:.03em}
+h1 .m{color:var(--neg)} h1 .p{color:var(--pos)}
+.who{display:flex;align-items:center;gap:6px;font-size:.9em;color:var(--ink-2)}
+.who input{font:inherit;border:1.5px solid var(--line);border-radius:8px;padding:.25em .5em;background:var(--card);color:var(--ink);width:8em}
+.nl{height:30px;position:relative;margin:2px 4px 0}
+.nl svg{width:100%;height:30px;display:block}
+.levels{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.lvl{border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:8px 8px 10px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0}
+.lvl b{font-family:var(--f-display);font-size:1.15em}
+.lvl span{font-size:.78em;color:var(--ink-2);line-height:1.3}
+.lvl .bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:6px}
+.lvl .bar i{display:block;height:100%;background:var(--ok)}
+.lvl.on{border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--ink)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 8px 24px -16px rgba(20,50,50,.45)}
+.dots{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.dots button{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);background:var(--card-2);font-family:var(--f-num);font-size:.72em;padding:0;color:var(--ink-2)}
+.dots button.cur{border-color:var(--ink);color:var(--ink);font-weight:600}
+.dots button.first{background:var(--ok);border-color:var(--ok);color:#fff}
+.dots button.second{background:color-mix(in srgb,var(--ok) 35%,var(--card));border-color:var(--ok);color:var(--ink)}
+.dots button.miss{background:color-mix(in srgb,var(--neg) 25%,var(--card));border-color:var(--neg);color:var(--ink)}
+.qhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;color:var(--ink-2);font-size:.9em}
+.q{font-family:var(--f-num);font-weight:600;font-size:clamp(1.7em,6.4vw,2.6em);line-height:1.25;margin:14px 0 10px;overflow-wrap:anywhere}
+.ansrow{display:flex;align-items:center;gap:10px;font-family:var(--f-num);font-size:clamp(1.5em,5.5vw,2.1em);font-weight:600}
+.ans{flex:1;min-width:0;min-height:1.6em;border:2.5px solid var(--ink);border-radius:12px;padding:.1em .45em;background:var(--card-2);display:flex;align-items:center}
+.ans .ph{font-family:var(--f-body);font-size:.5em;font-weight:400;color:var(--ink-2)}
+.ans.wrong{border-color:var(--neg);animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.msg{min-height:1.5em;margin:10px 0 2px;font-weight:700}
+.hint{border-left:4px solid var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent);padding:8px 12px;border-radius:0 10px 10px 0;margin:8px 0}
+.hint b{display:block;font-size:.8em;letter-spacing:.1em}
+.steps{background:var(--card-2);border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin:8px 0;font-size:.98em}
+.steps ol{margin:4px 0;padding-left:1.4em}
+.steps .fin{font-family:var(--f-num);font-weight:600;font-size:1.2em}
+.pad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.pad button{min-height:56px;border-radius:12px;border:1.5px solid var(--line);background:var(--card-2);font-family:var(--f-num);font-size:1.45em;font-weight:600}
+.pad button:active{transform:translateY(1px)}
+.pad .neg-k{color:var(--neg);font-size:1.1em}
+.pad .go{grid-column:4;grid-row:3/5;background:var(--ink);color:var(--card);border-color:var(--ink);font-family:var(--f-body);font-size:1.15em}
+.pad .wide{grid-column:span 2}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{border:1.5px solid var(--ink);background:var(--card);border-radius:10px;padding:.55em 1.1em;font-weight:700}
+.btn.main{background:var(--ink);color:var(--card)}
+.btn.alt{border-color:var(--line);font-weight:500}
+.result h2{font-family:var(--f-display);font-size:1.8em;margin:0 0 4px}
+.score{font-family:var(--f-num);font-size:3em;font-weight:600;line-height:1}
+.score small{font-size:.35em;color:var(--ink-2)}
+.stars{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;font-size:.95em}
+.misslist{list-style:none;padding:0;margin:8px 0;display:flex;flex-direction:column;gap:6px}
+.misslist li{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:4px;font-family:var(--f-num)}
+.foot{font-size:.82em;color:var(--ink-2);text-align:center}
+@media (max-width:560px){
+  .levels{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+  .lvl{padding:6px 5px 8px;border-radius:10px}
+  .lvl span{display:none}
+  .card{padding:14px}
+  .dots button{width:22px;height:22px}
+}
+@media (prefers-reduced-motion:reduce){.ans.wrong{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="p">正</span><span class="m">負</span>數加減 100 題</h1>
+    <label class="who" for="nm">名字 <input id="nm" maxlength="10" placeholder="寫上名字" autocomplete="off"></label>
+  </header>
+  <div class="nl" aria-hidden="true"><svg viewBox="0 0 700 30" preserveAspectRatio="none" id="nlsvg"></svg></div>
+  <nav class="levels" id="levels" aria-label="選擇關卡"></nav>
+  <main class="card" id="main"></main>
+  <p class="foot">每題有兩次機會：答錯一次會出現提示，再錯就看解題步驟。紀錄存在這台裝置上。</p>
+</div>
+
+<script>
+"use strict";
+const DATA={"hints": ["一正一負相加：用絕對值大的減去小的，符號跟著絕對值大的那個數。", "兩個負數相加：絕對值相加，答案還是負的。一正一負：大減小，符號跟著絕對值大的。", "減去一個數，等於加上它的相反數：先把「− (−數)」改成「+ 正數」，「− 正數」改成「+ (−數)」，再用加法規則。", "由左往右，一次算兩個數。先把每個減法改成加相反數。", "絕對值是和 0 的距離，一定不是負數。先算 | | 裡面，再取絕對值；| | 外面的負號要保留。"], "qs": [{"lv": 1, "q": "30 + (−33)", "a": -3, "steps": ["異號：33 − 30 = 3，33 比較大，取負號 → −3"]}, {"lv": 1, "q": "(−40) + 35", "a": -5, "steps": ["異號：40 − 35 = 5，40 比較大，取負號 → −5"]}, {"lv": 1, "q": "35 + (−25)", "a": 10, "steps": ["異號：35 − 25 = 10，35 比較大，取正號 → 10"]}, {"lv": 1, "q": "(−32) + 35", "a": 3, "steps": ["異號：35 − 32 = 3，35 比較大，取正號 → 3"]}, {"lv": 1, "q": "15 + (−19)", "a": -4, "steps": ["異號：19 − 15 = 4，19 比較大，取負號 → −4"]}, {"lv": 1, "q": "(−33) + 36", "a": 3, "steps": ["異號：36 − 33 = 3，36 比較大，取正號 → 3"]}, {"lv": 1, "q": "25 + (−16)", "a": 9, "steps": ["異號：25 − 16 = 9，25 比較大，取正號 → 9"]}, {"lv": 1, "q": "(−44) + 62", "a": 18, "steps": ["異號：62 − 44 = 18，62 比較大，取正號 → 18"]}, {"lv": 1, "q": "19 + (−33)", "a": -14, "steps": ["異號：33 − 19 = 14，33 比較大，取負號 → −14"]}, {"lv": 1, "q": "(−16) + 20", "a": 4, "steps": ["異號：20 − 16 = 4，20 比較大，取正號 → 4"]}, {"lv": 1, "q": "57 + (−30)", "a": 27, "steps": ["異號：57 − 30 = 27，57 比較大，取正號 → 27"]}, {"lv": 1, "q": "(−49) + 64", "a": 15, "steps": ["異號：64 − 49 = 15，64 比較大，取正號 → 15"]}, {"lv": 1, "q": "28 + (−40)", "a": -12, "steps": ["異號：40 − 28 = 12，40 比較大，取負號 → −12"]}, {"lv": 1, "q": "(−16) + 53", "a": 37, "steps": ["異號：53 − 16 = 37，53 比較大，取正號 → 37"]}, {"lv": 1, "q": "44 + (−37)", "a": 7, "steps": ["異號：44 − 37 = 7，44 比較大，取正號 → 7"]}, {"lv": 1, "q": "(−27) + 52", "a": 25, "steps": ["異號：52 − 27 = 25，52 比較大，取正號 → 25"]}, {"lv": 1, "q": "89 + (−58)", "a": 31, "steps": ["異號：89 − 58 = 31，89 比較大，取正號 → 31"]}, {"lv": 1, "q": "(−32) + 28", "a": -4, "steps": ["異號：32 − 28 = 4，32 比較大，取負號 → −4"]}, {"lv": 1, "q": "57 + (−64)", "a": -7, "steps": ["異號：64 − 57 = 7，64 比較大，取負號 → −7"]}, {"lv": 1, "q": "(−37) + 93", "a": 56, "steps": ["異號：93 − 37 = 56，93 比較大，取正號 → 56"]}, {"lv": 2, "q": "(−37) + (−39)", "a": -76, "steps": ["同號（都是負數）：37 + 39 = 76，符號是負 → −76"]}, {"lv": 2, "q": "(−25) + (−34)", "a": -59, "steps": ["同號（都是負數）：25 + 34 = 59，符號是負 → −59"]}, {"lv": 2, "q": "(−29) + (−39)", "a": -68, "steps": ["同號（都是負數）：29 + 39 = 68，符號是負 → −68"]}, {"lv": 2, "q": "(−20) + (−30)", "a": -50, "steps": ["同號（都是負數）：20 + 30 = 50，符號是負 → −50"]}, {"lv": 2, "q": "(−98) + (−27)", "a": -125, "steps": ["同號（都是負數）：98 + 27 = 125，符號是負 → −125"]}, {"lv": 2, "q": "(−71) + (−60)", "a": -131, "steps": ["同號（都是負數）：71 + 60 = 131，符號是負 → −131"]}, {"lv": 2, "q": "(−47) + (−22)", "a": -69, "steps": ["同號（都是負數）：47 + 22 = 69，符號是負 → −69"]}, {"lv": 2, "q": "(−42) + (−81)", "a": -123, "steps": ["同號（都是負數）：42 + 81 = 123，符號是負 → −123"]}, {"lv": 2, "q": "(−63) + (−37)", "a": -100, "steps": ["同號（都是負數）：63 + 37 = 100，符號是負 → −100"]}, {"lv": 2, "q": "49 + (−54)", "a": -5, "steps": ["異號：54 − 49 = 5，54 比較大，取負號 → −5"]}, {"lv": 2, "q": "(−106) + 61", "a": -45, "steps": ["異號：106 − 61 = 45，106 比較大，取負號 → −45"]}, {"lv": 2, "q": "(−47) + (−142)", "a": -189, "steps": ["同號（都是負數）：47 + 142 = 189，符號是負 → −189"]}, {"lv": 2, "q": "(−106) + (−113)", "a": -219, "steps": ["同號（都是負數）：106 + 113 = 219，符號是負 → −219"]}, {"lv": 2, "q": "30 + (−94)", "a": -64, "steps": ["異號：94 − 30 = 64，94 比較大，取負號 → −64"]}, {"lv": 2, "q": "(−68) + 139", "a": 71, "steps": ["異號：139 − 68 = 71，139 比較大，取正號 → 71"]}, {"lv": 2, "q": "(−147) + 147", "a": 0, "steps": ["(−147) 和 147 互為相反數，相加等於 0"]}, {"lv": 2, "q": "(−146) + (−117)", "a": -263, "steps": ["同號（都是負數）：146 + 117 = 263，符號是負 → −263"]}, {"lv": 2, "q": "98 + (−34)", "a": 64, "steps": ["異號：98 − 34 = 64，98 比較大，取正號 → 64"]}, {"lv": 2, "q": "(−97) + 25", "a": -72, "steps": ["異號：97 − 25 = 72，97 比較大，取負號 → −72"]}, {"lv": 2, "q": "(−123) + (−35)", "a": -158, "steps": ["同號（都是負數）：123 + 35 = 158，符號是負 → −158"]}, {"lv": 3, "q": "17 − 32", "a": -15, "steps": ["17 − 32 = 17 + (−32)（減去一個數 = 加上它的相反數）", "異號：32 − 17 = 15，32 比較大，取負號 → −15"]}, {"lv": 3, "q": "60 − (−53)", "a": 113, "steps": ["60 − (−53) = 60 + 53（減去一個數 = 加上它的相反數）", "同號（都是正數）：60 + 53 = 113，符號是正 → 113"]}, {"lv": 3, "q": "(−35) − 46", "a": -81, "steps": ["(−35) − 46 = (−35) + (−46)（減去一個數 = 加上它的相反數）", "同號（都是負數）：35 + 46 = 81，符號是負 → −81"]}, {"lv": 3, "q": "(−20) − (−12)", "a": -8, "steps": ["(−20) − (−12) = (−20) + 12（減去一個數 = 加上它的相反數）", "異號：20 − 12 = 8，20 比較大，取負號 → −8"]}, {"lv": 3, "q": "22 − 34", "a": -12, "steps": ["22 − 34 = 22 + (−34)（減去一個數 = 加上它的相反數）", "異號：34 − 22 = 12，34 比較大，取負號 → −12"]}, {"lv": 3, "q": "40 − (−26)", "a": 66, "steps": ["40 − (−26) = 40 + 26（減去一個數 = 加上它的相反數）", "同號（都是正數）：40 + 26 = 66，符號是正 → 66"]}, {"lv": 3, "q": "(−24) − 49", "a": -73, "steps": ["(−24) − 49 = (−24) + (−49)（減去一個數 = 加上它的相反數）", "同號（都是負數）：24 + 49 = 73，符號是負 → −73"]}, {"lv": 3, "q": "(−18) − (−56)", "a": 38, "steps": ["(−18) − (−56) = (−18) + 56（減去一個數 = 加上它的相反數）", "異號：56 − 18 = 38，56 比較大，取正號 → 38"]}, {"lv": 3, "q": "76 − 99", "a": -23, "steps": ["76 − 99 = 76 + (−99)（減去一個數 = 加上它的相反數）", "異號：99 − 76 = 23，99 比較大，取負號 → −23"]}, {"lv": 3, "q": "122 − (−54)", "a": 176, "steps": ["122 − (−54) = 122 + 54（減去一個數 = 加上它的相反數）", "同號（都是正數）：122 + 54 = 176，符號是正 → 176"]}, {"lv": 3, "q": "(−25) − 34", "a": -59, "steps": ["(−25) − 34 = (−25) + (−34)（減去一個數 = 加上它的相反數）", "同號（都是負數）：25 + 34 = 59，符號是負 → −59"]}, {"lv": 3, "q": "(−49) − (−139)", "a": 90, "steps": ["(−49) − (−139) = (−49) + 139（減去一個數 = 加上它的相反數）", "異號：139 − 49 = 90，139 比較大，取正號 → 90"]}, {"lv": 3, "q": "70 − 125", "a": -55, "steps": ["70 − 125 = 70 + (−125)（減去一個數 = 加上它的相反數）", "異號：125 − 70 = 55，125 比較大，取負號 → −55"]}, {"lv": 3, "q": "32 − (−117)", "a": 149, "steps": ["32 − (−117) = 32 + 117（減去一個數 = 加上它的相反數）", "同號（都是正數）：32 + 117 = 149，符號是正 → 149"]}, {"lv": 3, "q": "(−73) − 51", "a": -124, "steps": ["(−73) − 51 = (−73) + (−51)（減去一個數 = 加上它的相反數）", "同號（都是負數）：73 + 51 = 124，符號是負 → −124"]}, {"lv": 3, "q": "(−51) − (−80)", "a": 29, "steps": ["(−51) − (−80) = (−51) + 80（減去一個數 = 加上它的相反數）", "異號：80 − 51 = 29，80 比較大，取正號 → 29"]}, {"lv": 3, "q": "66 − 78", "a": -12, "steps": ["66 − 78 = 66 + (−78)（減去一個數 = 加上它的相反數）", "異號：78 − 66 = 12，78 比較大，取負號 → −12"]}, {"lv": 3, "q": "145 − (−78)", "a": 223, "steps": ["145 − (−78) = 145 + 78（減去一個數 = 加上它的相反數）", "同號（都是正數）：145 + 78 = 223，符號是正 → 223"]}, {"lv": 3, "q": "(−53) − 121", "a": -174, "steps": ["(−53) − 121 = (−53) + (−121)（減去一個數 = 加上它的相反數）", "同號（都是負數）：53 + 121 = 174，符號是負 → −174"]}, {"lv": 3, "q": "(−85) − (−110)", "a": 25, "steps": ["(−85) − (−110) = (−85) + 110（減去一個數 = 加上它的相反數）", "異號：110 − 85 = 25，110 比較大，取正號 → 25"]}, {"lv": 4, "q": "(−40) − 39 − 12", "a": -91, "steps": ["(−40) − 39 = (−40) + (−39)（減去一個數 = 加上它的相反數）", "同號（都是負數）：40 + 39 = 79，符號是負 → −79", "(−79) − 12 = (−79) + (−12)（減去一個數 = 加上它的相反數）", "同號（都是負數）：79 + 12 = 91，符號是負 → −91"]}, {"lv": 4, "q": "(−45) + (−20) + (−50)", "a": -115, "steps": ["同號（都是負數）：45 + 20 = 65，符號是負 → −65", "同號（都是負數）：65 + 50 = 115，符號是負 → −115"]}, {"lv": 4, "q": "(−48) + (−23) − (−32)", "a": -39, "steps": ["同號（都是負數）：48 + 23 = 71，符號是負 → −71", "(−71) − (−32) = (−71) + 32（減去一個數 = 加上它的相反數）", "異號：71 − 32 = 39，71 比較大，取負號 → −39"]}, {"lv": 4, "q": "28 + 38 + (−33)", "a": 33, "steps": ["同號（都是正數）：28 + 38 = 66，符號是正 → 66", "異號：66 − 33 = 33，66 比較大，取正號 → 33"]}, {"lv": 4, "q": "(−11) + (−45) + (−33)", "a": -89, "steps": ["同號（都是負數）：11 + 45 = 56，符號是負 → −56", "同號（都是負數）：56 + 33 = 89，符號是負 → −89"]}, {"lv": 4, "q": "13 − (−33) + (−10)", "a": 36, "steps": ["13 − (−33) = 13 + 33（減去一個數 = 加上它的相反數）", "同號（都是正數）：13 + 33 = 46，符號是正 → 46", "異號：46 − 10 = 36，46 比較大，取正號 → 36"]}, {"lv": 4, "q": "28 + (−24) − 21", "a": -17, "steps": ["異號：28 − 24 = 4，28 比較大，取正號 → 4", "4 − 21 = 4 + (−21)（減去一個數 = 加上它的相反數）", "異號：21 − 4 = 17，21 比較大，取負號 → −17"]}, {"lv": 4, "q": "(−33) + (−45) + 23", "a": -55, "steps": ["同號（都是負數）：33 + 45 = 78，符號是負 → −78", "異號：78 − 23 = 55，78 比較大，取負號 → −55"]}, {"lv": 4, "q": "17 + (−47) − 93", "a": -123, "steps": ["異號：47 − 17 = 30，47 比較大，取負號 → −30", "(−30) − 93 = (−30) + (−93)（減去一個數 = 加上它的相反數）", "同號（都是負數）：30 + 93 = 123，符號是負 → −123"]}, {"lv": 4, "q": "88 + (−32) − (−15)", "a": 71, "steps": ["異號：88 − 32 = 56，88 比較大，取正號 → 56", "56 − (−15) = 56 + 15（減去一個數 = 加上它的相反數）", "同號（都是正數）：56 + 15 = 71，符號是正 → 71"]}, {"lv": 4, "q": "77 + (−39) − (−20)", "a": 58, "steps": ["異號：77 − 39 = 38，77 比較大，取正號 → 38", "38 − (−20) = 38 + 20（減去一個數 = 加上它的相反數）", "同號（都是正數）：38 + 20 = 58，符號是正 → 58"]}, {"lv": 4, "q": "66 − (−51) − (−37)", "a": 154, "steps": ["66 − (−51) = 66 + 51（減去一個數 = 加上它的相反數）", "同號（都是正數）：66 + 51 = 117，符號是正 → 117", "117 − (−37) = 117 + 37（減去一個數 = 加上它的相反數）", "同號（都是正數）：117 + 37 = 154，符號是正 → 154"]}, {"lv": 4, "q": "36 − (−20) − 38", "a": 18, "steps": ["36 − (−20) = 36 + 20（減去一個數 = 加上它的相反數）", "同號（都是正數）：36 + 20 = 56，符號是正 → 56", "56 − 38 = 56 + (−38)（減去一個數 = 加上它的相反數）", "異號：56 − 38 = 18，56 比較大，取正號 → 18"]}, {"lv": 4, "q": "(−85) + (−25) − (−88)", "a": -22, "steps": ["同號（都是負數）：85 + 25 = 110，符號是負 → −110", "(−110) − (−88) = (−110) + 88（減去一個數 = 加上它的相反數）", "異號：110 − 88 = 22，110 比較大，取負號 → −22"]}, {"lv": 4, "q": "92 + (−78) + 80", "a": 94, "steps": ["異號：92 − 78 = 14，92 比較大，取正號 → 14", "同號（都是正數）：14 + 80 = 94，符號是正 → 94"]}, {"lv": 4, "q": "(−190) − (−97) + 135", "a": 42, "steps": ["(−190) − (−97) = (−190) + 97（減去一個數 = 加上它的相反數）", "異號：190 − 97 = 93，190 比較大，取負號 → −93", "異號：135 − 93 = 42，135 比較大，取正號 → 42"]}, {"lv": 4, "q": "77 − (−44) − (−155)", "a": 276, "steps": ["77 − (−44) = 77 + 44（減去一個數 = 加上它的相反數）", "同號（都是正數）：77 + 44 = 121，符號是正 → 121", "121 − (−155) = 121 + 155（減去一個數 = 加上它的相反數）", "同號（都是正數）：121 + 155 = 276，符號是正 → 276"]}, {"lv": 4, "q": "154 − 149 + (−179)", "a": -174, "steps": ["154 − 149 = 154 + (−149)（減去一個數 = 加上它的相反數）", "異號：154 − 149 = 5，154 比較大，取正號 → 5", "異號：179 − 5 = 174，179 比較大，取負號 → −174"]}, {"lv": 4, "q": "(−153) − 87 − (−74)", "a": -166, "steps": ["(−153) − 87 = (−153) + (−87)（減去一個數 = 加上它的相反數）", "同號（都是負數）：153 + 87 = 240，符號是負 → −240", "(−240) − (−74) = (−240) + 74（減去一個數 = 加上它的相反數）", "異號：240 − 74 = 166，240 比較大，取負號 → −166"]}, {"lv": 4, "q": "48 + (−111) + 61", "a": -2, "steps": ["異號：111 − 48 = 63，111 比較大，取負號 → −63", "異號：63 − 61 = 2，63 比較大，取負號 → −2"]}, {"lv": 5, "q": "|−48| + |−38|", "a": 86, "steps": ["|−48| = 48", "|−38| = 38", "再算：48 + 38", "同號（都是正數）：48 + 38 = 86，符號是正 → 86"]}, {"lv": 5, "q": "|20 − 24|", "a": 4, "steps": ["先算 | | 裡面：20 − 24 = −4", "取絕對值：|−4| = 4"]}, {"lv": 5, "q": "−|−23|", "a": -23, "steps": ["先算絕對值：|−23| = 23", "外面還有負號 → −23"]}, {"lv": 5, "q": "|−41| − |−67|", "a": -26, "steps": ["|−41| = 41", "|−67| = 67", "再算：41 − 67", "41 − 67 = 41 + (−67)（減去一個數 = 加上它的相反數）", "異號：67 − 41 = 26，67 比較大，取負號 → −26"]}, {"lv": 5, "q": "|(−60) + 35| + (−15)", "a": 10, "steps": ["先算 | | 裡面：(−60) + 35 = −25", "取絕對值：|−25| = 25", "再算：25 + (−15)", "異號：25 − 15 = 10，25 比較大，取正號 → 10"]}, {"lv": 5, "q": "|−21| + |−25|", "a": 46, "steps": ["|−21| = 21", "|−25| = 25", "再算：21 + 25", "同號（都是正數）：21 + 25 = 46，符號是正 → 46"]}, {"lv": 5, "q": "|21 − 61|", "a": 40, "steps": ["先算 | | 裡面：21 − 61 = −40", "取絕對值：|−40| = 40"]}, {"lv": 5, "q": "−|−68|", "a": -68, "steps": ["先算絕對值：|−68| = 68", "外面還有負號 → −68"]}, {"lv": 5, "q": "|−43| − |−82|", "a": -39, "steps": ["|−43| = 43", "|−82| = 82", "再算：43 − 82", "43 − 82 = 43 + (−82)（減去一個數 = 加上它的相反數）", "異號：82 − 43 = 39，82 比較大，取負號 → −39"]}, {"lv": 5, "q": "|(−60) + 15| + (−16)", "a": 29, "steps": ["先算 | | 裡面：(−60) + 15 = −45", "取絕對值：|−45| = 45", "再算：45 + (−16)", "異號：45 − 16 = 29，45 比較大，取正號 → 29"]}, {"lv": 5, "q": "|−98| + |118|", "a": 216, "steps": ["|−98| = 98", "|118| = 118", "再算：98 + 118", "同號（都是正數）：98 + 118 = 216，符號是正 → 216"]}, {"lv": 5, "q": "|18 − 101|", "a": 83, "steps": ["先算 | | 裡面：18 − 101 = −83", "取絕對值：|−83| = 83"]}, {"lv": 5, "q": "−|−136|", "a": -136, "steps": ["先算絕對值：|−136| = 136", "外面還有負號 → −136"]}, {"lv": 5, "q": "|−50| − |−58|", "a": -8, "steps": ["|−50| = 50", "|−58| = 58", "再算：50 − 58", "50 − 58 = 50 + (−58)（減去一個數 = 加上它的相反數）", "異號：58 − 50 = 8，58 比較大，取負號 → −8"]}, {"lv": 5, "q": "|(−74) + 24| + (−85)", "a": -35, "steps": ["先算 | | 裡面：(−74) + 24 = −50", "取絕對值：|−50| = 50", "再算：50 + (−85)", "異號：85 − 50 = 35，85 比較大，取負號 → −35"]}, {"lv": 5, "q": "|−48| + |88|", "a": 136, "steps": ["|−48| = 48", "|88| = 88", "再算：48 + 88", "同號（都是正數）：48 + 88 = 136，符號是正 → 136"]}, {"lv": 5, "q": "|113 − 153|", "a": 40, "steps": ["先算 | | 裡面：113 − 153 = −40", "取絕對值：|−40| = 40"]}, {"lv": 5, "q": "−|−143|", "a": -143, "steps": ["先算絕對值：|−143| = 143", "外面還有負號 → −143"]}, {"lv": 5, "q": "|−69| − |−128|", "a": -59, "steps": ["|−69| = 69", "|−128| = 128", "再算：69 − 128", "69 − 128 = 69 + (−128)（減去一個數 = 加上它的相反數）", "異號：128 − 69 = 59，128 比較大，取負號 → −59"]}, {"lv": 5, "q": "|(−69) + 47| + (−63)", "a": -41, "steps": ["先算 | | 裡面：(−69) + 47 = −22", "取絕對值：|−22| = 22", "再算：22 + (−63)", "異號：63 − 22 = 41，63 比較大，取負號 → −41"]}]};
+const LV=[
+  {name:'第 1 關',sub:'正數 + 負數'},
+  {name:'第 2 關',sub:'負 + 負，再混合'},
+  {name:'第 3 關',sub:'減法改加法'},
+  {name:'第 4 關',sub:'三個數連加減'},
+  {name:'第 5 關',sub:'加上絕對值'},
+];
+const M='−';
+const sn=n=>n<0?M+(-n):String(n);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const KEY='pm100.v1';
+let S=load();
+function load(){let s=null;try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+  if(!s||!Array.isArray(s.res)||s.res.length!==100) s={res:Array(100).fill(null),lv:1,name:''};return s;}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+// state for the current question
+let cur=null,typed='',tries=0,done=false;
+
+function drawNumberLine(){
+  let g='<line x1="10" y1="15" x2="690" y2="15" stroke="currentColor" stroke-width="1.5" opacity=".45"/>';
+  for(let i=-10;i<=10;i++){const x=350+i*33;g+=`<line x1="${x}" y1="${i===0?6:10}" x2="${x}" y2="${i===0?24:20}" stroke="${i<0?'var(--neg)':i>0?'var(--pos)':'currentColor'}" stroke-width="${i===0?2.5:1.5}"/>`;}
+  g+='<text x="350" y="30" font-size="9" text-anchor="middle" fill="currentColor" opacity=".6">0</text>';
+  $('#nlsvg').innerHTML=g;$('#nlsvg').style.color='var(--ink)';
+}
+function lvQs(lv){return DATA.qs.map((q,i)=>({...q,i})).filter(q=>q.lv===lv);}
+function lvStat(lv){const r=lvQs(lv).map(q=>S.res[q.i]);return {done:r.filter(Boolean).length,first:r.filter(x=>x==='first').length,second:r.filter(x=>x==='second').length,miss:r.filter(x=>x==='miss').length};}
+function renderLevels(){
+  $('#levels').innerHTML=LV.map((l,k)=>{const st=lvStat(k+1);const pct=st.done/20*100;
+    return `<button class="lvl ${S.lv===k+1?'on':''}" data-lv="${k+1}" aria-pressed="${S.lv===k+1}"><b>${l.name}</b><span>${l.sub}</span><span class="num">${st.done}/20</span><div class="bar"><i style="width:${pct}%"></i></div></button>`;}).join('');
+  $('#levels').querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{S.lv=+b.dataset.lv;save();openLevel();});
+}
+function openLevel(){
+  renderLevels();
+  const qs=lvQs(S.lv);const next=qs.find(q=>!S.res[q.i]);
+  if(next) show(next.i); else result();
+}
+function dotsHTML(){
+  return `<div class="dots" role="list">${lvQs(S.lv).map(q=>`<button role="listitem" data-q="${q.i}" class="${S.res[q.i]||''} ${cur&&cur.i===q.i?'cur':''}" aria-label="第 ${q.i+1} 題">${q.i+1}</button>`).join('')}</div>`;
+}
+function show(i){
+  cur={...DATA.qs[i],i};typed='';tries=0;done=!!S.res[i];
+  const lvq=lvQs(S.lv);const pos=lvq.findIndex(q=>q.i===i)+1;
+  $('#main').innerHTML=`${dotsHTML()}
+    <div class="qhead"><span>${LV[S.lv-1].name}・${LV[S.lv-1].sub}</span><span class="num">第 ${i+1} 題（${pos}/20）</span></div>
+    <div class="q" id="q">${esc(cur.q)}</div>
+    <div class="ansrow"><span>=</span><div class="ans" id="ans" aria-live="polite"></div></div>
+    <div class="msg" id="msg" aria-live="polite"></div>
+    <div id="help"></div>
+    <div id="ctl"></div>`;
+  $('#main').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>show(+b.dataset.q));
+  if(done) reviewMode(); else padMode();
+  drawAns();
+}
+function drawAns(){const a=$('#ans');if(!a)return;a.classList.remove('wrong');
+  a.innerHTML=typed?`<span class="${typed.startsWith(M)?'neg':''}">${typed}</span>`:'<span class="ph">用下面的按鍵輸入答案</span>';}
+function padMode(){
+  $('#ctl').innerHTML=`<div class="pad">
+    ${[7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button data-k="back" aria-label="退一格">⌫</button>
+    ${[4,5,6].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button data-k="neg" class="neg-k" aria-label="負號">− 負號</button>
+    ${[1,2,3].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button data-k="go" class="go">送出</button>
+    <button data-k="0" class="wide">0</button><button data-k="clr" style="font-size:1em">清除</button></div>`;
+  $('#ctl').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>key(b.dataset.k));
+}
+function key(k){
+  if(done) return;
+  if(/^\d$/.test(k)){const digits=typed.replace(M,'');if(digits.length<4) typed=(digits==='0'?typed.replace('0',''):typed)+k;}
+  else if(k==='neg'){typed=typed.startsWith(M)?typed.slice(1):M+typed;}
+  else if(k==='back'){typed=typed.slice(0,-1);}
+  else if(k==='clr'){typed='';}
+  else if(k==='go'){check();return;}
+  drawAns();
+}
+document.addEventListener('keydown',e=>{
+  if(!cur||e.target.id==='nm') return;
+  if(done){if(e.key==='Enter'){const b=$('#nextBtn');if(b){e.preventDefault();b.click();}}return;}
+  if(/^\d$/.test(e.key)) key(e.key);
+  else if(e.key==='-'||e.key==='−') key('neg');
+  else if(e.key==='Backspace') key('back');
+  else if(e.key==='Enter'){e.preventDefault();key('go');}
+});
+function check(){
+  if(!typed||typed===M){$('#msg').innerHTML='<span class="neg">先輸入答案。</span>';return;}
+  const v=Number(typed.replace(M,'-'));
+  tries++;
+  if(v===cur.a){finish(tries===1?'first':'second');return;}
+  $('#ans').classList.add('wrong');
+  if(tries===1){
+    $('#msg').innerHTML='<span class="neg">不對喔，看看提示再試一次。</span>';
+    $('#help').innerHTML=`<div class="hint"><b>提示</b>${esc(DATA.hints[cur.lv-1])}</div>`;
+    typed='';setTimeout(drawAns,450);
+    return;
+  }
+  finish('miss');
+}
+function stepsHTML(q){return `<div class="steps"><b>解題步驟</b><ol>${q.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol><div class="fin">答案：<span class="${q.a<0?'neg':''}">${sn(q.a)}</span></div></div>`;}
+function finish(res){
+  done=true;S.res[cur.i]=res;save();renderLevels();
+  $('#msg').innerHTML=res==='first'?'<span class="okc">答對了！★</span>':res==='second'?'<span class="okc">第二次答對！☆</span>':'<span class="neg">兩次都沒答對，一起看看怎麼算：</span>';
+  $('#help').innerHTML=res==='miss'?stepsHTML(cur):'';
+  nextControls();
+  $('#main').querySelector(`[data-q="${cur.i}"]`).className=res+' cur';
+}
+function nextControls(){
+  const qs=lvQs(S.lv);const after=qs.find(q=>q.i>cur.i&&!S.res[q.i])||qs.find(q=>!S.res[q.i]);
+  $('#ctl').innerHTML=`<div class="btns">${after?`<button class="btn main" id="nextBtn">下一題 →</button>`:`<button class="btn main" id="nextBtn">看這一關的成績</button>`}</div>`;
+  $('#nextBtn').onclick=()=>after?show(after.i):result();
+}
+function reviewMode(){
+  const r=S.res[cur.i];
+  typed=sn(cur.a);
+  $('#msg').innerHTML=r==='first'?'<span class="okc">這題已經答對 ★</span>':r==='second'?'<span class="okc">這題第二次答對 ☆</span>':'<span class="neg">這題沒答對，可以在成績頁重做錯題。</span>';
+  $('#help').innerHTML=r==='miss'?stepsHTML(cur):'';
+  nextControls();
+}
+function result(){
+  cur=null;
+  const st=lvStat(S.lv);const qs=lvQs(S.lv);const misses=qs.filter(q=>S.res[q.i]==='miss'||S.res[q.i]==='second');
+  const ok=st.first+st.second;const pass=ok>=18;
+  $('#main').innerHTML=`<div class="result">${dotsHTML()}
+    <h2>${LV[S.lv-1].name}完成${S.name?`・${esc(S.name)}`:''}</h2>
+    <div class="score">${ok}<small> / 20 題答對</small></div>
+    <div class="stars"><span class="okc">★ 一次答對 ${st.first}</span><span>☆ 第二次答對 ${st.second}</span><span class="neg">✗ 沒答對 ${st.miss}</span></div>
+    <p>${pass?(S.lv<5?'很棒！可以進下一關了。':'五關全部完成，太厲害了！'):'答對 18 題以上再進下一關。先把錯的題目重做一次吧。'}</p>
+    ${misses.length?`<details ${pass?'':'open'}><summary>要再練的題目（${misses.length} 題）</summary><ul class="misslist">${misses.map(q=>`<li><span>${q.i+1}. ${esc(q.q)}</span><span>${sn(q.a)}</span></li>`).join('')}</ul></details>`:''}
+    <div class="btns">
+      ${misses.length?'<button class="btn main" id="redo">重做錯的題目</button>':''}
+      ${S.lv<5?`<button class="btn ${misses.length?'':'main'}" id="nextLv">前往第 ${S.lv+1} 關</button>`:''}
+      <button class="btn alt" id="again">整關重新開始</button>
+    </div></div>`;
+  $('#main').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>show(+b.dataset.q));
+  if($('#redo')) $('#redo').onclick=()=>{misses.forEach(q=>S.res[q.i]=null);save();openLevel();};
+  if($('#nextLv')) $('#nextLv').onclick=()=>{S.lv++;save();openLevel();};
+  $('#again').onclick=()=>{
+    $('#again').outerHTML='<span>確定清除這一關的紀錄？</span><button class="btn main" id="againY">清除重來</button><button class="btn alt" id="againN">取消</button>';
+    $('#againY').onclick=()=>{qs.forEach(q=>S.res[q.i]=null);save();openLevel();};
+    $('#againN').onclick=result;
+  };
+}
+$('#nm').value=S.name||'';
+$('#nm').oninput=e=>{S.name=e.target.value.trim();save();};
+drawNumberLine();
+openLevel();
+</script>
+
+</body>
+</html>
