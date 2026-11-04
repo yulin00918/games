@@ -161,6 +161,14 @@ label{font-weight:700;font-size:14px;display:block;margin:12px 0 6px}
 .modal .box{background:var(--paper);border-radius:18px;padding:20px;max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.3)}
 .modal h3{margin-bottom:8px;color:var(--red)}
 .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;z-index:60;font-weight:500;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:90vw;text-align:center}
+.hotbar{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;border-radius:var(--radius);padding:10px 14px;margin:-4px 0 14px;background:#fde7e2;border:2px solid #e9a597}
+.hotbar .hb-t{font-weight:900;font-family:"Noto Serif TC",serif;color:var(--red-d)}
+.hotbar .hb-w{margin-left:auto;font-weight:700;color:var(--red)}
+.hotbar.taken{background:#f1e9df;border-color:var(--line)}
+.hotbar.taken .hb-w{color:var(--muted)}
+.chip.hotchip{background:#fde7e2;color:var(--red-d);font-weight:700}
+.ing .dem{font-size:12px;color:var(--muted);margin-top:2px}
+.ing .dem.hot{color:var(--red);font-weight:700}
 .banner{background:var(--gold-l);border:1px solid #e8cf93;border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:14px}
 .banner.err{background:var(--red-l);border-color:#e7b3aa}
 .empty{text-align:center;color:var(--muted);padding:24px}
@@ -289,6 +297,25 @@ const CARDS = [
 ].map(([id,name,kind,ing,d,text])=>({id,name,kind,ing,d,text}));
 const CARD = Object.fromEntries(CARDS.map(c=>[c.id,c]));
 const ROUNDS = 6, MAX_PLAYERS = 6;
+// 🧨 搶頭香：每回合公布一題，全桌第一個出符合的菜 +1 聲望
+const HOTS = [
+ {id:"lucky",label:"🧧好意頭的菜",f:d=>d.tags.includes("lucky")},
+ {id:"elder",label:"🥄長輩友善的菜",f:d=>d.tags.includes("elder")},
+ {id:"fresh",label:"🌿清爽的菜",f:d=>d.tags.includes("fresh")},
+ {id:"big",label:"★★★大菜",f:d=>d.stars===3},
+ {id:"cold",label:"❄️冷盤",f:d=>d.type==="cold"},
+ {id:"hot",label:"♨️熱菜",f:d=>d.type==="hot"},
+ {id:"soup",label:"🍲湯羹",f:d=>d.type==="soup"},
+ {id:"staple",label:"🍚主食",f:d=>d.type==="staple"},
+ {id:"dessert",label:"🍮甜點／水果",f:d=>d.type==="dessert"},
+ {id:"sea",label:"有🐟海鮮的菜",f:d=>d.ing.includes("sea")},
+ {id:"veg",label:"有🥬蔬菜的菜",f:d=>d.ing.includes("veg")},
+ {id:"meat",label:"有🥩肉類的菜",f:d=>d.ing.includes("meat")},
+ {id:"grain",label:"有🌾五穀根莖的菜",f:d=>d.ing.includes("grain")}
+];
+const HOT = Object.fromEntries(HOTS.map(h=>[h.id,h]));
+// 📈 供需：同一回合全桌每買走 DEMAND_STEP 份同種食材，價格 +1 箍（辛香調味不變）
+const DEMAND_STEP = 3;
 
 /* =========================================================
    ③ 連線層：Firebase（正式）／localStorage（本機測試）
@@ -314,7 +341,7 @@ const LocalNet = {
   async get(c){ return this.read(c) },
   watch(c,cb){ (this.ls[c]=this.ls[c]||[]).push(cb); cb(this.read(c)); return ()=>{this.ls[c]=this.ls[c].filter(f=>f!==cb)} },
   async update(c,patch){ const o=this.read(c)||{}; for(const p in patch) setPath(o,p,patch[p]); this.write(c,o) },
-  async txMeta(c,fn){ const o=this.read(c); if(!o) return; const n=fn(o.meta); if(n!==undefined){o.meta=n; this.write(c,o)} }
+  async txMeta(c,fn){ const o=this.read(c); if(!o) return false; const n=fn(o.meta); if(n!==undefined){o.meta=n; this.write(c,o); return true} return false }
 };
 window.addEventListener("storage",e=>{
   if(!e.key||!e.key.startsWith("tsps_room_")) return;
@@ -334,7 +361,7 @@ async function makeFirebaseNet(cfg){
     async get(c){ return (await db.get(r(c))).val() },
     watch(c,cb){ return db.onValue(r(c),s=>cb(s.val())) },
     async update(c,patch){ await db.update(r(c),patch) },
-    async txMeta(c,fn){ await db.runTransaction(db.ref(d,`rooms/${c}/meta`),cur=>{ if(cur===null) return cur; return fn(cur) }) }
+    async txMeta(c,fn){ let ok=false; const res=await db.runTransaction(db.ref(d,`rooms/${c}/meta`),cur=>{ if(cur===null) return cur; const n=fn(cur); ok=n!==undefined; return n }); return !!(res&&res.committed&&ok) }
   };
 }
 let NET = LocalNet, NET_ERR = "";
@@ -347,9 +374,16 @@ const uid = ()=>Math.random().toString(36).slice(2,10);
 const esc = s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 function marketCard(meta){ if(!meta||meta.round<2||!meta.deck) return null; return CARD[meta.deck[meta.round-2]]||null }
+function hotOn(meta){ return !!meta && meta.optHot!==false }
+function demandOn(meta){ return !!meta && meta.optDemand!==false }
+function hotFor(meta){ if(!hotOn(meta)||!meta.hotDeck) return null; return HOT[meta.hotDeck[(meta.round||1)-1]]||null }
+function hotWinner(meta){ return ((meta&&meta.hot)||{})["r"+meta.round]||null }
+function soldNow(ing, meta){ return (((meta&&meta.sold)||{})["r"+meta.round]||{})[ing]||0 }
+function surge(ing, meta){ if(!demandOn(meta)||ing==="spice") return 0; return Math.floor(soldNow(ing,meta)/DEMAND_STEP) }
 function price(ing, meta){
   let p = ING[ing].base; const c = marketCard(meta);
   if(c && c.kind==="A" && c.ing===ing && ing!=="spice") p += c.d;
+  p += surge(ing, meta);
   return Math.max(0,p);
 }
 function maxPerBuy(meta){ const c=marketCard(meta); if(c&&c.id==="H15") return 3; if(c&&c.id==="H16") return 1; return 2 }
@@ -389,11 +423,13 @@ function condLabel(c){
 function reqMet(comm, ids, money){ const ds=ids.map(i=>DISH[i]); return comm.req.every(c=>condCount(c,ds,money)>=c.n) }
 function bonusMet(comm, ids, money){ const ds=ids.map(i=>DISH[i]); return comm.bonus.every(c=>condCount(c,ds,money)>=c.n) }
 function basketCount(p){ return ING_KEYS.reduce((s,k)=>s+((p.basket||{})[k]||0),0) }
-function scoreOf(p){
-  if(!p.completedRound) return {total:0,base:0,bonus:0,early:0};
+function hotCount(meta, id){ return Object.values((meta&&meta.hot)||{}).filter(v=>v===id).length }
+function scoreOf(p, meta, id){
+  if(!p.completedRound) return {total:0,base:0,bonus:0,early:0,hot:0};
   const early = p.completedRound<=4?2:(p.completedRound===5?1:0);
   const bonus = p.bonus?1:0;
-  return {total:5+bonus+early,base:5,bonus,early};
+  const hot = hotCount(meta, id||p.id);
+  return {total:5+bonus+early+hot,base:5,bonus,early,hot};
 }
 function canCook(p, d){
   const miss = d.ing.filter(k=>!((p.basket||{})[k]>0));
@@ -403,7 +439,7 @@ function canCook(p, d){
 function isFinished(p){ return !!(p.completedRound||p.failed) }
 function playerList(room){ return Object.entries(room.players||{}).map(([id,p])=>({id,...p})).sort((a,b)=>(a.joinedAt||0)-(b.joinedAt||0)) }
 function ranking(room){
-  const ps = playerList(room).map(p=>({...p,sc:scoreOf(p),left:basketCount(p)}));
+  const ps = playerList(room).map(p=>({...p,sc:scoreOf(p,room.meta,p.id),left:basketCount(p)}));
   ps.sort((a,b)=>b.sc.total-a.sc.total || a.left-b.left || (b.money||0)-(a.money||0));
   let rank=0, prev=null;
   ps.forEach((p,i)=>{ const key=`${p.sc.total}|${p.left}|${p.money}`; if(key!==prev){rank=i+1; prev=key} p.rank=rank });
@@ -414,7 +450,7 @@ function ranking(room){
    ⑤ 狀態與畫面
    ========================================================= */
 const S = { code:null, me:null, role:null, room:null, unsub:null, tab:"comm", cart:{}, filter:"can", busy:false,
-            codes:[], rooms:{}, unsubs:{}, focus:null };
+            codes:[], rooms:{}, unsubs:{}, focus:null, optHot:true, optDemand:true, seenHot:null };
 const $app = document.getElementById("app"), $layer = document.getElementById("layer");
 
 function toast(msg){ const t=document.createElement("div"); t.className="toast"; t.textContent=msg; $layer.appendChild(t); setTimeout(()=>t.remove(),2200) }
@@ -440,7 +476,22 @@ function loadHost(){ return sGet("tsps_host") }
 function connect(code){
   if(S.unsub) S.unsub();
   S.code=code; S.role="player";
-  S.unsub = NET.watch(code, room=>{ S.room=room; checkAdvance(code,room); render(); });
+  S.seenHot=null;
+  S.unsub = NET.watch(code, room=>{ S.room=room; notifyHot(room); checkAdvance(code,room); render(); });
+}
+function notifyHot(room){
+  const h=(room&&room.meta&&room.meta.hot)||{}; const keys=Object.keys(h).sort().join(",");
+  if(S.seenHot!==null && keys!==S.seenHot){
+    for(const k of Object.keys(h)){ if(!S.seenHot.split(",").includes(k)){ const w=(room.players||{})[h[k]]; toast(h[k]===S.me?"🧨 你搶到頭香！+1 聲望":`🧨 ${w?w.name:"有人"} 搶到這回合的頭香！`) } }
+  }
+  S.seenHot=keys;
+}
+function hotHTML(room, big){
+  const m=room.meta, h=hotFor(m); if(!h) return "";
+  const w=hotWinner(m), wp=w&&(room.players||{})[w];
+  return `<div class="hotbar ${w?"taken":""}" ${big?'style="font-size:20px"':""}><span class="hb-t">🧨 搶頭香</span>
+    <span>本回合第一個出<b>「${h.label}」</b>的人 +1 聲望</span>
+    <span class="hb-w">${w?`已被 <b>${esc(wp?wp.name:"?")}</b> 搶走`:"還沒有人搶到！"}</span></div>`;
 }
 function hostWatch(code){
   if(S.unsubs[code]) return;
@@ -516,7 +567,7 @@ async function createRooms(n, me){
   const codes=[];
   for(let i=0;i<n;i++){
     const code=await newRoomCode();
-    await NET.create(code,{meta:{status:"lobby",round:0,lv:S.lv||"1",hostId:me,createdAt:Date.now()}});
+    await NET.create(code,{meta:{status:"lobby",round:0,lv:S.lv||"1",optHot:S.optHot,optDemand:S.optDemand,hostId:me,createdAt:Date.now()}});
     codes.push(code);
   }
   return codes;
@@ -577,13 +628,14 @@ function tableCard(code){
   if(st==="lobby"){
     body=`<div class="row" style="align-items:flex-start">
       <div class="qr qrbox" data-qr="${code}" data-size="110"></div>
-      <div style="flex:1;min-width:140px"><div class="small muted">${ps.length} / ${MAX_PLAYERS} 人・${({"1":"🌶️ 入門","2":"🌶️🌶️ 標準","3":"🌶️🌶️🌶️ 挑戰","mix":"🎲 混合"})[r.meta.lv||"1"]}</div>
+      <div style="flex:1;min-width:140px"><div class="small muted">${ps.length} / ${MAX_PLAYERS} 人・${({"1":"🌶️ 入門","2":"🌶️🌶️ 標準","3":"🌶️🌶️🌶️ 挑戰","mix":"🎲 混合"})[r.meta.lv||"1"]}${hotOn(r.meta)?"・🧨":""}${demandOn(r.meta)?"・📈":""}</div>
       <div class="row" style="gap:6px;margin-top:6px">${ps.map(p=>`<span class="chip">${esc(p.name)}<button class="x" data-act="kick" data-code="${code}" data-id="${p.id}" title="移除">×</button></span>`).join("")||`<span class="muted small">還沒有人加入</span>`}</div></div></div>
       <div class="row" style="margin-top:12px"><button class="btn green sm" data-act="start" data-code="${code}" ${ps.length<1?"disabled":""}>開始這桌</button>
       <button class="btn ghost sm" data-act="removetable" data-code="${code}">刪除這桌</button></div>`;
   } else if(st==="playing"){
     const c=marketCard(r.meta);
-    body=`<div class="small" style="margin-bottom:6px">📈 ${c?`${c.name}`:"第 1 回合無行情"}</div>
+    const hb=hotFor(r.meta), hw=hotWinner(r.meta);
+    body=`<div class="small" style="margin-bottom:6px">📈 ${c?`${c.name}`:"第 1 回合無行情"}${hb?`<br>🧨 ${hb.label}：${hw?`${esc(((r.players||{})[hw]||{}).name||"?")} 搶到`:"還沒人搶到"}`:""}</div>
       <table class="ptable mini"><tbody>${ps.map(p=>{const cm=COMM[p.commission]; return `<tr><td><b>${esc(p.name)}</b></td><td>${(p.dishes||[]).length}/${cm?cm.count:"-"} 道</td><td>💰${p.money??"-"}</td><td>${statusPill(p,r.meta.round)}</td></tr>`}).join("")}</tbody></table>
       <div class="row" style="margin-top:10px"><button class="btn ghost sm" data-act="force" data-code="${code}">強制下一回合</button></div>`;
   } else {
@@ -606,6 +658,10 @@ function renderDashboard(){
     ${NET.mode==="local"?`<div class="banner">💻 本機測試模式：另開分頁到同一個網址，輸入房號就能當學生加入。</div>`:`<div class="banner">學生掃各桌的 QR Code，或打開網址輸入房號。網址：<b>${esc(location.origin+location.pathname)}</b></div>`}
     <div class="card" style="margin-bottom:14px"><div class="row"><b>委託難度（套用到還沒開始的桌）</b></div>
       <div class="filters" style="margin-top:8px">${lvBtn("1","🌶️ 入門")}${lvBtn("2","🌶️🌶️ 標準")}${lvBtn("3","🌶️🌶️🌶️ 挑戰")}${lvBtn("mix","🎲 混合")}</div>
+      <div class="row" style="margin-top:4px"><b>互動規則</b><span class="small muted">（點一下開／關，套用到還沒開始的桌）</span></div>
+      <div class="filters" style="margin-top:8px">
+        <button class="${S.optHot?"on":""}" data-act="opt" data-k="optHot">🧨 搶頭香：${S.optHot?"開":"關"}</button>
+        <button class="${S.optDemand?"on":""}" data-act="opt" data-k="optDemand">📈 買越多越貴：${S.optDemand?"開":"關"}</button></div>
       <button class="btn green" style="margin-top:6px" data-act="startall" ${lobbyReady?"":"disabled"}>全部開始（${lobbyReady} 桌）</button></div>
     <div class="tables">${S.codes.map(tableCard).join("")}</div>
   </div>`;
@@ -638,7 +694,7 @@ function renderFocus(code){
   $app.innerHTML=`<div class="wrap wide">${back}
     <div class="row" style="margin-bottom:14px"><h2 style="font-size:28px;color:var(--red)">第 ${m.round} / ${ROUNDS} 回合</h2><span class="muted">房號 ${esc(code)}</span>
       <button class="btn ghost sm" style="margin-left:auto" data-act="force" data-code="${code}">強制進入下一回合</button></div>
-    ${marketHTML(m,true)}
+    ${marketHTML(m,true)}${hotHTML(r,true)}
     <div class="card" style="overflow-x:auto"><table class="ptable"><thead><tr><th>玩家</th><th>委託</th><th>出菜</th><th>箍錢</th><th>手路</th><th>狀態</th></tr></thead><tbody>
     ${ps.map(p=>{const cm=COMM[p.commission]; return `<tr>
       <td><b>${esc(p.name)}</b></td><td>${cm?esc(cm.name):"-"}</td><td>${(p.dishes||[]).length} / ${cm?cm.count:"-"}</td><td>💰${p.money??"-"}</td>
@@ -652,7 +708,8 @@ async function startGame(code){
   const ps=playerList(r); if(!ps.length) return;
   const lv=r.meta.lv||"1";
   const pool=shuffle(COMMS.filter(c=>lv==="mix"||String(c.lv)===lv));
-  const patch={"meta/status":"playing","meta/round":1,"meta/deck":shuffle(CARDS.map(c=>c.id)),"meta/startedAt":Date.now()};
+  const patch={"meta/status":"playing","meta/round":1,"meta/deck":shuffle(CARDS.map(c=>c.id)),"meta/startedAt":Date.now(),
+    "meta/hotDeck":shuffle(HOTS.map(h=>h.id)).slice(0,ROUNDS),"meta/hot":null,"meta/sold":null};
   ps.forEach((p,i)=>{
     const c=pool[i%pool.length];
     patch[`players/${p.id}`]={name:p.name,joinedAt:p.joinedAt,commission:c.id,money:c.budget,
@@ -664,9 +721,14 @@ async function setLevel(v){
   S.lv=v; render();
   for(const c of S.codes){ const r=S.rooms[c]; if(r&&r.meta.status==="lobby") await NET.update(c,{"meta/lv":v}) }
 }
+async function setOpt(k){
+  S[k]=!S[k]; render();
+  for(const c of S.codes){ const r=S.rooms[c]; if(r&&r.meta.status==="lobby") await NET.update(c,{["meta/"+k]:S[k]}) }
+}
 async function playAgain(code){
   const r=S.rooms[code]; if(!r) return;
-  const patch={"meta/status":"lobby","meta/round":0,"meta/deck":null,"meta/lv":S.lv||r.meta.lv||"1"};
+  const patch={"meta/status":"lobby","meta/round":0,"meta/deck":null,"meta/hotDeck":null,"meta/hot":null,"meta/sold":null,
+    "meta/lv":S.lv||r.meta.lv||"1","meta/optHot":S.optHot,"meta/optDemand":S.optDemand};
   playerList(r).forEach(p=>patch[`players/${p.id}`]={name:p.name,joinedAt:p.joinedAt});
   await NET.update(code,patch);
 }
@@ -689,7 +751,9 @@ function renderPlayerLobby(p){
   $app.innerHTML=`<div class="wrap"><div class="hero"><div class="plate">🪑</div><h1 style="font-size:32px">${esc(p.name)}，請入座</h1><p>房號 ${esc(S.code)}・等老師按下開始</p></div>
     <div class="card"><div class="sec" style="margin-top:0">同桌的人（${ps.length}）</div><div class="row">${ps.map(x=>`<span class="chip ${x.id===S.me?"red":""}">${esc(x.name)}</span>`).join("")}</div></div>
     <div class="card" style="margin-top:14px"><div class="sec" style="margin-top:0">📖 一句話規則</div>
-    <p style="margin:0">接委託、拜師學手路；每回合 2 個行動買食材或學藝；食材＋手路備齊就能做菜，完成主家的要求！</p></div>
+    <p style="margin:0">接委託、拜師學手路；每回合 2 個行動買食材或學藝；食材＋手路備齊就能做菜，完成主家的要求！</p>
+    ${hotOn(S.room.meta)?`<p style="margin:10px 0 0">🧨 <b>搶頭香</b>：每回合公布一個題目，全桌第一個出符合的菜 +1 聲望。</p>`:""}
+    ${demandOn(S.room.meta)?`<p style="margin:10px 0 0">📈 <b>買越多越貴</b>：同一回合全桌每買走 ${DEMAND_STEP} 份同種食材，它就漲 1 箍。</p>`:""}</div>
     <div style="text-align:center;margin-top:16px"><button class="btn ghost sm" data-act="leave">離開房間</button></div></div>`;
 }
 
@@ -733,7 +797,7 @@ function renderPlayerGame(p){
   $app.innerHTML=`<div class="top"><div class="in"><span class="rd">第 ${m.round}/${ROUNDS} 回合</span><span class="small">${esc(p.name)}</span>
       <span class="stat"><span>💰 ${p.money}</span><span class="dots" title="剩餘行動">${[0,1].map(i=>`<i class="${i<left&&!ended&&!done?"":"off"}"></i>`).join("")}</span></span></div>
     ${done?"":`<div class="tabs">${tb("comm","🧾 委託")}${tb("market","🛒 市場")}${tb("cook","🍳 做菜")}${tb("learn","👨‍🍳 學藝")}</div>`}</div>
-    <div class="wrap">${waitMsg}${done?"":marketHTML(m,false)}${body}</div>
+    <div class="wrap">${waitMsg}${done?"":marketHTML(m,false)+hotHTML(S.room,false)}${body}</div>
     ${done||ended?"":`<div class="bar"><div class="in"><span class="small muted">剩 ${left} 個行動・做菜不用行動</span><button class="btn" style="margin-left:auto" data-act="endround">結束這回合 ➜</button></div></div>`}`;
 }
 function myTableHTML(p){
@@ -746,10 +810,14 @@ function myTableHTML(p){
 function marketTabHTML(p,m,left,ended){
   const max=maxPerBuy(m); const n=ING_KEYS.reduce((s,k)=>s+(S.cart[k]||0),0);
   const cost=cartCost(S.cart,p,m); const lock=ended||left<=0;
+  const dem=demandOn(m);
   return `<div class="row" style="margin-bottom:8px"><b>🛒 上市採買</b><span class="small muted">花 1 個行動，最多買 ${max} 份</span></div>
-    <div class="ings">${ING_KEYS.map(k=>{const pr=price(k,m), b=ING[k].base, q=S.cart[k]||0; return `<div class="ing ${q?"sel":""}">
+    ${dem?`<div class="banner" style="margin-bottom:10px">📈 <b>買越多越貴</b>：這回合全桌每買走 ${DEMAND_STEP} 份同種食材，就漲 1 箍。下回合恢復原價。</div>`:""}
+    <div class="ings">${ING_KEYS.map(k=>{const pr=price(k,m), b=ING[k].base, q=S.cart[k]||0, sold=soldNow(k,m), up=surge(k,m); return `<div class="ing ${q?"sel":""}">
       <div class="e">${ING[k].icon}</div><div>${ING[k].name}</div>
-      <div class="p">${pr!==b?`<s>${b}</s>`:""}${pr} 箍</div><div class="have">菜籃仔有 ${(p.basket||{})[k]||0}${k==="spice"?"・不受行情影響":""}</div>
+      <div class="p">${pr!==b?`<s>${b}</s>`:""}${pr} 箍</div>
+      ${dem&&k!=="spice"?`<div class="dem ${up?"hot":""}">${up?`🔥 搶手 +${up}・`:""}全桌已買 ${sold}・再 ${DEMAND_STEP-sold%DEMAND_STEP} 份漲價</div>`:""}
+      <div class="have">菜籃仔有 ${(p.basket||{})[k]||0}${k==="spice"?"・價格固定":""}</div>
       <div class="qty"><button data-act="cart" data-k="${k}" data-d="-1" ${q<=0||lock?"disabled":""}>−</button><b>${q}</b><button data-act="cart" data-k="${k}" data-d="1" ${n>=max||lock?"disabled":""}>＋</button></div></div>`}).join("")}</div>
     <div class="card" style="margin-top:14px"><div class="row"><div><div>共 ${n} 份・原價 ${cost.sum} 箍</div>${cost.notes.map(x=>`<div class="small" style="color:var(--green)">${x}</div>`).join("")}</div>
       <div style="margin-left:auto;text-align:right"><div class="small muted">要付</div><div style="font-size:26px;font-weight:900;color:var(--red)">${cost.total} 箍</div></div></div>
@@ -778,7 +846,8 @@ function dishHTML(p,d,cm,made,full,ended,remain){
   }
   const ing=d.ing.map(k=>`<span class="chip ${(p.basket||{})[k]>0?"ok":"no"}">${ING[k].icon}${ING[k].name}</span>`).join("");
   const tech=d.tech?`<span class="chip ${(p.techs||{})[d.tech]?"ok":"no"}">${TECH[d.tech].icon}${TECH[d.tech].name}</span>`:`<span class="chip ok">無須手路</span>`;
-  const tags=d.tags.map(t=>`<span class="chip gold">${TAGS[t].icon}${TAGS[t].name}</span>`).join("");
+  const hb=hotFor(S.room.meta), hotOpen=hb&&!hotWinner(S.room.meta)&&hb.f(d)&&!isMade;
+  const tags=d.tags.map(t=>`<span class="chip gold">${TAGS[t].icon}${TAGS[t].name}</span>`).join("")+(hotOpen?`<span class="chip hotchip">🧨 頭香 +1</span>`:"");
   const btn = isMade?`<span class="chip ok">已出菜</span>`:(st.ok&&!full&&!ended?`<button class="btn green sm" data-act="cook" data-id="${d.id}">做菜</button>`:"");
   return `<div class="dish ${isMade?"done":(st.ok&&!full?"can":"")}"><div class="ic">${TYPE[d.type].icon}</div>
     <div style="flex:1;min-width:0"><div class="nm">${d.name}<small>${"★".repeat(d.stars)}</small></div><div class="small muted">${d.id}・${TYPE[d.type].name}</div>
@@ -792,10 +861,10 @@ function learnTabHTML(p,left,ended){
     ${got?`<span class="chip ok">✓ 已經學會</span>`:`<button class="btn sm block" data-act="learn" data-t="${c.tech}" ${lock?"disabled":""}>學藝（用 1 個行動）</button>`}</div>`}).join("")}</div>`;
 }
 function finishedHTML(p,cm){
-  const sc=scoreOf(p);
+  const sc=scoreOf(p,S.room.meta,S.me);
   return p.completedRound ? `<div class="card" style="text-align:center;border:3px solid var(--green)"><div style="font-size:56px">🎉</div><h2 style="color:var(--green)">委託完成！</h2>
     <p>你在第 ${p.completedRound} 回合完成「${cm.name}」</p>
-    <div class="row" style="justify-content:center"><span class="chip ok">完成委託 +5</span>${sc.bonus?`<span class="chip gold">🌟主家真歡喜 +1</span>`:""}${sc.early?`<span class="chip red">提早完成 +${sc.early}</span>`:""}</div>
+    <div class="row" style="justify-content:center"><span class="chip ok">完成委託 +5</span>${sc.bonus?`<span class="chip gold">🌟主家真歡喜 +1</span>`:""}${sc.early?`<span class="chip red">提早完成 +${sc.early}</span>`:""}${sc.hot?`<span class="chip hotchip">🧨 頭香 +${sc.hot}</span>`:""}</div>
     <div style="font-size:40px;font-weight:900;color:var(--red);margin-top:8px">${sc.total} 聲望</div><p class="muted small">等其他人完成，第 ${ROUNDS} 回合結束後公布排名。</p></div>${myTableHTML(p)}`
   : `<div class="card" style="text-align:center"><div style="font-size:56px">😢</div><h2>這次委託沒有完成</h2><p class="muted">出的菜已經到 ${cm.count} 道，但必要條件還不夠。下一局再挑戰！</p></div>${commHTML(p,cm,true)}`;
 }
@@ -805,7 +874,7 @@ function renderEnded(room, isHost, back=""){
   const rk=ranking(room);
   $app.innerHTML=`<div class="wrap ${isHost?"wide":""}">${back}<div class="hero"><div class="plate">🏆</div><h1 style="font-size:34px">辦桌結束</h1><p>聲望最高的就是今仔日的總舖師！</p></div>
     ${rk.map(p=>{const cm=COMM[p.commission]; return `<div class="rank r${p.rank} ${p.id===S.me?"card":""}"><div class="no">${p.rank}</div>
-      <div><b>${esc(p.name)}</b>${p.id===S.me?" （你）":""}<div class="small muted">${cm?cm.name:""}・${p.completedRound?`第${p.completedRound}回合完成`:"未完成"}${p.sc.bonus?"・🌟":""}</div>
+      <div><b>${esc(p.name)}</b>${p.id===S.me?" （你）":""}<div class="small muted">${cm?cm.name:""}・${p.completedRound?`第${p.completedRound}回合完成`:"未完成"}${p.sc.bonus?"・🌟":""}${p.sc.hot?`・🧨×${p.sc.hot}`:""}</div>
       <div class="small muted">剩 ${p.left} 份食材・💰${p.money??0}</div></div><div class="sc">${p.sc.total}</div></div>`}).join("")}
     <p class="small muted">同分時：剩餘食材較少者勝 → 剩餘箍錢較多者勝 → 仍相同則並列。</p>
     <div style="text-align:center;margin-top:16px">${isHost?"":`<button class="btn ghost" data-act="leave">回首頁</button>`}</div></div>`;
@@ -828,8 +897,20 @@ async function buy(){
   const cost=cartCost(S.cart,p,m); if(!cost.items.length) return;
   if(cost.items.length>maxPerBuy(m)) return toast("買太多份了");
   if(cost.total>p.money) return toast("箍錢不夠");
+  const cart={...S.cart};
+  if(demandOn(m)){
+    // 用交易一次確認價格並登記全桌買量，避免兩人同時買時價格算錯
+    const ok=await NET.txMeta(S.code, mt=>{
+      if(!mt||mt.status!=="playing"||mt.round!==m.round) return;
+      if(cartCost(cart,p,mt).total!==cost.total) return;
+      const rk="r"+mt.round; const sold={...(mt.sold||{})}; const cur={...(sold[rk]||{})};
+      for(const k of ING_KEYS) if(cart[k]&&k!=="spice") cur[k]=(cur[k]||0)+cart[k];
+      sold[rk]=cur; return {...mt,sold};
+    });
+    if(!ok){ render(); return toast("剛剛有人買走，價格變了，請再確認一次") }
+  }
   const patch={[`players/${S.me}/money`]:p.money-cost.total,[`players/${S.me}/used`]:usedPatch(p)};
-  for(const k of ING_KEYS) if(S.cart[k]) patch[`players/${S.me}/basket/${k}`]=((p.basket||{})[k]||0)+S.cart[k];
+  for(const k of ING_KEYS) if(cart[k]) patch[`players/${S.me}/basket/${k}`]=((p.basket||{})[k]||0)+cart[k];
   if(cost.useFirst) patch[`players/${S.me}/firstBuyRound`]=m.round;
   await NET.update(S.code,patch);
   toast(`買好了！付 ${cost.total} 箍`); S.cart={};
@@ -850,7 +931,15 @@ async function cook(id){
   const ids=[...dishes,id]; const last=ids.length===cm.count;
   if(last && !reqMet(cm,ids,p.money)){
     if(!await ask("⚠️ 這是最後一道菜","出了這道之後，委託的必要條件還沒達成，這局就<b>無法完成委託</b>（0 聲望）。<br>確定要出嗎？","還是要出","再想想")) return;
-  } else if(!await ask(`做 ${d.name}？`,`會用掉：${d.ing.map(k=>ING[k].icon+ING[k].name).join("、")}<br>出菜後不能更換。`,"做菜出菜！")) return;
+  } else if(!await ask(`做 ${d.name}？`,`會用掉：${d.ing.map(k=>ING[k].icon+ING[k].name).join("、")}<br>出菜後不能更換。${(()=>{const hb=hotFor(S.room.meta);return hb&&!hotWinner(S.room.meta)&&hb.f(d)?"<br>🧨 這道符合搶頭香，可以搶 +1 聲望！":""})()}`,"做菜出菜！")) return;
+  const hb=hotFor(S.room.meta);
+  if(hb&&hb.f(d)&&!hotWinner(S.room.meta)){
+    await NET.txMeta(S.code, mt=>{
+      if(!mt||mt.status!=="playing"||mt.round!==m.round) return;
+      const h={...(mt.hot||{})}; if(h["r"+mt.round]) return;
+      h["r"+mt.round]=S.me; return {...mt,hot:h};
+    });
+  }
   const patch={[`players/${S.me}/dishes`]:ids};
   for(const k of d.ing) patch[`players/${S.me}/basket/${k}`]=p.basket[k]-1;
   if(last){
@@ -882,6 +971,7 @@ document.addEventListener("click",e=>{
   if(a==="focus"){ S.focus=code; render(); return window.scrollTo(0,0) }
   if(a==="unfocus"){ S.focus=null; return render() }
   if(a==="lv") return act(()=>setLevel(b.dataset.v));
+  if(a==="opt") return act(()=>setOpt(b.dataset.k));
   if(a==="kick") return act(async()=>{ if(await ask("移除這位玩家？","")) await NET.update(code,{[`players/${b.dataset.id}`]:null}) });
   if(a==="start") return act(()=>startGame(code));
   if(a==="startall") return act(async()=>{ for(const c of S.codes){ await startGame(c) } toast("全部開始！") });
