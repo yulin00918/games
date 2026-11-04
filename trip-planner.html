@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>兩天一夜・小組旅行規劃師</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fbf5ef; --card:#ffffff; --ink:#3b2a22; --muted:#8a7366; --line:#ecdcd0;
+  --terra:#c4683f; --terra-d:#a2512d; --terra-l:#f6e3d6;
+  --go:#3f7d8c; --stay:#7a5ea8; --eat:#d08a1f; --fun:#4f8a4a;
+  --warn:#c0392b; --ok:#3d8b4f;
+  --r:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC",system-ui,sans-serif;font-size:17px;line-height:1.55}
+button,input,select,textarea{font:inherit;color:inherit}
+header{background:linear-gradient(135deg,var(--terra),#d9895f);color:#fff;padding:18px 20px 64px}
+header .wrap{max-width:1060px;margin:auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+header h1{margin:0;font-size:1.6rem;font-weight:900;letter-spacing:.04em}
+header p{margin:2px 0 0;opacity:.92;font-size:.95rem}
+.badge{background:rgba(255,255,255,.2);border-radius:999px;padding:4px 12px;font-size:.85rem}
+main{max-width:1060px;margin:-48px auto 40px;padding:0 14px}
+nav.tabs{display:flex;gap:6px;overflow-x:auto;background:var(--card);border-radius:var(--r);padding:8px;box-shadow:0 4px 18px rgba(120,60,30,.10);position:sticky;top:8px;z-index:5;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;border:0;background:transparent;border-radius:12px;padding:10px 14px;min-height:48px;cursor:pointer;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:6px;position:relative}
+.tab.on{background:var(--terra);color:#fff}
+.tab .dot{width:9px;height:9px;border-radius:50%;background:#e0cfc3}
+.tab .dot.done{background:var(--ok)}
+.tab.on .dot{background:#fff}
+section.panel{display:none;margin-top:16px}
+section.panel.on{display:block;animation:fade .25s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+.card{background:var(--card);border-radius:var(--r);padding:18px;box-shadow:0 2px 10px rgba(120,60,30,.06);margin-bottom:14px}
+h2{margin:0 0 6px;font-size:1.35rem}
+h3{margin:0 0 8px;font-size:1.1rem}
+.sub{color:var(--muted);margin:0 0 12px;font-size:.95rem}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+label.f{display:flex;flex-direction:column;gap:4px;font-weight:500;font-size:.92rem;color:var(--muted)}
+label.f span.req::after{content:" *";color:var(--warn)}
+input,select,textarea{border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:#fffdfb;min-height:48px;width:100%;color:var(--ink)}
+textarea{min-height:84px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--terra)}
+.btn{border:0;border-radius:12px;padding:12px 18px;min-height:48px;font-weight:700;cursor:pointer;background:var(--terra);color:#fff}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:var(--terra-l);color:var(--terra-d)}
+.btn.line{background:#fff;border:2px solid var(--line);color:var(--ink)}
+.btn.sm{padding:8px 12px;min-height:40px;font-size:.9rem}
+.btn.danger{background:#fbe5e1;color:var(--warn)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+.hint{background:var(--terra-l);border-radius:14px;padding:14px 16px}
+.hint b{color:var(--terra-d)}
+.hint ul{margin:6px 0 0;padding-left:20px}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.links a{background:#fff;border:1.5px solid #e8c8b4;color:var(--terra-d);text-decoration:none;padding:6px 12px;border-radius:999px;font-size:.88rem;font-weight:500}
+.cat-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.cat-icon{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-size:1.7rem;color:#fff;flex:0 0 auto}
+.item{border:2px solid var(--line);border-left-width:8px;border-radius:14px;padding:12px 14px;margin-bottom:10px;background:#fffdfb}
+.item .t{font-weight:700;font-size:1.05rem}
+.item .m{color:var(--muted);font-size:.9rem}
+.item a{color:var(--terra-d);word-break:break-all}
+.chip{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.8rem;font-weight:700;background:#f1e7df;color:var(--ink);margin-right:4px}
+.empty{color:var(--muted);text-align:center;padding:20px;border:2px dashed var(--line);border-radius:14px}
+.checks{list-style:none;padding:0;margin:0}
+.checks li{padding:8px 0;border-bottom:1px dashed var(--line);display:flex;gap:10px;align-items:flex-start}
+.checks li:last-child{border:0}
+.ck{flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#fff;font-size:.85rem}
+.ck.y{background:var(--ok)} .ck.n{background:#d9c6b9}
+.ck.w{background:var(--warn)}
+/* timeline */
+.days{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.tl{position:relative;padding-left:28px}
+.tl::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:3px;background:var(--line);border-radius:3px}
+.tl .ev{position:relative;margin-bottom:12px}
+.tl .ev::before{content:"";position:absolute;left:-20px;top:7px;width:13px;height:13px;border-radius:50%;background:var(--c,#ccc);border:3px solid #fff;box-shadow:0 0 0 2px var(--c,#ccc)}
+.tl .time{font-weight:900;font-size:.9rem;color:var(--c)}
+.tl .ev.clash .time::after{content:" ⚠ 時間重疊";color:var(--warn);font-weight:700}
+.tl .gap{color:var(--muted);font-size:.82rem;margin:-6px 0 10px}
+/* budget */
+.big{font-size:2rem;font-weight:900}
+.bar{height:26px;border-radius:999px;background:#f1e7df;overflow:hidden;display:flex}
+.bar div{height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:.92rem}
+.legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;background:var(--c);vertical-align:-1px}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--muted);font-weight:500}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.meter{position:relative;height:16px;border-radius:999px;background:#f1e7df;margin:10px 0 4px}
+.meter i{position:absolute;inset:0 auto 0 0;border-radius:999px;background:var(--ok)}
+.meter.over i{background:var(--warn)}
+.status{font-weight:700}
+.status.over{color:var(--warn)} .status.ok{color:var(--ok)}
+/* modal */
+.mask{position:fixed;inset:0;background:rgba(59,42,34,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.mask.on{display:flex}
+.sheet{background:#fff;width:100%;max-width:720px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:20px}
+@media(min-width:760px){.mask{align-items:center}.sheet{border-radius:22px}}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:999px;transition:.3s;z-index:30;font-weight:500}
+.toast.on{transform:translateX(-50%) translateY(0)}
+/* result */
+.result-head{background:linear-gradient(135deg,var(--terra),#d9895f);color:#fff;border-radius:var(--r);padding:20px}
+.result-head h2{font-size:1.6rem}
+.kv{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:8px}
+.foot{color:var(--muted);text-align:center;font-size:.85rem;margin-top:20px}
+/* presentation */
+#show{position:fixed;inset:0;background:#2a1d17;z-index:40;display:none;flex-direction:column}
+#show.on{display:flex}
+.stage{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:2.5vmin}
+.slide{width:min(100%,calc((100vh - 90px)*16/9));aspect-ratio:16/9;max-height:100%;background:var(--bg);border-radius:2vmin;overflow:hidden;position:relative;display:none;flex-direction:column;padding:4.5% 5.5%;font-size:clamp(12px,2.1vmin + .6vw,30px)}
+.slide.on{display:flex;animation:sIn .35s}
+@keyframes sIn{from{opacity:0;transform:translateX(30px)}to{opacity:1}}
+.slide h1{font-size:2.6em;margin:0 0 .2em;font-weight:900;line-height:1.2}
+.slide h2{font-size:1.75em;margin:0 0 .5em;display:flex;align-items:center;gap:.4em}
+.slide .tag{display:inline-block;padding:.15em .7em;border-radius:999px;background:var(--terra-l);color:var(--terra-d);font-weight:700;font-size:.8em;margin:0 .3em .3em 0}
+.slide .cover{position:absolute;inset:0;background:linear-gradient(135deg,var(--terra),#e0a070);color:#fff;padding:7% 8%;display:flex;flex-direction:column;justify-content:center}
+.slide .cover .tag{background:rgba(255,255,255,.22);color:#fff}
+.slide .body{flex:1;min-height:0;display:flex;flex-direction:column;gap:.6em}
+.slide .cols{display:grid;align-content:start;grid-template-columns:repeat(auto-fit,minmax(30%,1fr));gap:.8em;flex:1;min-height:0}
+.slide .box{background:#fff;border-radius:.6em;padding:.8em 1em;border-top:.35em solid var(--c,var(--terra));overflow:hidden}
+.slide .box b.t{display:block;font-size:1.12em;margin-bottom:.2em}
+.slide .box .m{color:var(--muted);font-size:.82em}
+.slide .stl{display:flex;flex-direction:column;gap:.35em;overflow:hidden}
+.slide .stl div{display:flex;gap:.8em;align-items:baseline;background:#fff;border-radius:.5em;padding:.35em .8em;border-left:.35em solid var(--c)}
+.slide .stl .tm{font-weight:900;color:var(--c);min-width:5.6em;font-variant-numeric:tabular-nums}
+.slide .bigno{font-size:3em;font-weight:900;color:var(--terra-d);line-height:1.1}
+.slide .sbar2{height:1.4em;border-radius:999px;overflow:hidden;display:flex;margin:.4em 0}
+.slide .sbar2 div{height:100%}
+.slide .pg{position:absolute;right:3%;bottom:3%;color:var(--muted);font-size:.7em}
+.slide .note{display:none;position:absolute;left:4%;right:4%;bottom:4%;background:rgba(59,42,34,.92);color:#fff;border-radius:.6em;padding:.6em 1em;font-size:.78em}
+#show.notes .slide .note{display:block}
+.sbar{display:flex;align-items:center;gap:8px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:#1e1410}
+.sbtn{border:0;background:#3b2a22;color:#fff;border-radius:12px;min-width:52px;height:48px;font-size:1.3rem;cursor:pointer}
+.sinfo{flex:1;color:#e8d6c9;font-size:.9rem;display:flex;align-items:center;gap:10px}
+.sprog{flex:1;height:6px;background:#3b2a22;border-radius:6px;overflow:hidden}
+.sprog i{display:block;height:100%;background:var(--terra);transition:width .3s}
+@media print{
+  header,nav.tabs,.noprint,.toast{display:none!important}
+  main{margin:0;max-width:none}
+  section.panel{display:none!important}
+  section#p-result{display:block!important}
+  .card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div style="font-size:2.4rem">🧳</div>
+    <div>
+      <h1>兩天一夜・小組旅行規劃師</h1>
+      <p>食・住・行・樂 自己查、自己排、自己算預算</p>
+    </div>
+    <div class="spacer"></div>
+    <div class="badge" id="saveBadge">尚未儲存</div>
+  </div>
+</header>
+
+<main>
+  <nav class="tabs" id="tabs"></nav>
+
+  <!-- ① 出發設定 -->
+  <section class="panel" id="p-setup">
+    <div class="card">
+      <h2>① 出發設定</h2>
+      <p class="sub">先決定你們是誰、要去哪裡、有多少預算。預算請依老師公布的金額填寫。</p>
+      <div class="grid g3">
+        <label class="f"><span class="req">班級</span><input id="s-class" placeholder="例：801"></label>
+        <label class="f"><span class="req">組別</span><input id="s-group" placeholder="例：第3組"></label>
+        <label class="f"><span class="req">人數</span><input id="s-people" type="number" min="1" max="10" inputmode="numeric" placeholder="例：5"></label>
+      </div>
+      <div class="grid g2" style="margin-top:12px">
+        <label class="f"><span class="req">組員姓名（用頓號分開）</span><input id="s-members" placeholder="例：王小明、林小華、陳小美"></label>
+        <label class="f"><span class="req">旅行團名稱</span><input id="s-title" placeholder="例：花蓮山海慢慢遊"></label>
+      </div>
+      <div class="grid g3" style="margin-top:12px">
+        <label class="f"><span class="req">目的地縣市</span>
+          <select id="s-dest"><option value="">請選擇</option></select></label>
+        <label class="f"><span class="req">出發地</span><input id="s-from" placeholder="例：桃園火車站"></label>
+        <label class="f"><span class="req">出發日期</span><input id="s-date" type="date"></label>
+      </div>
+      <div class="grid g2" style="margin-top:12px">
+        <label class="f"><span class="req">全組總預算（元）</span><input id="s-budget" type="number" step="500" min="0" inputmode="numeric" placeholder="例：20000"></label>
+        <label class="f"><span>旅行主題</span>
+          <select id="s-theme"><option value="">請選擇</option><option>自然生態</option><option>在地美食</option><option>歷史文化</option><option>親子休閒</option><option>運動冒險</option><option>藝術文創</option><option>節能環保</option></select></label>
+      </div>
+      <label class="f" style="margin-top:12px"><span>為什麼選這個地方？（2～3句）</span><textarea id="s-why" placeholder="例：我們想看海，也想體驗原住民文化……"></textarea></label>
+    </div>
+    <div class="hint">
+      <b>規則提醒</b>
+      <ul>
+        <li>行程從<b>第1天早上出發</b>，到<b>第2天傍晚回到出發地</b>。</li>
+        <li>食住行樂每一項都要<b>自己上網查</b>，並貼上<b>資料來源網址</b>。</li>
+        <li>費用要寫清楚是「<b>每人</b>」還是「<b>全組</b>」，網頁會自動幫你們加總。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- category panels are generated -->
+  <div id="catPanels"></div>
+
+  <!-- 行程表 -->
+  <section class="panel" id="p-timeline">
+    <div class="card">
+      <h2>⑥ 行程表</h2>
+      <p class="sub">根據你們填的時間自動排好。檢查一下：時間有沒有重疊？交通時間夠不夠？</p>
+      <div class="days" id="tlDays"></div>
+    </div>
+    <div class="card">
+      <h3>☔ 雨天備案</h3>
+      <p class="sub">如果下大雨，原本的戶外行程要換成什麼？</p>
+      <textarea id="s-rain" placeholder="例：第1天下午若下雨，改去○○博物館（門票每人100元）"></textarea>
+    </div>
+  </section>
+
+  <!-- 預算 -->
+  <section class="panel" id="p-budget">
+    <div class="card">
+      <h2>⑦ 預算表</h2>
+      <p class="sub">網頁自動加總。「每人」的費用會乘上人數。</p>
+      <div class="grid g3">
+        <div><div class="sub" style="margin:0">全組總花費</div><div class="big" id="b-total">0</div></div>
+        <div><div class="sub" style="margin:0">平均每人</div><div class="big" id="b-per">0</div></div>
+        <div><div class="sub" style="margin:0">預算剩餘</div><div class="big" id="b-left">0</div></div>
+      </div>
+      <div class="meter" id="b-meter"><i></i></div>
+      <div class="status" id="b-status"></div>
+    </div>
+    <div class="card">
+      <h3>食住行樂各花多少？</h3>
+      <div class="bar" id="b-bar"></div>
+      <div class="legend" id="b-legend"></div>
+      <table style="margin-top:14px" id="b-table"></table>
+    </div>
+    <div class="card">
+      <h3>💡 理財小思考</h3>
+      <div class="grid g2">
+        <label class="f"><span class="req">哪一項花最多錢？為什麼？</span><textarea id="r-most"></textarea></label>
+        <label class="f"><span class="req">如果超過預算，你們會怎麼省？（至少2個方法）</span><textarea id="r-save"></textarea></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- 成果 -->
+  <section class="panel" id="p-result">
+    <div class="card noprint">
+      <h2>⑧ 檢核 &amp; 成果</h2>
+      <p class="sub">全部打勾後，按下方按鈕交作業。</p>
+      <ul class="checks" id="checks"></ul>
+    </div>
+    <div id="resultBody"></div>
+    <div class="card noprint" style="background:linear-gradient(135deg,#fff,var(--terra-l))">
+      <h3>🎤 上台發表</h3>
+      <p class="sub">把你們的規劃自動變成投影片。平板可接投影機，左右滑動或點畫面兩側換頁。每頁下方有「講稿提示」，提醒要講什麼。</p>
+      <button class="btn" id="btnShow" style="font-size:1.1rem">🎤 進入發表模式</button>
+    </div>
+    <div class="card noprint">
+      <h3>交作業</h3>
+      <p class="sub">方法一：截圖上方的成果頁。方法二：按「複製成果文字」，貼到 Google Classroom 或老師指定的地方。</p>
+      <div class="row">
+        <button class="btn" id="btnCopy">📋 複製成果文字</button>
+        <button class="btn ghost" id="btnPrint">🖨️ 列印 / 存成 PDF</button>
+      </div>
+    </div>
+    <div class="card noprint">
+      <h3>備份與換平板</h3>
+      <p class="sub">資料只存在這台平板。換平板或怕不見，請先複製「備份碼」，到新平板貼上還原。</p>
+      <div class="row">
+        <button class="btn line" id="btnBackup">複製備份碼</button>
+        <button class="btn line" id="btnRestore">貼上備份碼還原</button>
+        <div class="spacer"></div>
+        <button class="btn danger sm" id="btnReset">清空重來</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">生活聆距離・家政課 ｜ 消費與理財：旅行規劃單元</p>
+</main>
+
+<!-- modal -->
+<div class="mask" id="mask">
+  <div class="sheet">
+    <div class="row" style="margin-bottom:10px"><h2 id="mTitle" style="margin:0">新增</h2><div class="spacer"></div><button class="btn line sm" id="mClose">✕ 關閉</button></div>
+    <form id="mForm"></form>
+  </div>
+</div>
+<div class="mask" id="mask2">
+  <div class="sheet">
+    <h2 id="m2Title">貼上備份碼</h2>
+    <p class="sub" id="m2Sub"></p>
+    <textarea id="m2Text" style="min-height:140px"></textarea>
+    <div class="row" style="margin-top:12px"><div class="spacer"></div><button class="btn line" id="m2Cancel">取消</button><button class="btn" id="m2Ok">確定</button></div>
+  </div>
+</div>
+<div id="show" aria-hidden="true">
+  <div class="stage" id="stage"></div>
+  <div class="sbar">
+    <button class="sbtn" id="sPrev" aria-label="上一頁">‹</button>
+    <div class="sinfo"><span id="sNo"></span><div class="sprog"><i id="sProg"></i></div></div>
+    <button class="sbtn" id="sNote" title="講稿提示">💬</button>
+    <button class="sbtn" id="sFull" title="全螢幕">⛶</button>
+    <button class="sbtn" id="sExit" title="離開">✕</button>
+    <button class="sbtn" id="sNext" aria-label="下一頁">›</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+const COUNTIES=["基隆市","臺北市","新北市","桃園市","新竹市","新竹縣","苗栗縣","臺中市","彰化縣","南投縣","雲林縣","嘉義市","嘉義縣","臺南市","高雄市","屏東縣","宜蘭縣","花蓮縣","臺東縣","澎湖縣","金門縣","連江縣（馬祖）"];
+const TRANSPORT=["臺鐵","高鐵","客運","市區公車","捷運","計程車","租車（含司機）","公共自行車","步行","渡輪","飛機","其他"];
+const CATS={
+  go:{key:"go",no:"②",name:"行",full:"交通",icon:"🚆",color:"var(--go)",hex:"#3f7d8c",
+    desc:"怎麼去、當地怎麼移動、怎麼回家？每一段交通都要寫。",
+    tips:["去程、當地移動、回程都要排到","查班次時間，記得預留轉乘與等車時間","學生票、團體票、一日券可能更便宜"],
+    links:[["臺鐵訂票","https://tip.railway.gov.tw/"],["台灣高鐵","https://www.thsrc.com.tw/"],["公路客運/公車動態","https://www.taiwanbus.tw/"],["台灣好行","https://www.taiwantrip.com.tw/"],["Google 地圖","https://www.google.com/maps"]],
+    fields:[
+      {id:"leg",label:"這一段是",type:"select",opts:["去程","當地移動","回程"],req:1},
+      {id:"mode",label:"交通工具",type:"select",opts:TRANSPORT,req:1},
+      {id:"name",label:"從哪裡 → 到哪裡",ph:"例：桃園車站 → 花蓮車站",req:1},
+      {id:"detail",label:"車次 / 路線",ph:"例：自強號 408 次"}
+    ],defMode:"pp"},
+  stay:{key:"stay",no:"③",name:"住",full:"住宿",icon:"🏠",color:"var(--stay)",hex:"#7a5ea8",
+    desc:"晚上住哪裡？要算清楚幾間房、一間多少錢。",
+    tips:["比較至少2家，寫下選擇理由","看清楚一間房可以住幾個人","注意是否合法立案（有旅宿標章或民宿登記編號）","有沒有含早餐？含早餐就不用另外找第2天早餐"],
+    links:[["交通部觀光署 旅宿網","https://taiwanstay.net.tw/"],["台灣觀光資訊網","https://www.taiwan.net.tw/"],["Google 地圖","https://www.google.com/maps"]],
+    fields:[
+      {id:"name",label:"住宿名稱",ph:"例：○○民宿",req:1},
+      {id:"stype",label:"類型",type:"select",opts:["飯店","民宿","青年旅館","露營區","其他"],req:1},
+      {id:"detail",label:"房型（幾人房、幾間）",ph:"例：四人房 1 間 + 雙人房 1 間"},
+      {id:"bf",label:"是否含早餐",type:"select",opts:["含早餐","不含早餐"],req:1},
+      {id:"reason",label:"為什麼選這間？",type:"textarea",ph:"例：離車站近、價錢合理、評價好"}
+    ],defMode:"grp",fixDay:1,costLabel:"住宿總價"},
+  eat:{key:"eat",no:"④",name:"食",full:"餐飲",icon:"🍜",color:"var(--eat)",hex:"#d08a1f",
+    desc:"兩天要吃哪幾餐？推薦吃當地特色！",
+    tips:["至少要有：第1天午餐、晚餐，第2天早餐、午餐","每人預估花費要合理","試著找當地特色小吃或在地食材"],
+    links:[["台灣觀光資訊網・美食","https://www.taiwan.net.tw/"],["Google 地圖","https://www.google.com/maps"]],
+    fields:[
+      {id:"meal",label:"哪一餐",type:"select",opts:["早餐","午餐","晚餐","點心"],req:1},
+      {id:"name",label:"店名",ph:"例：○○扁食",req:1},
+      {id:"detail",label:"想吃什麼",ph:"例：扁食、炸彈蔥油餅"},
+      {id:"local",label:"在地特色是什麼？",ph:"例：花蓮知名小吃，使用在地食材"}
+    ],defMode:"pp"},
+  fun:{key:"fun",no:"⑤",name:"樂",full:"景點活動",icon:"🎡",color:"var(--fun)",hex:"#4f8a4a",
+    desc:"要去哪些景點、玩什麼活動？",
+    tips:["至少安排3個景點或活動","查開放時間與公休日！","寫下這個地方可以學到什麼","安排至少1個室內景點，下雨也能去"],
+    links:[["台灣觀光資訊網","https://www.taiwan.net.tw/"],["國家公園","https://np.cpami.gov.tw/"],["Google 地圖","https://www.google.com/maps"]],
+    fields:[
+      {id:"name",label:"景點 / 活動名稱",ph:"例：七星潭",req:1},
+      {id:"io",label:"室內或戶外",type:"select",opts:["戶外","室內","都有"],req:1},
+      {id:"detail",label:"要做什麼",ph:"例：看海、撿石頭、拍照"},
+      {id:"learn",label:"可以學到 / 體驗到什麼？",type:"textarea"}
+    ],defMode:"pp"}
+};
+const CAT_KEYS=["go","stay","eat","fun"];
+
+let S=load()||blank();
+function blank(){return{setup:{},items:[],extra:{},saved:0}}
+function load(){try{const t=localStorage.getItem("trip2d1n");return t?JSON.parse(t):null}catch(e){return null}}
+let saveT;
+function save(){
+  clearTimeout(saveT);
+  saveT=setTimeout(()=>{
+    S.saved=Date.now();
+    try{localStorage.setItem("trip2d1n",JSON.stringify(S));badge("✓ 已自動儲存 "+new Date().toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"}))}
+    catch(e){badge("⚠ 無法自動儲存，請用備份碼")}
+  },300);
+}
+function badge(t){document.getElementById("saveBadge").textContent=t}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=n=>"$"+Math.round(n||0).toLocaleString("zh-TW");
+function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("on"),2200)}
+const people=()=>Math.max(1,parseInt(S.setup.people)||1);
+const itemCost=it=>(+it.cost||0)*(it.cmode==="pp"?people():1);
+const tmin=t=>{if(!t)return null;const[a,b]=t.split(":");return(+a)*60+(+b)};
+
+// ---------- tabs ----------
+const TABS=[["setup","① 出發"],["go","② 行"],["stay","③ 住"],["eat","④ 食"],["fun","⑤ 樂"],["timeline","⑥ 行程表"],["budget","⑦ 預算"],["result","⑧ 成果"]];
+function buildTabs(){
+  $("#tabs").innerHTML=TABS.map(([k,l])=>`<button class="tab" data-k="${k}"><span class="dot" id="dot-${k}"></span>${l}</button>`).join("");
+  $("#tabs").addEventListener("click",e=>{const b=e.target.closest(".tab");if(b)go(b.dataset.k)});
+}
+function go(k){
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b.dataset.k===k));
+  document.querySelectorAll("section.panel").forEach(p=>p.classList.toggle("on",p.id==="p-"+k));
+  if(k==="timeline")renderTimeline();
+  if(k==="budget")renderBudget();
+  if(k==="result")renderResult();
+  try{history.replaceState(null,"","#"+k)}catch(e){}
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+// ---------- category panels ----------
+function buildCats(){
+  $("#catPanels").innerHTML=CAT_KEYS.map(k=>{const c=CATS[k];return`
+  <section class="panel" id="p-${k}">
+    <div class="card">
+      <div class="cat-head"><div class="cat-icon" style="background:${c.color}">${c.icon}</div>
+        <div><h2 style="margin:0">${c.no} ${c.name}・${c.full}</h2><p class="sub" style="margin:0">${c.desc}</p></div></div>
+      <div class="hint"><b>去哪裡找？</b><ul>${c.tips.map(t=>`<li>${t}</li>`).join("")}</ul>
+        <div class="links">${c.links.map(([n,u])=>`<a href="${u}" target="_blank" rel="noopener">${n} ↗</a>`).join("")}</div></div>
+    </div>
+    <div class="card">
+      <div class="row" style="margin-bottom:10px"><h3 style="margin:0">我們的${c.full}</h3><div class="spacer"></div>
+        <span class="chip" id="sum-${k}">小計 $0</span>
+        <button class="btn" data-add="${k}">＋ 新增${c.name}</button></div>
+      <div id="list-${k}"></div>
+    </div>
+  </section>`}).join("");
+  $("#catPanels").addEventListener("click",e=>{
+    const a=e.target.closest("[data-add]");if(a)openForm(a.dataset.add);
+    const ed=e.target.closest("[data-edit]");if(ed){const it=S.items.find(x=>x.id===ed.dataset.edit);openForm(it.cat,it)}
+    const dl=e.target.closest("[data-del]");if(dl){if(dl.dataset.sure){S.items=S.items.filter(x=>x.id!==dl.dataset.del);save();renderLists();toast("已刪除")}else{dl.dataset.sure=1;dl.textContent="再按一次確認刪除";setTimeout(()=>{if(dl.isConnected){delete dl.dataset.sure;dl.textContent="刪除"}},3000)}}
+  });
+}
+function itemSubtitle(it){
+  const c=CATS[it.cat],bits=[];
+  if(it.cat==="go")bits.push(it.leg,it.mode);
+  if(it.cat==="stay")bits.push(it.stype,it.bf);
+  if(it.cat==="eat")bits.push(it.meal);
+  if(it.cat==="fun")bits.push(it.io);
+  return bits.filter(Boolean).map(b=>`<span class="chip">${esc(b)}</span>`).join("");
+}
+function sortItems(a,b){return(a.day-b.day)||((tmin(a.start)??9999)-(tmin(b.start)??9999))}
+function renderLists(){
+  CAT_KEYS.forEach(k=>{
+    const list=S.items.filter(i=>i.cat===k).sort(sortItems);
+    const c=CATS[k];
+    $("#sum-"+k).textContent="小計 "+money(list.reduce((s,i)=>s+itemCost(i),0));
+    $("#list-"+k).innerHTML=list.length?list.map(it=>`
+      <div class="item" style="border-left-color:${c.hex}">
+        <div class="row"><div class="t">${esc(it.name)}</div><div class="spacer"></div>
+          <b>${money(itemCost(it))}</b></div>
+        <div style="margin:4px 0">${itemSubtitle(it)}<span class="chip">第${it.day}天 ${esc(it.start||"")}${it.end?"–"+esc(it.end):""}</span></div>
+        ${it.detail?`<div class="m">${esc(it.detail)}</div>`:""}
+        ${it.reason?`<div class="m">理由：${esc(it.reason)}</div>`:""}
+        ${it.local?`<div class="m">在地特色：${esc(it.local)}</div>`:""}
+        ${it.learn?`<div class="m">學到：${esc(it.learn)}</div>`:""}
+        <div class="m">費用：${money(it.cost)} ${it.cmode==="pp"?"× "+people()+" 人":"（全組）"}</div>
+        ${it.link?`<div class="m">來源：<a href="${esc(safeUrl(it.link))}" target="_blank" rel="noopener">${esc(it.link)}</a></div>`:`<div class="m" style="color:var(--warn)">⚠ 還沒貼資料來源</div>`}
+        <div class="row" style="margin-top:8px"><button class="btn line sm" data-edit="${it.id}">編輯</button><button class="btn danger sm" data-del="${it.id}">刪除</button></div>
+      </div>`).join(""):`<div class="empty">還沒有資料，按「＋ 新增${c.name}」開始</div>`;
+  });
+  updateDots();
+}
+function safeUrl(u){u=String(u).trim();return /^https?:\/\//i.test(u)?u:"https://"+u}
+
+// ---------- form ----------
+let editing=null,editCat=null;
+function fieldHTML(f,v){
+  const val=v[f.id]??"";
+  const lab=`<span class="${f.req?"req":""}">${f.label}</span>`;
+  if(f.type==="select")return`<label class="f">${lab}<select name="${f.id}">${f.opts.map(o=>`<option ${o===val?"selected":""}>${o}</option>`).join("")}</select></label>`;
+  if(f.type==="textarea")return`<label class="f" style="grid-column:1/-1">${lab}<textarea name="${f.id}" placeholder="${f.ph||""}">${esc(val)}</textarea></label>`;
+  return`<label class="f">${lab}<input name="${f.id}" value="${esc(val)}" placeholder="${f.ph||""}"></label>`;
+}
+function openForm(cat,it){
+  editCat=cat;editing=it||null;const c=CATS[cat];
+  const v=it||{day:c.fixDay||1,cmode:c.defMode};
+  if(!it&&cat==="go"&&!S.items.some(i=>i.cat==="go"))v.name=(S.setup.from||"")+" → ";
+  $("#mTitle").innerHTML=`${c.icon} ${it?"編輯":"新增"}${c.name}`;
+  const stayTimes=cat==="stay";
+  $("#mForm").innerHTML=`
+    <div class="grid g2">${c.fields.map(f=>fieldHTML(f,v)).join("")}</div>
+    <div class="grid g3" style="margin-top:12px">
+      <label class="f"><span class="req">第幾天</span><select name="day"><option value="1" ${v.day==1?"selected":""}>第1天</option><option value="2" ${v.day==2?"selected":""}>第2天</option></select></label>
+      <label class="f"><span class="req">${stayTimes?"入住時間":"開始時間"}</span><input type="time" name="start" value="${esc(v.start||"")}"></label>
+      <label class="f"><span>${stayTimes?"（隔天）退房時間":"結束時間"}</span><input type="time" name="end" value="${esc(v.end||"")}"></label>
+    </div>
+    <div class="grid g2" style="margin-top:12px">
+      <label class="f"><span class="req">${c.costLabel||"費用"}（元）</span><input type="number" name="cost" min="0" inputmode="numeric" value="${esc(v.cost??"")}" placeholder="例：${cat==="stay"?"6000":cat==="go"?"440":"150"}"></label>
+      <label class="f"><span class="req">計費方式</span><select name="cmode"><option value="pp" ${v.cmode==="pp"?"selected":""}>每人（會乘上人數）</option><option value="grp" ${v.cmode==="grp"?"selected":""}>全組合計</option></select></label>
+    </div>
+    <label class="f" style="margin-top:12px"><span class="req">資料來源網址</span><input name="link" inputmode="url" value="${esc(v.link||"")}" placeholder="把查到資料的網址貼在這裡"></label>
+    <label class="f" style="margin-top:12px"><span>備註</span><input name="note" value="${esc(v.note||"")}" placeholder="例：需要先預約、週一公休"></label>
+    <p id="mErr" style="color:var(--warn);font-weight:700;min-height:1.5em;margin:10px 0 0"></p>
+    <div class="row"><div class="spacer"></div><button type="button" class="btn line" id="mCancel">取消</button><button class="btn" type="submit">儲存</button></div>`;
+  $("#mCancel").onclick=closeForm;
+  $("#mask").classList.add("on");
+}
+function closeForm(){$("#mask").classList.remove("on")}
+$("#mClose").onclick=closeForm;
+$("#mask").addEventListener("click",e=>{if(e.target.id==="mask")closeForm()});
+$("#mForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target),o={};fd.forEach((v,k)=>o[k]=String(v).trim());
+  const c=CATS[editCat];
+  const miss=c.fields.filter(f=>f.req&&!o[f.id]).map(f=>f.label);
+  if(!o.start)miss.push(editCat==="stay"?"入住時間":"開始時間");
+  if(o.cost==="")miss.push("費用");
+  if(miss.length){$("#mErr").textContent="還沒填："+miss.join("、");return}
+  if(o.end&&editCat!=="stay"&&tmin(o.end)<=tmin(o.start)){$("#mErr").textContent="結束時間要比開始時間晚喔";return}
+  o.day=+o.day;o.cost=+o.cost;o.cat=editCat;
+  if(editing)Object.assign(editing,o);else{o.id="i"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);S.items.push(o)}
+  save();renderLists();closeForm();toast("已儲存 "+o.name);
+});
+
+// ---------- setup binding ----------
+const SETUP_IDS=["class","group","people","members","title","dest","from","date","budget","theme","why"];
+function bindSetup(){
+  $("#s-dest").innerHTML+=COUNTIES.map(c=>`<option>${c}</option>`).join("");
+  SETUP_IDS.forEach(id=>{const el=$("#s-"+id);el.value=S.setup[id]||"";el.addEventListener("input",()=>{S.setup[id]=el.value;save();updateDots();if(id==="people")renderLists()})});
+  [["s-rain","rain"],["r-most","most"],["r-save","saveTip"]].forEach(([id,k])=>{const el=$("#"+id);el.value=S.extra[k]||"";el.addEventListener("input",()=>{S.extra[k]=el.value;save();updateDots()})});
+}
+
+// ---------- checks ----------
+function checks(){
+  const s=S.setup,it=S.items,by=k=>it.filter(i=>i.cat===k);
+  const meals=by("eat").map(i=>i.day+i.meal);
+  const bf=by("stay").some(i=>i.bf==="含早餐");
+  const needMeals=[["1午餐","第1天午餐"],["1晚餐","第1天晚餐"],["2早餐","第2天早餐"],["2午餐","第2天午餐"]];
+  const missMeals=needMeals.filter(([k])=>!(meals.includes(k)||(k==="2早餐"&&bf))).map(m=>m[1]);
+  const total=it.reduce((a,i)=>a+itemCost(i),0),budget=+s.budget||0;
+  const funs=by("fun");
+  const clashes=findClashes();
+  const nolink=it.filter(i=>!i.link).length;
+  return[
+    {k:"setup",ok:["class","group","people","members","title","dest","from","date","budget"].every(x=>s[x]),t:"出發設定都填好了",d:"班級、組別、人數、組員、團名、目的地、出發地、日期、預算"},
+    {k:"go",ok:by("go").some(i=>i.leg==="去程")&&by("go").some(i=>i.leg==="回程"),t:"有去程也有回程交通"},
+    {k:"stay",ok:by("stay").length>0,t:"安排好晚上的住宿"},
+    {k:"eat",ok:missMeals.length===0,t:"四餐都有安排",d:missMeals.length?"還缺："+missMeals.join("、"):""},
+    {k:"fun",ok:funs.length>=3,t:"至少 3 個景點或活動",d:`目前 ${funs.length} 個`},
+    {k:"timeline",ok:clashes.size===0&&it.length>0,t:"行程時間沒有重疊",warn:clashes.size>0,d:clashes.size?`有 ${clashes.size} 個行程時間重疊`:""},
+    {k:"timeline2",ok:!!(S.extra.rain||"").trim()||funs.some(f=>f.io!=="戶外"),t:"想好雨天備案（或有室內景點）"},
+    {k:"links",ok:it.length>0&&nolink===0,t:"每一項都有資料來源網址",d:nolink?`還有 ${nolink} 項沒貼網址`:""},
+    {k:"budget",ok:budget>0&&total>0&&total<=budget,warn:budget>0&&total>budget,t:"總花費在預算內",d:budget?`${money(total)} / ${money(budget)}`:"還沒填預算"},
+    {k:"budget2",ok:!!(S.extra.most||"").trim()&&!!(S.extra.saveTip||"").trim(),t:"完成理財小思考"}
+  ];
+}
+function updateDots(){
+  const c=checks(),g=k=>c.filter(x=>x.k===k||x.k.startsWith(k)).every(x=>x.ok);
+  const map={setup:g("setup"),go:g("go"),stay:g("stay"),eat:g("eat"),fun:g("fun"),timeline:g("timeline"),budget:g("budget"),result:c.every(x=>x.ok)};
+  Object.entries(map).forEach(([k,v])=>{const d=$("#dot-"+k);if(d)d.classList.toggle("done",v)});
+}
+
+// ---------- timeline ----------
+function findClashes(){
+  const set=new Set();
+  [1,2].forEach(d=>{
+    const ev=S.items.filter(i=>i.day===d&&i.cat!=="stay"&&i.start&&i.end).map(i=>({id:i.id,s:tmin(i.start),e:tmin(i.end)})).sort((a,b)=>a.s-b.s);
+    for(let i=0;i<ev.length;i++)for(let j=i+1;j<ev.length;j++)if(ev[j].s<ev[i].e){set.add(ev[i].id);set.add(ev[j].id)}
+  });
+  return set;
+}
+function renderTimeline(){
+  const cl=findClashes();
+  const stay=S.items.filter(i=>i.cat==="stay");
+  const dayEvents=d=>{
+    let ev=S.items.filter(i=>i.day===d&&i.cat!=="stay");
+    if(d===1)stay.forEach(s=>ev.push({...s,_label:"入住",end:""}));
+    if(d===2)stay.forEach(s=>ev.push({...s,_label:"退房",start:s.end||"",end:""}));
+    return ev.sort((a,b)=>(tmin(a.start)??9999)-(tmin(b.start)??9999));
+  };
+  $("#tlDays").innerHTML=[1,2].map(d=>{
+    const ev=dayEvents(d);
+    const date=S.setup.date?new Date(new Date(S.setup.date).getTime()+(d-1)*864e5).toLocaleDateString("zh-TW",{month:"numeric",day:"numeric",weekday:"short"}):"";
+    let prevEnd=null;
+    return`<div><h3>第 ${d} 天 <span class="sub">${date}</span></h3>${ev.length?`<div class="tl">${ev.map(e=>{
+      const c=CATS[e.cat];let gap="";
+      const st=tmin(e.start);
+      if(prevEnd!=null&&st!=null&&st-prevEnd>=90&&e.cat!=="go")gap=`<div class="gap">⋯ 空檔 ${Math.floor((st-prevEnd)/60)} 小時${(st-prevEnd)%60?(st-prevEnd)%60+" 分":""}，要做什麼？</div>`;
+      if(e.end)prevEnd=tmin(e.end);else if(st!=null)prevEnd=st;
+      return gap+`<div class="ev ${cl.has(e.id)?"clash":""}" style="--c:${c.hex}">
+        <div class="time">${esc(e.start||"??:??")}${e.end?" – "+esc(e.end):""}</div>
+        <div><b>${c.icon} ${e._label?e._label+"・":""}${esc(e.name)}</b>${e.cat==="go"&&e.mode?` <span class="chip">${esc(e.mode)}</span>`:""}${e.cat==="eat"?` <span class="chip">${esc(e.meal)}</span>`:""}</div>
+        ${e.detail?`<div class="m" style="color:var(--muted);font-size:.9rem">${esc(e.detail)}</div>`:""}</div>`}).join("")}</div>`:`<div class="empty">第 ${d} 天還沒有行程</div>`}</div>`;
+  }).join("");
+}
+
+// ---------- budget ----------
+function catTotals(){const t={};CAT_KEYS.forEach(k=>t[k]=S.items.filter(i=>i.cat===k).reduce((s,i)=>s+itemCost(i),0));return t}
+function renderBudget(){
+  const t=catTotals(),total=Object.values(t).reduce((a,b)=>a+b,0),budget=+S.setup.budget||0,n=people();
+  $("#b-total").textContent=money(total);
+  $("#b-per").textContent=money(total/n);
+  const left=budget-total;
+  $("#b-left").textContent=budget?money(left):"—";
+  $("#b-left").style.color=budget&&left<0?"var(--warn)":"";
+  const m=$("#b-meter");m.classList.toggle("over",budget&&total>budget);
+  m.querySelector("i").style.width=(budget?Math.min(100,total/budget*100):0)+"%";
+  const st=$("#b-status");
+  if(!budget){st.className="status";st.textContent="請先到「① 出發」填寫全組總預算"}
+  else if(total>budget){st.className="status over";st.textContent=`超出預算 ${money(total-budget)}！想想哪裡可以省？`}
+  else{st.className="status ok";st.textContent=`在預算內，用了 ${Math.round(total/budget*100)}%`}
+  $("#b-bar").innerHTML=total?CAT_KEYS.map(k=>`<div style="width:${t[k]/total*100}%;background:${CATS[k].hex}" title="${CATS[k].name}"></div>`).join(""):"";
+  $("#b-legend").innerHTML=CAT_KEYS.map(k=>`<span style="--c:${CATS[k].hex}">${CATS[k].name} ${total?Math.round(t[k]/total*100):0}%</span>`).join("");
+  $("#b-table").innerHTML=`<tr><th>項目</th><th class="n">全組</th><th class="n">每人</th><th class="n">占比</th></tr>`+
+    CAT_KEYS.map(k=>`<tr><td>${CATS[k].icon} ${CATS[k].name}・${CATS[k].full}</td><td class="n">${money(t[k])}</td><td class="n">${money(t[k]/n)}</td><td class="n">${total?Math.round(t[k]/total*100):0}%</td></tr>`).join("")+
+    `<tr><td><b>合計</b></td><td class="n"><b>${money(total)}</b></td><td class="n"><b>${money(total/n)}</b></td><td class="n">100%</td></tr>`;
+}
+
+// ---------- result ----------
+function renderResult(){
+  const c=checks();
+  $("#checks").innerHTML=c.map(x=>`<li><span class="ck ${x.ok?"y":x.warn?"w":"n"}">${x.ok?"✓":x.warn?"!":""}</span><div><b>${x.t}</b>${x.d?`<div class="sub" style="margin:0">${esc(x.d)}</div>`:""}</div></li>`).join("");
+  renderBudget();renderTimeline();
+  const s=S.setup,t=catTotals(),total=Object.values(t).reduce((a,b)=>a+b,0),n=people();
+  $("#resultBody").innerHTML=`
+    <div class="result-head"><div class="sub" style="color:#fff;opacity:.85;margin:0">${esc(s.class||"")} ${esc(s.group||"")}・${esc(s.members||"")}</div>
+      <h2>${esc(s.title||"（還沒取團名）")}</h2>
+      <div class="kv"><span>📍 ${esc(s.dest||"？")}</span><span>🚩 從 ${esc(s.from||"？")} 出發</span><span>📅 ${esc(s.date||"？")}</span><span>👥 ${n} 人</span>${s.theme?`<span>🎯 ${esc(s.theme)}</span>`:""}</div>
+      ${s.why?`<p style="margin:10px 0 0">${esc(s.why)}</p>`:""}</div>
+    <div class="card" style="margin-top:14px"><h3>行程表</h3><div class="days">${$("#tlDays").innerHTML}</div>
+      ${S.extra.rain?`<p><b>☔ 雨天備案：</b>${esc(S.extra.rain)}</p>`:""}</div>
+    <div class="card"><h3>預算</h3>
+      <p>全組 <b>${money(total)}</b>／預算 ${money(s.budget)}　每人約 <b>${money(total/n)}</b></p>
+      <div class="bar">${$("#b-bar").innerHTML}</div><div class="legend">${$("#b-legend").innerHTML}</div>
+      ${S.extra.most?`<p><b>花最多：</b>${esc(S.extra.most)}</p>`:""}${S.extra.saveTip?`<p><b>省錢方法：</b>${esc(S.extra.saveTip)}</p>`:""}</div>
+    <div class="card"><h3>住宿與資料來源</h3>${S.items.filter(i=>i.cat==="stay").map(i=>`<p>🏠 <b>${esc(i.name)}</b>（${esc(i.stype)}，${esc(i.bf)}）${money(itemCost(i))}${i.reason?"<br>理由："+esc(i.reason):""}</p>`).join("")||"<p class='sub'>尚未安排</p>"}
+      <ol style="font-size:.85rem;color:var(--muted);padding-left:20px">${S.items.slice().sort(sortItems).filter(i=>i.link).map(i=>`<li>${esc(i.name)}：${esc(i.link)}</li>`).join("")}</ol></div>`;
+}
+function resultText(){
+  const s=S.setup,t=catTotals(),total=Object.values(t).reduce((a,b)=>a+b,0),n=people();
+  const L=[];
+  L.push(`【兩天一夜旅行規劃】${s.title||""}`,`${s.class||""} ${s.group||""}｜組員：${s.members||""}`,`目的地：${s.dest||""}｜出發地：${s.from||""}｜日期：${s.date||""}｜${n}人｜主題：${s.theme||""}`);
+  if(s.why)L.push(`選擇原因：${s.why}`);
+  [1,2].forEach(d=>{
+    L.push("",`— 第${d}天 —`);
+    S.items.filter(i=>i.day===d||(i.cat==="stay"&&d===2)).map(i=>i.cat==="stay"&&d===2?{...i,start:i.end,_l:"退房"}:i.cat==="stay"?{...i,_l:"入住"}:i)
+      .sort((a,b)=>(tmin(a.start)??9999)-(tmin(b.start)??9999))
+      .forEach(i=>L.push(`${i.start||"??"}${i.end&&!i._l?"-"+i.end:""} [${CATS[i.cat].name}] ${i._l?i._l+"・":""}${i.name}${i.mode?"（"+i.mode+"）":""}${i.meal?"（"+i.meal+"）":""}${i._l==="退房"?"":"　"+money(itemCost(i))}`));
+  });
+  if(S.extra.rain)L.push("",`雨天備案：${S.extra.rain}`);
+  L.push("","— 預算 —",...CAT_KEYS.map(k=>`${CATS[k].name}：${money(t[k])}`),`合計：${money(total)}（預算 ${money(s.budget)}，每人約 ${money(total/n)}）`);
+  if(S.extra.most)L.push(`花最多：${S.extra.most}`);
+  if(S.extra.saveTip)L.push(`省錢方法：${S.extra.saveTip}`);
+  L.push("","— 資料來源 —",...S.items.filter(i=>i.link).map(i=>`${i.name}：${i.link}`));
+  return L.join("\n");
+}
+async function copy(text,msg){
+  try{await navigator.clipboard.writeText(text);toast(msg)}
+  catch(e){openText("請手動複製","自動複製失敗，請長按下方文字全選後複製。",text,null)}
+}
+$("#btnCopy").onclick=()=>copy(resultText(),"已複製成果文字，可以貼上交作業了");
+$("#btnPrint").onclick=()=>{renderResult();try{window.print()}catch(e){}setTimeout(()=>toast("若沒有跳出列印視窗，請改用截圖"),600)};
+$("#btnBackup").onclick=()=>{let code;try{code=btoa(unescape(encodeURIComponent(JSON.stringify(S))))}catch(e){return}copy(code,"已複製備份碼，請貼到安全的地方保存")};
+$("#btnRestore").onclick=()=>openText("貼上備份碼","在下面貼上之前複製的備份碼，目前的資料會被取代。","",txt=>{
+  try{const o=JSON.parse(decodeURIComponent(escape(atob(txt.trim()))));if(!o.items)throw 0;S=o;S.extra=S.extra||{};save();refreshAll();toast("還原成功！")}catch(e){toast("備份碼不正確，請再試一次")}
+});
+$("#btnReset").onclick=function(){if(this.dataset.sure){S=blank();save();refreshAll();go("setup");toast("已清空");delete this.dataset.sure;this.textContent="清空重來"}else{this.dataset.sure=1;this.textContent="確定要全部清空？再按一次";setTimeout(()=>{delete this.dataset.sure;this.textContent="清空重來"},3000)}};
+let m2cb=null;
+function openText(title,sub,val,cb){$("#m2Title").textContent=title;$("#m2Sub").textContent=sub;$("#m2Text").value=val;m2cb=cb;$("#m2Ok").style.display=cb?"":"none";$("#mask2").classList.add("on");if(val)setTimeout(()=>$("#m2Text").select(),50)}
+$("#m2Cancel").onclick=()=>$("#mask2").classList.remove("on");
+$("#m2Ok").onclick=()=>{const v=$("#m2Text").value;$("#mask2").classList.remove("on");m2cb&&m2cb(v)};
+
+// ---------- presentation ----------
+let sIdx=0,slides=[];
+function dayList(d){
+  const stay=S.items.filter(i=>i.cat==="stay");
+  let ev=S.items.filter(i=>i.day===d&&i.cat!=="stay");
+  if(d===1)stay.forEach(s=>ev.push({...s,_l:"入住",end:""}));
+  if(d===2)stay.forEach(s=>ev.push({...s,_l:"退房",start:s.end||"",end:""}));
+  return ev.sort((a,b)=>(tmin(a.start)??9999)-(tmin(b.start)??9999));
+}
+function buildSlides(){
+  const s=S.setup,t=catTotals(),total=Object.values(t).reduce((a,b)=>a+b,0),n=people(),budget=+s.budget||0;
+  const by=k=>S.items.filter(i=>i.cat===k).sort(sortItems);
+  const out=[];
+  const add=(html,note)=>out.push({html,note});
+  add(`<div class="cover"><div><span class="tag">${esc(s.class||"")} ${esc(s.group||"")}</span>${s.theme?`<span class="tag">🎯 ${esc(s.theme)}</span>`:""}</div>
+    <h1>${esc(s.title||"我們的兩天一夜")}</h1>
+    <div style="font-size:1.3em">📍 ${esc(s.dest||"")}　📅 ${esc(s.date||"")}　👥 ${n} 人</div>
+    <div style="margin-top:1.2em;opacity:.9">組員：${esc(s.members||"")}</div></div>`,
+    "大家好，我們是第＿組，今天要介紹我們規劃的旅程。請每位組員自我介紹並說明自己負責的部分。");
+  add(`<h2>📍 為什麼去${esc(s.dest||"這裡")}？</h2><div class="body">
+    <div class="box" style="font-size:1.2em;flex:1">${esc(s.why||"（還沒寫選擇原因）")}</div>
+    <div><span class="tag">從 ${esc(s.from||"？")} 出發</span>${s.theme?`<span class="tag">主題：${esc(s.theme)}</span>`:""}<span class="tag">預算 ${money(budget)}</span></div></div>`,
+    "說明選擇這個目的地的理由，和旅行主題有什麼關係。");
+  [1,2].forEach(d=>{
+    const ev=dayList(d);
+    const date=s.date?new Date(new Date(s.date).getTime()+(d-1)*864e5).toLocaleDateString("zh-TW",{month:"numeric",day:"numeric",weekday:"short"}):"";
+    const max=9,shown=ev.slice(0,max);
+    add(`<h2>🗓️ 第 ${d} 天 <span class="tag">${date}</span></h2><div class="body"><div class="stl">${shown.map(e=>{const c=CATS[e.cat];
+      return`<div style="--c:${c.hex}"><span class="tm">${esc(e.start||"")}${e.end?"–"+esc(e.end):""}</span><span>${c.icon} ${e._l?e._l+"・":""}<b>${esc(e.name)}</b>${e.mode?` <span class="tag">${esc(e.mode)}</span>`:""}${e.meal?` <span class="tag">${esc(e.meal)}</span>`:""}</span></div>`}).join("")||"<div style='--c:#ccc'>（尚未安排）</div>"}
+      ${ev.length>max?`<div style="--c:#ccc">……還有 ${ev.length-max} 項</div>`:""}</div></div>`,
+      `帶大家走一遍第${d}天：幾點去哪裡、怎麼過去、為什麼這樣排順序。`);
+  });
+  const boxes=(arr,c,f)=>arr.slice(0,6).map(i=>`<div class="box" style="--c:${c.hex}"><b class="t">${esc(i.name)}</b>${f(i)}<div class="m">${money(itemCost(i))}</div></div>`).join("")||`<div class="box">（尚未安排）</div>`;
+  add(`<h2>🚆 行・怎麼移動</h2><div class="cols">${boxes(by("go"),CATS.go,i=>`<span class="tag">${esc(i.leg)}</span><span class="tag">${esc(i.mode)}</span>${i.detail?`<div class="m">${esc(i.detail)}</div>`:""}`)}</div>`,
+    "介紹交通方式，為什麼選這種交通工具？有用到學生票或優惠嗎？");
+  add(`<h2>🏠 住・晚上住哪裡</h2><div class="cols">${boxes(by("stay"),CATS.stay,i=>`<span class="tag">${esc(i.stype)}</span><span class="tag">${esc(i.bf)}</span>${i.detail?`<div class="m">${esc(i.detail)}</div>`:""}${i.reason?`<div style="margin-top:.4em">💡 ${esc(i.reason)}</div>`:""}`)}</div>`,
+    "說明住宿的選擇理由，你們比較過哪幾家？怎麼確認是合法旅宿？");
+  add(`<h2>🍜 食・在地美味</h2><div class="cols">${boxes(by("eat"),CATS.eat,i=>`<span class="tag">第${i.day}天${esc(i.meal)}</span>${i.detail?`<div class="m">${esc(i.detail)}</div>`:""}${i.local?`<div style="margin-top:.4em">⭐ ${esc(i.local)}</div>`:""}`)}</div>`,
+    "推薦最想吃的一道，說說它的在地特色。");
+  add(`<h2>🎡 樂・景點活動</h2><div class="cols">${boxes(by("fun"),CATS.fun,i=>`<span class="tag">${esc(i.io)}</span>${i.detail?`<div class="m">${esc(i.detail)}</div>`:""}${i.learn?`<div style="margin-top:.4em">📚 ${esc(i.learn)}</div>`:""}`)}</div>`,
+    "介紹最推薦的景點，在那裡可以學到或體驗到什麼？");
+  add(`<h2>💰 預算怎麼花</h2><div class="body"><div class="cols" style="flex:0 0 auto">
+      <div class="box"><div class="m">全組總花費</div><div class="bigno">${money(total)}</div></div>
+      <div class="box"><div class="m">平均每人</div><div class="bigno">${money(total/n)}</div></div>
+      <div class="box" style="--c:${budget&&total>budget?"var(--warn)":"var(--ok)"}"><div class="m">${budget&&total>budget?"超出預算":"預算剩餘"}</div><div class="bigno" style="color:${budget&&total>budget?"var(--warn)":"var(--ok)"}">${budget?money(Math.abs(budget-total)):"—"}</div></div></div>
+    <div class="sbar2">${total?CAT_KEYS.map(k=>`<div style="width:${t[k]/total*100}%;background:${CATS[k].hex}"></div>`).join(""):""}</div>
+    <div>${CAT_KEYS.map(k=>`<span class="tag" style="background:#fff;border-left:.5em solid ${CATS[k].hex}">${CATS[k].name} ${money(t[k])}（${total?Math.round(t[k]/total*100):0}%）</span>`).join("")}</div></div>`,
+    "說明總花費和每人花費，哪一項占最多？有沒有在預算內？");
+  add(`<h2>🧠 理財小思考</h2><div class="cols">
+    <div class="box"><b class="t">花最多錢的是…</b>${esc(S.extra.most||"（未填）")}</div>
+    <div class="box" style="--c:var(--ok)"><b class="t">我們的省錢妙招</b>${esc(S.extra.saveTip||"（未填）")}</div>
+    <div class="box" style="--c:var(--go)"><b class="t">☔ 雨天備案</b>${esc(S.extra.rain||"（未填）")}</div></div>`,
+    "分享你們規劃時遇到的困難，以及怎麼調整讓預算更合理。");
+  add(`<div class="cover" style="align-items:center;text-align:center"><div style="font-size:3em">🧳</div><h1>謝謝聆聽！</h1>
+    <div style="font-size:1.2em">歡迎提問 🙋　${esc(s.class||"")} ${esc(s.group||"")}</div></div>`,
+    "邀請同學和老師提問，並感謝大家。");
+  return out;
+}
+function showSlide(i){
+  sIdx=Math.max(0,Math.min(slides.length-1,i));
+  document.querySelectorAll("#stage .slide").forEach((el,k)=>el.classList.toggle("on",k===sIdx));
+  $("#sNo").textContent=`${sIdx+1} / ${slides.length}`;
+  $("#sProg").style.width=((sIdx+1)/slides.length*100)+"%";
+}
+function openShow(){
+  slides=buildSlides();
+  $("#stage").innerHTML=slides.map((s,i)=>`<div class="slide">${s.html}<div class="note">💬 講稿提示：${s.note}</div><div class="pg">${i+1}</div></div>`).join("");
+  $("#show").classList.add("on");$("#show").setAttribute("aria-hidden","false");
+  showSlide(0);
+}
+function closeShow(){
+  $("#show").classList.remove("on","notes");$("#show").setAttribute("aria-hidden","true");
+  try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}
+}
+$("#btnShow").onclick=openShow;
+$("#sPrev").onclick=()=>showSlide(sIdx-1);
+$("#sNext").onclick=()=>showSlide(sIdx+1);
+$("#sExit").onclick=closeShow;
+$("#sNote").onclick=()=>$("#show").classList.toggle("notes");
+$("#sFull").onclick=()=>{try{const el=$("#show");const p=document.fullscreenElement?document.exitFullscreen():(el.requestFullscreen||el.webkitRequestFullscreen).call(el);if(p&&p.catch)p.catch(()=>toast("這裡不支援全螢幕"))}catch(e){toast("這裡不支援全螢幕")}};
+$("#stage").addEventListener("click",e=>{const r=$("#stage").getBoundingClientRect();showSlide(sIdx+(e.clientX-r.left<r.width/3?-1:1))});
+let tx=null;
+$("#stage").addEventListener("touchstart",e=>{tx=e.touches[0].clientX},{passive:true});
+$("#stage").addEventListener("touchend",e=>{if(tx==null)return;const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50){showSlide(sIdx+(dx<0?1:-1));e.preventDefault()}tx=null});
+document.addEventListener("keydown",e=>{if(!$("#show").classList.contains("on"))return;
+  if(["ArrowRight","PageDown"," "].includes(e.key)){e.preventDefault();showSlide(sIdx+1)}
+  if(["ArrowLeft","PageUp"].includes(e.key))showSlide(sIdx-1);
+  if(e.key==="Escape")closeShow()});
+
+function refreshAll(){
+  SETUP_IDS.forEach(id=>$("#s-"+id).value=S.setup[id]||"");
+  [["s-rain","rain"],["r-most","most"],["r-save","saveTip"]].forEach(([id,k])=>$("#"+id).value=S.extra[k]||"");
+  renderLists();
+}
+
+buildTabs();buildCats();bindSetup();renderLists();
+if(S.saved)badge("✓ 已讀取上次的進度");
+const h=(location.hash||"").slice(1);
+go(TABS.some(t=>t[0]===h)?h:"setup");
+})();
+</script>
+</body>
+</html>
