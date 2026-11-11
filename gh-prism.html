@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>柱體的體積與表面積 50 題</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: title, level picker, one big question card; answer typed into a mixed-number box (whole / numerator / denominator) with an on-screen keypad. */
+:root{
+  --paper:#f1f5f3; --card:#ffffff; --card-2:#f5f8f7; --ink:#1b2729; --ink-2:#56666a; --line:#d3ddda;
+  --pos:#1d63a8; --neg:#cc3a26; --ok:#2e8a4e; --accent:#e39a12; --sel:#1d63a8;
+  --f-display:"LXGW WenKai TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111a1b; --card:#1b2627; --card-2:#162021; --ink:#e6eeec; --ink-2:#a2b2b4; --line:#2f3d3f;
+  --pos:#6cb2f5; --neg:#ff7a63; --ok:#5fc27f; --accent:#f2b23a; --sel:#6cb2f5; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111a1b; --card:#1b2627; --card-2:#162021; --ink:#e6eeec; --ink-2:#a2b2b4; --line:#2f3d3f;
+  --pos:#6cb2f5; --neg:#ff7a63; --ok:#5fc27f; --accent:#f2b23a; --sel:#6cb2f5; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 28px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-size:2em;line-height:1.1;margin:0;letter-spacing:.03em}
+.who{display:flex;align-items:center;gap:6px;font-size:.9em;color:var(--ink-2)}
+.who input{font:inherit;border:1.5px solid var(--line);border-radius:8px;padding:.25em .5em;background:var(--card);color:var(--ink);width:8em}
+.levels{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.lvl{border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:8px 8px 10px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0}
+.lvl b{font-family:var(--f-display);font-size:1.15em}
+.lvl span{font-size:.78em;color:var(--ink-2);line-height:1.3}
+.lvl .bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:6px}
+.lvl .bar i{display:block;height:100%;background:var(--ok)}
+.lvl.on{border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--ink)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 8px 24px -16px rgba(20,50,50,.45)}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.dots button{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);background:var(--card-2);font-family:var(--f-num);font-size:.8em;padding:0;color:var(--ink-2)}
+.dots button.cur{border-color:var(--ink);color:var(--ink);font-weight:600}
+.dots button.first{background:var(--ok);border-color:var(--ok);color:#fff}
+.dots button.second{background:color-mix(in srgb,var(--ok) 35%,var(--card));border-color:var(--ok);color:var(--ink)}
+.dots button.miss{background:color-mix(in srgb,var(--neg) 25%,var(--card));border-color:var(--neg);color:var(--ink)}
+.qhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;color:var(--ink-2);font-size:.9em}
+/* math typesetting */
+.mx{font-family:var(--f-num);font-weight:600;display:inline-flex;align-items:center;flex-wrap:wrap;gap:.18em .3em;line-height:1}
+.fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;margin:0 .05em}
+.fr>span{padding:0 .12em}
+.fr>span:first-child{border-bottom:.09em solid currentColor;padding-bottom:.08em}
+.fr>span:last-child{padding-top:.08em}
+.mixed{display:inline-flex;align-items:center;gap:.08em}
+.q{font-size:clamp(1.6em,5.6vw,2.3em);margin:16px 0 12px;overflow-wrap:anywhere}
+.q .fr{font-size:.82em}
+.q.qword{font-size:clamp(1.1em,4vw,1.4em);line-height:1.7}
+.q.qword .mx{font-family:var(--f-body);font-weight:700;gap:.1em .15em}
+.q.qword .fr{font-family:var(--f-num);font-size:.85em}
+.unit{font-family:var(--f-body);font-size:.75em;font-weight:700}
+.colon{font-size:1.2em;padding:0 .1em}
+.steps .mx,.q.qword .mx,.misslist .mx{display:inline;line-height:2}
+.steps .fr,.q.qword .fr,.misslist .fr{vertical-align:middle}
+.fig{display:flex;justify-content:center;margin:4px 0 8px}
+.fig svg{width:min(100%,300px);height:auto;overflow:visible}
+.fig .ln{stroke:var(--ink);stroke-width:2;fill:none}
+.fig .fl{fill:color-mix(in srgb,var(--pos) 14%,transparent);stroke:var(--ink);stroke-width:2}
+.fig .sh{fill:color-mix(in srgb,var(--accent) 35%,transparent)}
+.fig .hid{stroke:var(--ink-2);stroke-width:1.5;stroke-dasharray:5 4;fill:none}
+.fig .mk{stroke:var(--neg);stroke-width:2.5;fill:none}
+.fig text{font-family:var(--f-body);font-size:15px;font-weight:700;fill:var(--neg)}
+.fig .dot{fill:var(--ink)}
+.paren{font-weight:400;font-size:1.15em;margin:0 -.12em}
+.steps .mx,.hint .mx,.misslist .mx{font-size:1.02em;font-weight:500}
+.steps .fr{font-size:.86em}
+/* answer box */
+.ansrow{display:flex;align-items:center;gap:12px;font-family:var(--f-num);font-weight:600;font-size:clamp(1.4em,5vw,1.9em);flex-wrap:wrap}
+.ansbox{display:inline-flex;align-items:center;gap:.25em;border:2.5px solid var(--ink);border-radius:14px;padding:.25em .5em;background:var(--card-2)}
+.ansbox.wrong{border-color:var(--neg);animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.sgn{min-width:.6em;text-align:center;color:var(--neg)}
+.slot{min-width:2.1em;min-height:1.35em;border:2px dashed var(--line);border-radius:8px;background:var(--card);display:inline-flex;align-items:center;justify-content:center;padding:0 .2em;font:inherit;color:var(--ink)}
+.slot.on{border:2.5px solid var(--sel);box-shadow:0 0 0 3px color-mix(in srgb,var(--sel) 20%,transparent)}
+.slot.ph{color:var(--ink-2);font-family:var(--f-body);font-size:.45em;font-weight:500}
+.fracslot{display:inline-flex;flex-direction:column;align-items:center;gap:4px}
+.fracslot .line{width:100%;height:3px;background:var(--ink);border-radius:2px}
+.anshint{font-size:.85em;color:var(--ink-2);margin-top:6px}
+.msg{min-height:1.5em;margin:10px 0 2px;font-weight:700}
+.hint{border-left:4px solid var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent);padding:8px 12px;border-radius:0 10px 10px 0;margin:8px 0}
+.hint b{display:block;font-size:.8em;letter-spacing:.1em}
+.steps{background:var(--card-2);border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+.steps ol{margin:6px 0;padding-left:1.4em;display:flex;flex-direction:column;gap:10px}
+.steps .fin{font-weight:700;display:flex;align-items:center;gap:.5em;flex-wrap:wrap}
+.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}
+.pad button{min-height:54px;border-radius:12px;border:1.5px solid var(--line);background:var(--card-2);font-family:var(--f-num);font-size:1.4em;font-weight:600}
+.pad button:active{transform:translateY(1px)}
+.pad .fn{font-family:var(--f-body);font-size:.95em;font-weight:700}
+.pad .neg-k{color:var(--neg)}
+.pad .go{background:var(--ink);color:var(--card);border-color:var(--ink);font-family:var(--f-body);font-size:1.1em}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{border:1.5px solid var(--ink);background:var(--card);border-radius:10px;padding:.55em 1.1em;font-weight:700}
+.btn.main{background:var(--ink);color:var(--card)}
+.btn.alt{border-color:var(--line);font-weight:500}
+.okc{color:var(--ok)} .neg{color:var(--neg)}
+.result h2{font-family:var(--f-display);font-size:1.8em;margin:0 0 4px}
+.score{font-family:var(--f-num);font-size:3em;font-weight:600;line-height:1}
+.score small{font-size:.35em;color:var(--ink-2)}
+.stars{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;font-size:.95em}
+.misslist{list-style:none;padding:0;margin:8px 0;display:flex;flex-direction:column;gap:10px}
+.misslist li{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:6px;flex-wrap:wrap}
+.foot{font-size:.82em;color:var(--ink-2);text-align:center}
+@media (max-width:560px){
+  .lvl{padding:6px 5px 8px;border-radius:10px}
+  .lvl span{display:none}
+  .card{padding:14px}
+  .dots{gap:4px}
+  .dots button{width:26px;height:26px;font-size:.7em}
+  .pad{grid-template-columns:repeat(5,1fr);gap:6px}
+  .pad button{min-height:50px;font-size:1.2em}
+  .pad .fn{font-size:.8em}
+}
+@media (prefers-reduced-motion:reduce){.ansbox.wrong{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>柱體的體積與表面積 50 題</h1>
+    <label class="who" for="nm">名字 <input id="nm" maxlength="10" placeholder="寫上名字" autocomplete="off"></label>
+  </header>
+  <nav class="levels" id="levels" aria-label="選擇關卡"></nav>
+  <main class="card" id="main"></main>
+  <p class="foot">圓周率用 3.14。答案寫整數或小數。每題兩次機會：錯一次看提示，再錯就看解題步驟。紀錄存在這台裝置上。</p>
+</div>
+
+<script>
+"use strict";
+const SET={"key": "prism", "decimal": true, "noneg": true, "numOnly": true, "levels": ["長方體體積", "三角柱體積", "圓柱體積", "角柱表面積", "圓柱表面積"], "qs": [{"t": "val", "q": "長 11 公分、寬 2 公分、高 10 公分的長方體，體積是多少立方公分？", "a": [220, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 11 × 2 = 22", "22 × 10 = 220"], "fig": {"type": "box", "l": 11, "w": 2, "h": 10}, "lv": 1}, {"t": "val", "q": "長 6 公分、寬 8 公分、高 5 公分的長方體，體積是多少立方公分？", "a": [240, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 6 × 8 = 48", "48 × 5 = 240"], "fig": {"type": "box", "l": 6, "w": 8, "h": 5}, "lv": 1}, {"t": "val", "q": "邊長 2 公分的正方體，體積是多少立方公分？", "a": [8, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 2 × 2 = 4", "4 × 2 = 8"], "fig": {"type": "box", "l": 2, "w": 2, "h": 2}, "lv": 1}, {"t": "val", "q": "長 7 公分、寬 3 公分、高 8 公分的長方體，體積是多少立方公分？", "a": [168, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 7 × 3 = 21", "21 × 8 = 168"], "fig": {"type": "box", "l": 7, "w": 3, "h": 8}, "lv": 1}, {"t": "val", "q": "長 10 公分、寬 8 公分、高 7 公分的長方體，體積是多少立方公分？", "a": [560, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 10 × 8 = 80", "80 × 7 = 560"], "fig": {"type": "box", "l": 10, "w": 8, "h": 7}, "lv": 1}, {"t": "val", "q": "邊長 8 公分的正方體，體積是多少立方公分？", "a": [512, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 8 × 8 = 64", "64 × 8 = 512"], "fig": {"type": "box", "l": 8, "w": 8, "h": 8}, "lv": 1}, {"t": "val", "q": "長 4 公分、寬 3 公分、高 8 公分的長方體，體積是多少立方公分？", "a": [96, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 4 × 3 = 12", "12 × 8 = 96"], "fig": {"type": "box", "l": 4, "w": 3, "h": 8}, "lv": 1}, {"t": "val", "q": "長 12 公分、寬 5 公分、高 2 公分的長方體，體積是多少立方公分？", "a": [120, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 12 × 5 = 60", "60 × 2 = 120"], "fig": {"type": "box", "l": 12, "w": 5, "h": 2}, "lv": 1}, {"t": "val", "q": "邊長 7 公分的正方體，體積是多少立方公分？", "a": [343, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 7 × 7 = 49", "49 × 7 = 343"], "fig": {"type": "box", "l": 7, "w": 7, "h": 7}, "lv": 1}, {"t": "val", "q": "長 11 公分、寬 2 公分、高 9 公分的長方體，體積是多少立方公分？", "a": [198, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 11 × 2 = 22", "22 × 9 = 198"], "fig": {"type": "box", "l": 11, "w": 2, "h": 9}, "lv": 1}, {"t": "val", "q": "三角柱的底面是底 8 公分、高 5 公分的三角形，柱高 12 公分。體積是多少立方公分？", "a": [240, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 8 × 5 ÷ 2 = 20", "20 × 12 = 240"], "fig": {"type": "tri", "b": 8, "th": 5, "L": 12}, "lv": 2}, {"t": "val", "q": "三角柱的底面是底 12 公分、高 7 公分的三角形，柱高 14 公分。體積是多少立方公分？", "a": [588, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 12 × 7 ÷ 2 = 42", "42 × 14 = 588"], "fig": {"type": "tri", "b": 12, "th": 7, "L": 14}, "lv": 2}, {"t": "val", "q": "三角柱的底面是底 10 公分、高 2 公分的三角形，柱高 15 公分。體積是多少立方公分？", "a": [150, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 10 × 2 ÷ 2 = 10", "10 × 15 = 150"], "fig": {"type": "tri", "b": 10, "th": 2, "L": 15}, "lv": 2}, {"t": "val", "q": "三角柱的底面是底 12 公分、高 5 公分的三角形，柱高 10 公分。體積是多少立方公分？", "a": [300, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 12 × 5 ÷ 2 = 30", "30 × 10 = 300"], "fig": {"type": "tri", "b": 12, "th": 5, "L": 10}, "lv": 2}, {"t": "val", "q": "三角柱的底面是底 7 公分、高 2 公分的三角形，柱高 11 公分。體積是多少立方公分？", "a": [77, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 7 × 2 ÷ 2 = 7", "7 × 11 = 77"], "fig": {"type": "tri", "b": 7, "th": 2, "L": 11}, "lv": 2}, {"t": "val", "q": "三角柱的底面是底 8 公分、高 3 公分的三角形，柱高 11 公分。體積是多少立方公分？", "a": [132, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 8 × 3 ÷ 2 = 12", "12 × 11 = 132"], "fig": {"type": "tri", "b": 8, "th": 3, "L": 11}, "lv": 2}, {"t": "val", "q": "三角柱的底面是底 6 公分、高 5 公分的三角形，柱高 8 公分。體積是多少立方公分？", "a": [120, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 6 × 5 ÷ 2 = 15", "15 × 8 = 120"], "fig": {"type": "tri", "b": 6, "th": 5, "L": 8}, "lv": 2}, {"t": "val", "q": "三角柱的底面是底 4 公分、高 6 公分的三角形，柱高 15 公分。體積是多少立方公分？", "a": [180, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 4 × 6 ÷ 2 = 12", "12 × 15 = 180"], "fig": {"type": "tri", "b": 4, "th": 6, "L": 15}, "lv": 2}, {"t": "val", "q": "三角柱的底面是底 8 公分、高 6 公分的三角形，柱高 6 公分。體積是多少立方公分？", "a": [144, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 8 × 6 ÷ 2 = 24", "24 × 6 = 144"], "fig": {"type": "tri", "b": 8, "th": 6, "L": 6}, "lv": 2}, {"t": "val", "q": "三角柱的底面是底 5 公分、高 6 公分的三角形，柱高 5 公分。體積是多少立方公分？", "a": [75, 1], "unit": "立方公分", "steps": ["柱體體積 = 底面積 × 高", "底面積 = 5 × 6 ÷ 2 = 15", "15 × 5 = 75"], "fig": {"type": "tri", "b": 5, "th": 6, "L": 5}, "lv": 2}, {"t": "val", "q": "底面直徑 16 公分、高 5 公分的圓柱，體積是多少立方公分？", "a": [5024, 5], "unit": "立方公分", "steps": ["半徑 = 16 ÷ 2 = 8", "圓柱體積 = 底面積 × 高", "底面積 = 8 × 8 × 3.14 = 200.96", "200.96 × 5 = 1004.8"], "fig": {"type": "cyl", "r": 8, "h": 5, "show": "d"}, "lv": 3}, {"t": "val", "q": "底面半徑 8 公分、高 12 公分的圓柱，體積是多少立方公分？", "a": [60288, 25], "unit": "立方公分", "steps": ["圓柱體積 = 底面積 × 高", "底面積 = 8 × 8 × 3.14 = 200.96", "200.96 × 12 = 2411.52"], "fig": {"type": "cyl", "r": 8, "h": 12, "show": "r"}, "lv": 3}, {"t": "val", "q": "底面半徑 1 公分、高 10 公分的圓柱，體積是多少立方公分？", "a": [157, 5], "unit": "立方公分", "steps": ["圓柱體積 = 底面積 × 高", "底面積 = 1 × 1 × 3.14 = 3.14", "3.14 × 10 = 31.4"], "fig": {"type": "cyl", "r": 1, "h": 10, "show": "r"}, "lv": 3}, {"t": "val", "q": "底面直徑 16 公分、高 8 公分的圓柱，體積是多少立方公分？", "a": [40192, 25], "unit": "立方公分", "steps": ["半徑 = 16 ÷ 2 = 8", "圓柱體積 = 底面積 × 高", "底面積 = 8 × 8 × 3.14 = 200.96", "200.96 × 8 = 1607.68"], "fig": {"type": "cyl", "r": 8, "h": 8, "show": "d"}, "lv": 3}, {"t": "val", "q": "底面半徑 8 公分、高 11 公分的圓柱，體積是多少立方公分？", "a": [55264, 25], "unit": "立方公分", "steps": ["圓柱體積 = 底面積 × 高", "底面積 = 8 × 8 × 3.14 = 200.96", "200.96 × 11 = 2210.56"], "fig": {"type": "cyl", "r": 8, "h": 11, "show": "r"}, "lv": 3}, {"t": "val", "q": "底面半徑 3 公分、高 10 公分的圓柱，體積是多少立方公分？", "a": [1413, 5], "unit": "立方公分", "steps": ["圓柱體積 = 底面積 × 高", "底面積 = 3 × 3 × 3.14 = 28.26", "28.26 × 10 = 282.6"], "fig": {"type": "cyl", "r": 3, "h": 10, "show": "r"}, "lv": 3}, {"t": "val", "q": "底面直徑 6 公分、高 11 公分的圓柱，體積是多少立方公分？", "a": [15543, 50], "unit": "立方公分", "steps": ["半徑 = 6 ÷ 2 = 3", "圓柱體積 = 底面積 × 高", "底面積 = 3 × 3 × 3.14 = 28.26", "28.26 × 11 = 310.86"], "fig": {"type": "cyl", "r": 3, "h": 11, "show": "d"}, "lv": 3}, {"t": "val", "q": "底面半徑 6 公分、高 9 公分的圓柱，體積是多少立方公分？", "a": [25434, 25], "unit": "立方公分", "steps": ["圓柱體積 = 底面積 × 高", "底面積 = 6 × 6 × 3.14 = 113.04", "113.04 × 9 = 1017.36"], "fig": {"type": "cyl", "r": 6, "h": 9, "show": "r"}, "lv": 3}, {"t": "val", "q": "底面半徑 6 公分、高 2 公分的圓柱，體積是多少立方公分？", "a": [5652, 25], "unit": "立方公分", "steps": ["圓柱體積 = 底面積 × 高", "底面積 = 6 × 6 × 3.14 = 113.04", "113.04 × 2 = 226.08"], "fig": {"type": "cyl", "r": 6, "h": 2, "show": "r"}, "lv": 3}, {"t": "val", "q": "底面直徑 2 公分、高 11 公分的圓柱，體積是多少立方公分？", "a": [1727, 50], "unit": "立方公分", "steps": ["半徑 = 2 ÷ 2 = 1", "圓柱體積 = 底面積 × 高", "底面積 = 1 × 1 × 3.14 = 3.14", "3.14 × 11 = 34.54"], "fig": {"type": "cyl", "r": 1, "h": 11, "show": "d"}, "lv": 3}, {"t": "val", "q": "長 8 公分、寬 6 公分、高 5 公分的長方體，表面積是多少平方公分？", "a": [236, 1], "unit": "平方公分", "steps": ["長方體有 6 個面，相對的兩面一樣大", "上下：8 × 6 × 2 = 96", "前後：8 × 5 × 2 = 80", "左右：6 × 5 × 2 = 60", "96 + 80 + 60 = 236"], "fig": {"type": "box", "l": 8, "w": 6, "h": 5}, "lv": 4}, {"t": "val", "q": "三角柱的底面是邊長 3、4、5 公分的直角三角形，柱高 9 公分。表面積是多少平方公分？", "a": [120, 1], "unit": "平方公分", "steps": ["兩個底面：3 × 4 ÷ 2 × 2 = 12", "側面攤開是長方形：底面周長 × 高 = (3 + 4 + 5) × 9 = 108", "12 + 108 = 120"], "fig": {"type": "tri", "b": 4, "th": 3, "L": 9, "right": true, "c": 5}, "lv": 4}, {"t": "val", "q": "長 10 公分、寬 4 公分、高 6 公分的長方體，表面積是多少平方公分？", "a": [248, 1], "unit": "平方公分", "steps": ["長方體有 6 個面，相對的兩面一樣大", "上下：10 × 4 × 2 = 80", "前後：10 × 6 × 2 = 120", "左右：4 × 6 × 2 = 48", "80 + 120 + 48 = 248"], "fig": {"type": "box", "l": 10, "w": 4, "h": 6}, "lv": 4}, {"t": "val", "q": "三角柱的底面是邊長 3、4、5 公分的直角三角形，柱高 4 公分。表面積是多少平方公分？", "a": [60, 1], "unit": "平方公分", "steps": ["兩個底面：3 × 4 ÷ 2 × 2 = 12", "側面攤開是長方形：底面周長 × 高 = (3 + 4 + 5) × 4 = 48", "12 + 48 = 60"], "fig": {"type": "tri", "b": 4, "th": 3, "L": 4, "right": true, "c": 5}, "lv": 4}, {"t": "val", "q": "長 4 公分、寬 5 公分、高 7 公分的長方體，表面積是多少平方公分？", "a": [166, 1], "unit": "平方公分", "steps": ["長方體有 6 個面，相對的兩面一樣大", "上下：4 × 5 × 2 = 40", "前後：4 × 7 × 2 = 56", "左右：5 × 7 × 2 = 70", "40 + 56 + 70 = 166"], "fig": {"type": "box", "l": 4, "w": 5, "h": 7}, "lv": 4}, {"t": "val", "q": "三角柱的底面是邊長 9、12、15 公分的直角三角形，柱高 5 公分。表面積是多少平方公分？", "a": [288, 1], "unit": "平方公分", "steps": ["兩個底面：9 × 12 ÷ 2 × 2 = 108", "側面攤開是長方形：底面周長 × 高 = (9 + 12 + 15) × 5 = 180", "108 + 180 = 288"], "fig": {"type": "tri", "b": 12, "th": 9, "L": 5, "right": true, "c": 15}, "lv": 4}, {"t": "val", "q": "長 7 公分、寬 3 公分、高 4 公分的長方體，表面積是多少平方公分？", "a": [122, 1], "unit": "平方公分", "steps": ["長方體有 6 個面，相對的兩面一樣大", "上下：7 × 3 × 2 = 42", "前後：7 × 4 × 2 = 56", "左右：3 × 4 × 2 = 24", "42 + 56 + 24 = 122"], "fig": {"type": "box", "l": 7, "w": 3, "h": 4}, "lv": 4}, {"t": "val", "q": "三角柱的底面是邊長 3、4、5 公分的直角三角形，柱高 10 公分。表面積是多少平方公分？", "a": [132, 1], "unit": "平方公分", "steps": ["兩個底面：3 × 4 ÷ 2 × 2 = 12", "側面攤開是長方形：底面周長 × 高 = (3 + 4 + 5) × 10 = 120", "12 + 120 = 132"], "fig": {"type": "tri", "b": 4, "th": 3, "L": 10, "right": true, "c": 5}, "lv": 4}, {"t": "val", "q": "長 8 公分、寬 2 公分、高 3 公分的長方體，表面積是多少平方公分？", "a": [92, 1], "unit": "平方公分", "steps": ["長方體有 6 個面，相對的兩面一樣大", "上下：8 × 2 × 2 = 32", "前後：8 × 3 × 2 = 48", "左右：2 × 3 × 2 = 12", "32 + 48 + 12 = 92"], "fig": {"type": "box", "l": 8, "w": 2, "h": 3}, "lv": 4}, {"t": "val", "q": "三角柱的底面是邊長 3、4、5 公分的直角三角形，柱高 6 公分。表面積是多少平方公分？", "a": [84, 1], "unit": "平方公分", "steps": ["兩個底面：3 × 4 ÷ 2 × 2 = 12", "側面攤開是長方形：底面周長 × 高 = (3 + 4 + 5) × 6 = 72", "12 + 72 = 84"], "fig": {"type": "tri", "b": 4, "th": 3, "L": 6, "right": true, "c": 5}, "lv": 4}, {"t": "val", "q": "底面半徑 3 公分、高 2 公分的圓柱，表面積是多少平方公分？", "a": [471, 5], "unit": "平方公分", "steps": ["兩個底面：3 × 3 × 3.14 × 2 = 56.52", "側面攤開是長方形：長 = 底面圓周長 3 × 2 × 3.14 = 18.84，寬 = 高 2", "側面積 = 18.84 × 2 = 37.68", "56.52 + 37.68 = 94.2"], "fig": {"type": "cyl", "r": 3, "h": 2, "show": "r"}, "lv": 5}, {"t": "val", "q": "底面半徑 2 公分、高 5 公分的圓柱，表面積是多少平方公分？", "a": [2198, 25], "unit": "平方公分", "steps": ["兩個底面：2 × 2 × 3.14 × 2 = 25.12", "側面攤開是長方形：長 = 底面圓周長 2 × 2 × 3.14 = 12.56，寬 = 高 5", "側面積 = 12.56 × 5 = 62.8", "25.12 + 62.8 = 87.92"], "fig": {"type": "cyl", "r": 2, "h": 5, "show": "r"}, "lv": 5}, {"t": "val", "q": "底面半徑 6 公分、高 7 公分的圓柱，表面積是多少平方公分？", "a": [12246, 25], "unit": "平方公分", "steps": ["兩個底面：6 × 6 × 3.14 × 2 = 226.08", "側面攤開是長方形：長 = 底面圓周長 6 × 2 × 3.14 = 37.68，寬 = 高 7", "側面積 = 37.68 × 7 = 263.76", "226.08 + 263.76 = 489.84"], "fig": {"type": "cyl", "r": 6, "h": 7, "show": "r"}, "lv": 5}, {"t": "val", "q": "底面半徑 1 公分、高 4 公分的圓柱，表面積是多少平方公分？", "a": [157, 5], "unit": "平方公分", "steps": ["兩個底面：1 × 1 × 3.14 × 2 = 6.28", "側面攤開是長方形：長 = 底面圓周長 1 × 2 × 3.14 = 6.28，寬 = 高 4", "側面積 = 6.28 × 4 = 25.12", "6.28 + 25.12 = 31.4"], "fig": {"type": "cyl", "r": 1, "h": 4, "show": "r"}, "lv": 5}, {"t": "val", "q": "底面半徑 2 公分、高 4 公分的圓柱，表面積是多少平方公分？", "a": [1884, 25], "unit": "平方公分", "steps": ["兩個底面：2 × 2 × 3.14 × 2 = 25.12", "側面攤開是長方形：長 = 底面圓周長 2 × 2 × 3.14 = 12.56，寬 = 高 4", "側面積 = 12.56 × 4 = 50.24", "25.12 + 50.24 = 75.36"], "fig": {"type": "cyl", "r": 2, "h": 4, "show": "r"}, "lv": 5}, {"t": "val", "q": "底面半徑 4 公分、高 9 公分的圓柱，表面積是多少平方公分？", "a": [8164, 25], "unit": "平方公分", "steps": ["兩個底面：4 × 4 × 3.14 × 2 = 100.48", "側面攤開是長方形：長 = 底面圓周長 4 × 2 × 3.14 = 25.12，寬 = 高 9", "側面積 = 25.12 × 9 = 226.08", "100.48 + 226.08 = 326.56"], "fig": {"type": "cyl", "r": 4, "h": 9, "show": "r"}, "lv": 5}, {"t": "val", "q": "底面半徑 5 公分、高 3 公分的圓柱，表面積是多少平方公分？", "a": [1256, 5], "unit": "平方公分", "steps": ["兩個底面：5 × 5 × 3.14 × 2 = 157", "側面攤開是長方形：長 = 底面圓周長 5 × 2 × 3.14 = 31.4，寬 = 高 3", "側面積 = 31.4 × 3 = 94.2", "157 + 94.2 = 251.2"], "fig": {"type": "cyl", "r": 5, "h": 3, "show": "r"}, "lv": 5}, {"t": "val", "q": "底面半徑 2 公分、高 6 公分的圓柱，表面積是多少平方公分？", "a": [2512, 25], "unit": "平方公分", "steps": ["兩個底面：2 × 2 × 3.14 × 2 = 25.12", "側面攤開是長方形：長 = 底面圓周長 2 × 2 × 3.14 = 12.56，寬 = 高 6", "側面積 = 12.56 × 6 = 75.36", "25.12 + 75.36 = 100.48"], "fig": {"type": "cyl", "r": 2, "h": 6, "show": "r"}, "lv": 5}, {"t": "val", "q": "底面半徑 2 公分、高 3 公分的圓柱，表面積是多少平方公分？", "a": [314, 5], "unit": "平方公分", "steps": ["兩個底面：2 × 2 × 3.14 × 2 = 25.12", "側面攤開是長方形：長 = 底面圓周長 2 × 2 × 3.14 = 12.56，寬 = 高 3", "側面積 = 12.56 × 3 = 37.68", "25.12 + 37.68 = 62.8"], "fig": {"type": "cyl", "r": 2, "h": 3, "show": "r"}, "lv": 5}, {"t": "val", "q": "底面半徑 1 公分、高 10 公分的圓柱，表面積是多少平方公分？", "a": [1727, 25], "unit": "平方公分", "steps": ["兩個底面：1 × 1 × 3.14 × 2 = 6.28", "側面攤開是長方形：長 = 底面圓周長 1 × 2 × 3.14 = 6.28，寬 = 高 10", "側面積 = 6.28 × 10 = 62.8", "6.28 + 62.8 = 69.08"], "fig": {"type": "cyl", "r": 1, "h": 10, "show": "r"}, "lv": 5}]};
+const HINTS=["柱體體積 = 底面積 × 高。長方體的底面積 = 長 × 寬。", "三角柱的底面是三角形：底面積 = 底 × 高 ÷ 2，再乘以柱高。", "圓柱的底面是圓：底面積 = 半徑 × 半徑 × 3.14，再乘以高。", "表面積 = 所有面加起來。長方體：(長×寬 + 長×高 + 寬×高) × 2；三角柱：2 個底面 + 側面（底面周長 × 高）。", "圓柱表面積 = 2 個圓形底面 + 側面。側面攤開是長方形：長 = 底面圓周長，寬 = 高。"];
+const KEY='frac-'+SET.key+'.v1';
+const M='−';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a};
+
+/* ---- 把「−2又1/3」「3/4」這類文字排成上下式分數 ---- */
+function fracHTML(n,d){return `<span class="fr" aria-label="${d}分之${n}"><span>${n}</span><span>${d}</span></span>`;}
+function mathHTML(t){
+  t=esc(t);
+  t=t.replace(/(\d+)又(\d+)\/(\d+)/g,(_,w,n,d)=>`<span class="mixed">${w}${fracHTML(n,d)}</span>`);
+  t=t.replace(/(\d+)\/(\d+)/g,(_,n,d)=>fracHTML(n,d));
+  t=t.replace(/([()\[\]])/g,'<span class="paren">$1</span>');
+  return `<span class="mx">${t}</span>`;
+}
+function ansHTML(q){if(SET.numOnly)return mathHTML(String(+(q.a[0]/q.a[1]).toFixed(6)))+` <span class="unit">${esc(q.unit||'')}</span>`;return q.t==='ratio'?mathHTML(q.a[0]+' : '+q.a[1]):valHTML(q.a[0],q.a[1])+(q.unit?` <span class="unit">${esc(q.unit)}</span>`:'');}
+function valHTML(n,d){ // 最簡分數答案，含帶分數
+  const s=n<0?M:'';n=Math.abs(n);
+  if(d===1) return mathHTML(s+n);
+  let h=mathHTML(s+n+'/'+d);
+  if(n>d){const w=Math.floor(n/d),r=n%d;h+=` <span class="mx" style="font-weight:400">=</span> `+mathHTML(s+w+'又'+r+'/'+d);}
+  if(SET.decimal){let k=d;while(k%2===0)k/=2;while(k%5===0)k/=5;if(k===1){h+=` <span class="mx" style="font-weight:400">=</span> `+mathHTML(s+String(+(n/d).toFixed(6)));}}
+  return h;
+}
+
+/* ---- 依題目參數畫圖 ---- */
+function figSVG(f){
+  const T=(x,y,s,a='middle')=>`<text x="${x}" y="${y}" text-anchor="${a}">${esc(s)}</text>`;
+  const cm=x=>x+' 公分';
+  if(f.type==='circle'){
+    const R=90,cx=150,cy=105;let g=`<circle class="fl" cx="${cx}" cy="${cy}" r="${R}"/><circle class="dot" cx="${cx}" cy="${cy}" r="3.5"/>`;
+    if(f.show==='d') g+=`<line class="mk" x1="${cx-R}" y1="${cy}" x2="${cx+R}" y2="${cy}"/>${T(cx,cy-8,f.lab)}`;
+    else g+=`<line class="mk" x1="${cx}" y1="${cy}" x2="${cx+R}" y2="${cy}"/>${T(cx+R/2,cy-8,f.lab)}`;
+    return `<svg viewBox="0 0 300 210">${g}</svg>`;
+  }
+  if(f.type==='sector'){
+    const R=95,cx=150,cy=f.a>180?110:(f.a>90?130:170),a=f.a*Math.PI/180;
+    const x2=cx+R*Math.cos(-a),y2=cy+R*Math.sin(-a),large=f.a>180?1:0;
+    const ra=26,ax=cx+ra*Math.cos(-a),ay=cy+ra*Math.sin(-a);
+    const mid=-a/2,lx=cx+44*Math.cos(mid),ly=cy+44*Math.sin(mid)+5;
+    let g=`<path class="fl" d="M${cx},${cy} L${cx+R},${cy} A${R},${R} 0 ${large} 0 ${x2},${y2} Z"/>`;
+    g+=`<path class="mk" d="M${cx+ra},${cy} A${ra},${ra} 0 ${large} 0 ${ax},${ay}" style="stroke-width:2"/>${T(lx,ly,f.a+'°')}`;
+    g+=`<line class="mk" x1="${cx}" y1="${cy}" x2="${cx+R}" y2="${cy}"/>${T(cx+R/2+8,cy+20,f.lab)}<circle class="dot" cx="${cx}" cy="${cy}" r="3.5"/>`;
+    return `<svg viewBox="0 0 300 ${f.a>180?230:190}">${g}</svg>`;
+  }
+  if(f.type==='sqcircle'){
+    const s=170,x=65,y=15,r=s/2;
+    return `<svg viewBox="0 0 300 220"><path class="sh" fill-rule="evenodd" d="M${x},${y}h${s}v${s}h${-s}Z M${x+s},${y+r} a${r},${r} 0 1,0 ${-s},0 a${r},${r} 0 1,0 ${s},0Z"/>
+      <rect class="ln" x="${x}" y="${y}" width="${s}" height="${s}"/><circle class="ln" cx="${x+r}" cy="${y+r}" r="${r}"/>${T(x+r,y+s+22,f.lab)}</svg>`;
+  }
+  if(f.type==='ring'){
+    const cx=150,cy=105,R2=95,R1=Math.max(28,Math.round(95*f.r1/f.r2));
+    return `<svg viewBox="0 0 300 210"><path class="sh" fill-rule="evenodd" d="M${cx+R2},${cy} a${R2},${R2} 0 1,0 ${-2*R2},0 a${R2},${R2} 0 1,0 ${2*R2},0Z M${cx+R1},${cy} a${R1},${R1} 0 1,0 ${-2*R1},0 a${R1},${R1} 0 1,0 ${2*R1},0Z"/>
+      <circle class="ln" cx="${cx}" cy="${cy}" r="${R2}"/><circle class="ln" cx="${cx}" cy="${cy}" r="${R1}"/><circle class="dot" cx="${cx}" cy="${cy}" r="3.5"/>
+      <line class="mk" x1="${cx}" y1="${cy}" x2="${cx+R2}" y2="${cy}"/><line class="mk" x1="${cx}" y1="${cy}" x2="${cx-R1*0.7}" y2="${cy-R1*0.7}"/>
+      ${T(cx+R2/2+12,cy+20,cm(f.r2))}${T(cx-R1*0.35-6,cy-R1*0.35-10,cm(f.r1),'end')}</svg>`;
+  }
+  // 立體：斜投影
+  const fit=(vals,max)=>{const m=Math.max(...vals);return vals.map(v=>Math.max(28,v/m*max));};
+  if(f.type==='box'){
+    let [L,H,W]=fit([f.l,f.h,f.w],150);const dx=W*0.55,dy=W*0.4,x=40,y=30+dy;
+    const P=(a,b)=>`${a},${b}`;
+    let g=`<path class="fl" d="M${P(x,y)} h${L} v${H} h${-L}Z"/><path class="fl" d="M${P(x,y)} l${dx},${-dy} h${L} l${-dx},${dy}Z"/><path class="fl" d="M${P(x+L,y)} l${dx},${-dy} v${H} l${-dx},${dy}Z"/>`;
+    g+=`<path class="hid" d="M${P(x,y+H)} l${dx},${-dy} h${L} M${P(x+dx,y-dy)} v${H}"/>`;
+    g+=T(x+L/2,y+H+22,cm(f.l))+T(x+L+dx+8,y-dy+H/2+5,cm(f.h),'start')+T(x+L+dx/2+8,y+H-dy/2+20,cm(f.w),'start');
+    return `<svg viewBox="0 0 ${x+L+dx+90} ${y+H+34}">${g}</svg>`;
+  }
+  if(f.type==='tri'){
+    let [B,Ht]=fit([f.b,f.th],130);const D=Math.min(120,Math.max(55,f.L/Math.max(f.b,f.th)*80));const dx=D*0.75,dy=D*0.38,x=30,y=20+Ht+dy;
+    const ax=f.right?x:x+B*0.35;
+    const front=`M${x},${y} L${x+B},${y} L${ax},${y-Ht}Z`;
+    let g=`<path class="fl" d="M${x+B},${y} l${dx},${-dy} L${ax+dx},${y-Ht-dy} L${ax},${y-Ht}Z"/><path class="fl" d="M${ax},${y-Ht} l${dx},${-dy} L${x+dx},${y-dy} L${x},${y}Z" style="opacity:.6"/>`;
+    g+=`<path class="hid" d="M${x},${y} l${dx},${-dy} h${B}"/><path class="fl" d="${front}"/>`;
+    if(!f.right) g+=`<line class="hid" style="stroke:var(--neg)" x1="${ax}" y1="${y-Ht}" x2="${ax}" y2="${y}"/><line class="mk" x1="${x-14}" y1="${y-Ht}" x2="${x-14}" y2="${y}" style="stroke-width:1.5;stroke-dasharray:3 3"/>${T(x-20,y-Ht/2+5,'高 '+cm(f.th),'end')}`;
+    else g+=`<path class="ln" d="M${x+10},${y} v-10 h-10" style="stroke-width:1.5"/>${T(x-6,y-Ht/2+5,cm(f.th),'end')}${T(x+B/2+14,y-Ht/2-6,cm(f.c),'start')}`;
+    g+=T(x+B/2,y+22,'底 '+cm(f.b))+T(x+B+dx/2+10,y-dy/2+18,'柱高 '+cm(f.L),'start');
+    return `<svg viewBox="-60 0 ${x+B+dx+170} ${y+34}">${g}</svg>`;
+  }
+  if(f.type==='cyl'){
+    let [Rr,H]=fit([f.r*2,f.h],150);Rr=Rr/2;const rx=Math.max(34,Rr),ry=rx*0.3,cx=40+rx,top=20+ry;
+    let g=`<path class="fl" d="M${cx-rx},${top} v${H} a${rx},${ry} 0 0,0 ${2*rx},0 v${-H}" style="fill-opacity:1"/><ellipse class="fl" cx="${cx}" cy="${top}" rx="${rx}" ry="${ry}"/>`;
+    g+=`<path class="hid" d="M${cx-rx},${top+H} a${rx},${ry} 0 0,1 ${2*rx},0"/><path class="ln" d="M${cx-rx},${top+H} a${rx},${ry} 0 0,0 ${2*rx},0"/><circle class="dot" cx="${cx}" cy="${top}" r="3"/>`;
+    if(f.show==='d') g+=`<line class="mk" x1="${cx-rx}" y1="${top}" x2="${cx+rx}" y2="${top}"/>${T(cx,top-ry-6,cm(f.r*2))}`;
+    else g+=`<line class="mk" x1="${cx}" y1="${top}" x2="${cx+rx}" y2="${top}"/>${T(cx+rx/2,top-ry-6,cm(f.r))}`;
+    g+=`<line class="mk" x1="${cx+rx+14}" y1="${top}" x2="${cx+rx+14}" y2="${top+H}" style="stroke-width:1.5"/>`+T(cx+rx+22,top+H/2+5,cm(f.h),'start');
+    return `<svg viewBox="0 0 ${cx+rx+100} ${top+H+ry+12}">${g}</svg>`;
+  }
+  return '';
+}
+let S=load();
+function load(){let s=null;try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+  if(!s||!Array.isArray(s.res)||s.res.length!==SET.qs.length) s={res:Array(SET.qs.length).fill(null),lv:1,name:''};return s;}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+let cur=null,tries=0,done=false;
+let A={neg:false,w:'',n:'',d:'',slot:'n'}; // 作答狀態
+
+const lvQs=lv=>SET.qs.map((q,i)=>({...q,i})).filter(q=>q.lv===lv);
+function lvStat(lv){const r=lvQs(lv).map(q=>S.res[q.i]);return {done:r.filter(Boolean).length,first:r.filter(x=>x==='first').length,second:r.filter(x=>x==='second').length,miss:r.filter(x=>x==='miss').length,total:r.length};}
+function renderLevels(){
+  $('#levels').innerHTML=SET.levels.map((name,k)=>{const st=lvStat(k+1);
+    return `<button class="lvl ${S.lv===k+1?'on':''}" data-lv="${k+1}" aria-pressed="${S.lv===k+1}"><b>第 ${k+1} 關</b><span>${name}</span><span>${st.done}/${st.total}</span><div class="bar"><i style="width:${st.done/st.total*100}%"></i></div></button>`;}).join('');
+  $('#levels').querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{S.lv=+b.dataset.lv;save();openLevel();});
+}
+function openLevel(){renderLevels();const next=lvQs(S.lv).find(q=>!S.res[q.i]);next?show(next.i):result();}
+function dotsHTML(){return `<div class="dots">${lvQs(S.lv).map(q=>`<button data-q="${q.i}" class="${S.res[q.i]||''} ${cur&&cur.i===q.i?'cur':''}" aria-label="第 ${q.i+1} 題">${q.i+1}</button>`).join('')}</div>`;}
+
+function show(i){
+  cur={...SET.qs[i],i};tries=0;done=!!S.res[i];A={neg:false,w:'',n:'',d:'',slot:cur.t==='ratio'?'n':'w'};
+  const lq=lvQs(S.lv);const pos=lq.findIndex(q=>q.i===i)+1;
+  $('#main').innerHTML=`${dotsHTML()}
+    <div class="qhead"><span>第 ${S.lv} 關・${SET.levels[S.lv-1]}</span><span>第 ${i+1} 題（${pos}/${lq.length}）</span></div>
+    <div class="q ${cur.q.length>16?'qword':''}">${mathHTML(cur.q)}</div>
+    ${cur.fig?`<div class="fig" aria-hidden="true">${figSVG(cur.fig)}</div>`:''}
+    <div class="ansrow"><span>${cur.t==='ratio'?'答：':'答：'}</span><div class="ansbox" id="ansbox"></div><span class="unit" id="unit"></span></div>
+    <div class="anshint" id="anshint">${SET.numOnly?'答案填整數或小數，小數點在「0」旁邊。':cur.t==='ratio'?'在冒號兩邊填上前項和後項，要化成最簡整數比。':SET.decimal?'答案可以寫最簡分數，也可以寫小數（小數填在左邊那格）。':'點格子選擇要填的地方：整數（帶分數才需要）、分子、分母。整數答案只填左邊那格。'}</div>
+    <div class="msg" id="msg" aria-live="polite"></div>
+    <div id="help"></div><div id="ctl"></div>`;
+  $('#main').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>show(+b.dataset.q));
+  if(done) review(); else padMode();
+  drawAns();
+}
+function slotHTML(k,ph){const v=A[k];return `<button class="slot ${A.slot===k&&!done?'on':''} ${v?'':'ph'}" data-slot="${k}" aria-label="${ph}">${v||ph}</button>`;}
+function drawAns(){
+  const b=$('#ansbox');if(!b)return;b.classList.remove('wrong');
+  b.innerHTML=SET.numOnly?`${slotHTML('w','答案')}`:cur.t==='ratio'?`${slotHTML('n','前項')}<span class="colon">:</span>${slotHTML('d','後項')}`
+    :`<span class="sgn">${A.neg?M:''}</span>${slotHTML('w',SET.decimal?'整數／小數':'整數')}<span class="fracslot">${slotHTML('n','分子')}<span class="line"></span>${slotHTML('d','分母')}</span>`;
+  const u=$('#unit');if(u)u.textContent=cur.unit||'';
+  b.querySelectorAll('[data-slot]').forEach(s=>s.onclick=()=>{if(done)return;A.slot=s.dataset.slot;drawAns();});
+}
+function padMode(){
+  const R=cur.t==='ratio'||SET.numOnly;
+  $('#ctl').innerHTML=`<div class="pad">
+    ${[7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}${SET.numOnly?'<span></span>':R?'<button class="fn" data-k="n">前項</button>':'<button class="fn" data-k="w">'+(SET.decimal?'整數':'整數')+'</button>'}<button data-k="back" aria-label="退一格">⌫</button>
+    ${[4,5,6].map(n=>`<button data-k="${n}">${n}</button>`).join('')}${SET.numOnly?'<span></span>':R?'<button class="fn" data-k="d">後項</button>':'<button class="fn" data-k="n">分子</button>'}${SET.noneg?'<button class="fn" data-k="clr">清除</button>':'<button class="fn neg-k" data-k="neg">− 負號</button>'}
+    ${[1,2,3].map(n=>`<button data-k="${n}">${n}</button>`).join('')}${R?'<span></span>':'<button class="fn" data-k="d">分母</button>'}${SET.noneg?'<span></span>':'<button class="fn" data-k="clr">清除</button>'}
+    ${SET.decimal&&(!R||SET.numOnly)?'<button data-k="0" style="grid-column:span 2">0</button><button data-k="dot" aria-label="小數點">.</button>':'<button data-k="0" style="grid-column:span 3">0</button>'}<button class="go" data-k="go" style="grid-column:span 2">送出</button></div>`;
+  $('#ctl').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>key(b.dataset.k));
+}
+function key(k){
+  if(done) return;
+  if(/^\d$/.test(k)){const v=A[A.slot];if(v.replace('.','').length<(A.slot==='w'?5:4)) A[A.slot]=(v==='0'?'':v)+k;}
+  else if(k==='dot'){if(!SET.decimal)return;if(A.slot!=='w'){A.slot='w';}if(!A.w.includes('.')){A.w=(A.w||'0')+'.';A.n='';A.d='';}}
+  else if(k==='w'||k==='n'||k==='d'){A.slot=k;}
+  else if(k==='neg'){A.neg=!A.neg;}
+  else if(k==='back'){if(A[A.slot]) A[A.slot]=A[A.slot].slice(0,-1); else {const order=['w','n','d'];const j=order.indexOf(A.slot);if(j>0){A.slot=order[j-1];A[A.slot]=A[A.slot].slice(0,-1);}}}
+  else if(k==='clr'){A={neg:false,w:'',n:'',d:'',slot:'n'};}
+  else if(k==='go'){check();return;}
+  drawAns();
+}
+document.addEventListener('keydown',e=>{
+  if(!cur||e.target.id==='nm') return;
+  if(done){if(e.key==='Enter'){const b=$('#nextBtn');if(b){e.preventDefault();b.click();}}return;}
+  if(/^\d$/.test(e.key)) key(e.key);
+  else if(e.key==='-'||e.key==='−') key('neg');
+  else if(e.key==='.') key('dot');
+  else if(e.key==='/'||e.key==='ArrowDown'){e.preventDefault();key('d');}
+  else if(e.key==='ArrowUp'){e.preventDefault();key('n');}
+  else if(e.key===' '||e.key==='ArrowRight'){e.preventDefault();key(A.slot==='w'?'n':A.slot==='n'?'d':'d');}
+  else if(e.key==='ArrowLeft'){e.preventDefault();key('w');}
+  else if(e.key==='Backspace'){e.preventDefault();key('back');}
+  else if(e.key==='Enter'){e.preventDefault();key('go');}
+});
+// 回傳 {err} 或 {n,d,simplest,why}
+function readAns(){
+  if(cur.t==='ratio'){
+    if(A.n===''||A.d==='') return {err:'前項和後項都要填。'};
+    const n=+A.n,d=+A.d;if(!n||!d) return {err:'前項、後項不能是 0。'};
+    const g=gcd(n,d);return {ratio:true,n,d,simplest:g===1,why:'還可以再約成更簡單的整數比',rn:n/g,rd:d/g};
+  }
+  if(A.w.includes('.')){
+    if(A.n!==''||A.d!=='') return {err:'寫小數就不要再填分數。'};
+    const [ip,fp]=A.w.split('.');if(fp===undefined||fp==='') return {err:'小數點後面還沒寫。'};
+    let den=10**fp.length,num=(+(ip||0))*den+(+fp);if(A.neg)num=-num;
+    const g=gcd(num,den)||1;return {n:num/g,d:den/g,simplest:true};
+  }
+  const w=A.w===''?null:+A.w,n=A.n===''?null:+A.n,d=A.d===''?null:+A.d;
+  if(w===null&&n===null&&d===null) return {err:'先填答案。'};
+  if(n===null&&d===null){const v=A.neg?-w:w;return {n:v,d:1,simplest:true};}
+  if(n===null) return {err:'分子還沒填。'};
+  if(d===null) return {err:'分母還沒填。'};
+  if(d===0) return {err:'分母不能是 0。'};
+  let N=(w||0)*d+n;if(A.neg)N=-N;
+  const g=gcd(N,d);const rn=N/g,rd=d/g;
+  let simplest=true,why='';
+  if(gcd(n,d)!==1){simplest=false;why='還可以約分';}
+  else if(d===1){simplest=false;why='分母是 1，要寫成整數';}
+  else if(w!==null&&n>=d){simplest=false;why='帶分數的分數部分要比 1 小';}
+  else if(n===0){simplest=false;why='分子是 0，答案要寫成整數';}
+  return {n:rn,d:rd,simplest,why};
+}
+function check(){
+  const r=readAns();
+  if(r.err){$('#msg').innerHTML=`<span class="neg">${r.err}</span>`;return;}
+  tries++;
+  const right=r.ratio?(r.rn===cur.a[0]&&r.rd===cur.a[1]):(r.n===cur.a[0]&&r.d===cur.a[1]);
+  if(right&&r.simplest){finish(tries===1?'first':'second');return;}
+  $('#ansbox').classList.add('wrong');
+  const note=right?`${r.ratio?'比值對了':'數值對了'}，但${r.why}。`:'';
+  if(tries===1){
+    $('#msg').innerHTML=`<span class="neg">${note||'不對喔，'}看看提示再試一次。</span>`;
+    $('#help').innerHTML=`<div class="hint"><b>提示</b>${esc(HINTS[cur.lv-1])}</div>`;
+    A={neg:false,w:'',n:'',d:'',slot:cur.t==='ratio'?'n':'w'};drawAns();$('#ansbox').classList.add('wrong');
+    return;
+  }
+  finish('miss',note);
+}
+function stepsHTML(q){return `<div class="steps"><b>解題步驟</b><ol>${q.steps.map(s=>`<li>${mathHTML(s)}</li>`).join('')}</ol><div class="fin">答案：${ansHTML(q)}</div></div>`;}
+function finish(res,note){
+  done=true;S.res[cur.i]=res;save();renderLevels();drawAns();
+  $('#msg').innerHTML=res==='first'?'<span class="okc">答對了！★</span>':res==='second'?'<span class="okc">第二次答對！☆</span>':`<span class="neg">${note||''}兩次都沒答對，一起看看怎麼算：</span>`;
+  $('#help').innerHTML=res==='miss'?stepsHTML(cur):'';
+  nextControls();
+  const dot=$('#main').querySelector(`[data-q="${cur.i}"]`);if(dot) dot.className=res+' cur';
+}
+function nextControls(){
+  const qs=lvQs(S.lv);const after=qs.find(q=>q.i>cur.i&&!S.res[q.i])||qs.find(q=>!S.res[q.i]);
+  $('#ctl').innerHTML=`<div class="btns"><button class="btn main" id="nextBtn">${after?'下一題 →':'看這一關的成績'}</button></div>`;
+  $('#nextBtn').onclick=()=>after?show(after.i):result();
+}
+function review(){
+  const r=S.res[cur.i];const [n,d]=cur.a;
+  if(SET.numOnly){A={neg:false,w:String(+(n/d).toFixed(6)),n:'',d:'',slot:''};}
+  else if(cur.t==='ratio'){A={neg:false,w:'',n:String(n),d:String(d),slot:''};}
+  else {A={neg:n<0,w:'',n:d===1?'':String(Math.abs(n)),d:d===1?'':String(d),slot:''};if(d===1)A.w=String(Math.abs(n));}
+  $('#anshint').hidden=true;
+  $('#msg').innerHTML=r==='first'?'<span class="okc">這題已經答對 ★</span>':r==='second'?'<span class="okc">這題第二次答對 ☆</span>':'<span class="neg">這題沒答對，可以在成績頁重做錯題。</span>';
+  $('#help').innerHTML=r==='miss'?stepsHTML(cur):'';
+  nextControls();
+}
+function result(){
+  cur=null;
+  const st=lvStat(S.lv),qs=lvQs(S.lv),again=qs.filter(q=>S.res[q.i]==='miss'||S.res[q.i]==='second');
+  const ok=st.first+st.second,need=Math.ceil(st.total*0.9),pass=ok>=need;
+  $('#main').innerHTML=`<div class="result">${dotsHTML()}
+    <h2>第 ${S.lv} 關完成${S.name?`・${esc(S.name)}`:''}</h2>
+    <div class="score">${ok}<small> / ${st.total} 題答對</small></div>
+    <div class="stars"><span class="okc">★ 一次答對 ${st.first}</span><span>☆ 第二次答對 ${st.second}</span><span class="neg">✗ 沒答對 ${st.miss}</span></div>
+    <p>${pass?(S.lv<5?'很棒！可以進下一關了。':'五關全部完成，太厲害了！'):`答對 ${need} 題以上再進下一關。先把錯的題目重做一次吧。`}</p>
+    ${again.length?`<details ${pass?'':'open'}><summary>要再練的題目（${again.length} 題）</summary><ul class="misslist">${again.map(q=>`<li><span>${q.i+1}. ${mathHTML(q.q)}</span><span>${ansHTML(q)}</span></li>`).join('')}</ul></details>`:''}
+    <div class="btns">${again.length?'<button class="btn main" id="redo">重做錯的題目</button>':''}
+      ${S.lv<5?`<button class="btn ${again.length?'':'main'}" id="nextLv">前往第 ${S.lv+1} 關</button>`:''}
+      <button class="btn alt" id="again">整關重新開始</button></div></div>`;
+  $('#main').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>show(+b.dataset.q));
+  if($('#redo')) $('#redo').onclick=()=>{again.forEach(q=>S.res[q.i]=null);save();openLevel();};
+  if($('#nextLv')) $('#nextLv').onclick=()=>{S.lv++;save();openLevel();};
+  $('#again').onclick=()=>{
+    $('#again').outerHTML='<span>確定清除這一關的紀錄？</span><button class="btn main" id="againY">清除重來</button><button class="btn alt" id="againN">取消</button>';
+    $('#againY').onclick=()=>{qs.forEach(q=>S.res[q.i]=null);save();openLevel();};
+    $('#againN').onclick=result;
+  };
+}
+$('#nm').value=S.name||'';
+$('#nm').oninput=e=>{S.name=e.target.value.trim();save();};
+openLevel();
+</script>
+
+</body>
+</html>
