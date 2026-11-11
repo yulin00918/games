@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>質因數與公因數倍數 50 題</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: title, level picker, one big question card; answer typed into a mixed-number box (whole / numerator / denominator) with an on-screen keypad. */
+:root{
+  --paper:#f1f5f3; --card:#ffffff; --card-2:#f5f8f7; --ink:#1b2729; --ink-2:#56666a; --line:#d3ddda;
+  --pos:#1d63a8; --neg:#cc3a26; --ok:#2e8a4e; --accent:#e39a12; --sel:#1d63a8;
+  --f-display:"LXGW WenKai TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111a1b; --card:#1b2627; --card-2:#162021; --ink:#e6eeec; --ink-2:#a2b2b4; --line:#2f3d3f;
+  --pos:#6cb2f5; --neg:#ff7a63; --ok:#5fc27f; --accent:#f2b23a; --sel:#6cb2f5; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111a1b; --card:#1b2627; --card-2:#162021; --ink:#e6eeec; --ink-2:#a2b2b4; --line:#2f3d3f;
+  --pos:#6cb2f5; --neg:#ff7a63; --ok:#5fc27f; --accent:#f2b23a; --sel:#6cb2f5; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 28px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-size:2em;line-height:1.1;margin:0;letter-spacing:.03em}
+.who{display:flex;align-items:center;gap:6px;font-size:.9em;color:var(--ink-2)}
+.who input{font:inherit;border:1.5px solid var(--line);border-radius:8px;padding:.25em .5em;background:var(--card);color:var(--ink);width:8em}
+.levels{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.lvl{border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:8px 8px 10px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0}
+.lvl b{font-family:var(--f-display);font-size:1.15em}
+.lvl span{font-size:.78em;color:var(--ink-2);line-height:1.3}
+.lvl .bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:6px}
+.lvl .bar i{display:block;height:100%;background:var(--ok)}
+.lvl.on{border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--ink)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 8px 24px -16px rgba(20,50,50,.45)}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.dots button{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);background:var(--card-2);font-family:var(--f-num);font-size:.8em;padding:0;color:var(--ink-2)}
+.dots button.cur{border-color:var(--ink);color:var(--ink);font-weight:600}
+.dots button.first{background:var(--ok);border-color:var(--ok);color:#fff}
+.dots button.second{background:color-mix(in srgb,var(--ok) 35%,var(--card));border-color:var(--ok);color:var(--ink)}
+.dots button.miss{background:color-mix(in srgb,var(--neg) 25%,var(--card));border-color:var(--neg);color:var(--ink)}
+.qhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;color:var(--ink-2);font-size:.9em}
+/* math typesetting */
+.mx{font-family:var(--f-num);font-weight:600;display:inline-flex;align-items:center;flex-wrap:wrap;gap:.18em .3em;line-height:1}
+.fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;margin:0 .05em}
+.fr>span{padding:0 .12em}
+.fr>span:first-child{border-bottom:.09em solid currentColor;padding-bottom:.08em}
+.fr>span:last-child{padding-top:.08em}
+.mixed{display:inline-flex;align-items:center;gap:.08em}
+.q{font-size:clamp(1.6em,5.6vw,2.3em);margin:16px 0 12px;overflow-wrap:anywhere}
+.q .fr{font-size:.82em}
+.paren{font-weight:400;font-size:1.15em;margin:0 -.12em}
+.steps .mx,.hint .mx,.misslist .mx{font-size:1.02em;font-weight:500}
+.steps .fr{font-size:.86em}
+/* answer box */
+.ansrow{display:flex;align-items:center;gap:12px;font-family:var(--f-num);font-weight:600;font-size:clamp(1.4em,5vw,1.9em);flex-wrap:wrap}
+.ansbox{display:inline-flex;align-items:center;gap:.25em;border:2.5px solid var(--ink);border-radius:14px;padding:.25em .5em;background:var(--card-2)}
+.ansbox.wrong{border-color:var(--neg);animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.sgn{min-width:.6em;text-align:center;color:var(--neg)}
+.slot{min-width:2.1em;min-height:1.35em;border:2px dashed var(--line);border-radius:8px;background:var(--card);display:inline-flex;align-items:center;justify-content:center;padding:0 .2em;font:inherit;color:var(--ink)}
+.slot.on{border:2.5px solid var(--sel);box-shadow:0 0 0 3px color-mix(in srgb,var(--sel) 20%,transparent)}
+.slot.ph{color:var(--ink-2);font-family:var(--f-body);font-size:.45em;font-weight:500}
+.fracslot{display:inline-flex;flex-direction:column;align-items:center;gap:4px}
+.fracslot .line{width:100%;height:3px;background:var(--ink);border-radius:2px}
+.anshint{font-size:.85em;color:var(--ink-2);margin-top:6px}
+.msg{min-height:1.5em;margin:10px 0 2px;font-weight:700}
+.hint{border-left:4px solid var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent);padding:8px 12px;border-radius:0 10px 10px 0;margin:8px 0}
+.hint b{display:block;font-size:.8em;letter-spacing:.1em}
+.steps{background:var(--card-2);border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+.steps ol{margin:6px 0;padding-left:1.4em;display:flex;flex-direction:column;gap:10px}
+.steps .fin{font-weight:700;display:flex;align-items:center;gap:.5em;flex-wrap:wrap}
+.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}
+.pad button{min-height:54px;border-radius:12px;border:1.5px solid var(--line);background:var(--card-2);font-family:var(--f-num);font-size:1.4em;font-weight:600}
+.pad button:active{transform:translateY(1px)}
+.pad .fn{font-family:var(--f-body);font-size:.95em;font-weight:700}
+.pad .neg-k{color:var(--neg)}
+.pad .go{background:var(--ink);color:var(--card);border-color:var(--ink);font-family:var(--f-body);font-size:1.1em}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{border:1.5px solid var(--ink);background:var(--card);border-radius:10px;padding:.55em 1.1em;font-weight:700}
+.btn.main{background:var(--ink);color:var(--card)}
+.btn.alt{border-color:var(--line);font-weight:500}
+.okc{color:var(--ok)} .neg{color:var(--neg)}
+.result h2{font-family:var(--f-display);font-size:1.8em;margin:0 0 4px}
+.score{font-family:var(--f-num);font-size:3em;font-weight:600;line-height:1}
+.score small{font-size:.35em;color:var(--ink-2)}
+.stars{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;font-size:.95em}
+.misslist{list-style:none;padding:0;margin:8px 0;display:flex;flex-direction:column;gap:10px}
+.misslist li{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:6px;flex-wrap:wrap}
+.foot{font-size:.82em;color:var(--ink-2);text-align:center}
+@media (max-width:560px){
+  .lvl{padding:6px 5px 8px;border-radius:10px}
+  .lvl span{display:none}
+  .card{padding:14px}
+  .dots{gap:4px}
+  .dots button{width:26px;height:26px;font-size:.7em}
+  .pad{grid-template-columns:repeat(5,1fr);gap:6px}
+  .pad button{min-height:50px;font-size:1.2em}
+  .pad .fn{font-size:.8em}
+}
+@media (prefers-reduced-motion:reduce){.ansbox.wrong{animation:none}}
+
+.choice{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.choice button{min-height:64px;border-radius:14px;border:2px solid var(--line);background:var(--card-2);font-family:var(--f-display);font-size:1.5em;font-weight:700}
+.choice button.picked{border-color:var(--sel);box-shadow:0 0 0 3px color-mix(in srgb,var(--sel) 20%,transparent)}
+.qtext{font-size:clamp(1.15em,4.2vw,1.45em);font-weight:700;margin:14px 0 10px;line-height:1.6}
+.qtext .big{font-family:var(--f-num);font-size:1.25em}
+.facline{font-family:var(--f-num);font-weight:600;font-size:clamp(1.3em,5vw,1.8em);display:flex;align-items:center;gap:.4em;flex-wrap:wrap;min-height:1.8em}
+.facline .box{border:2.5px solid var(--ink);border-radius:12px;padding:.15em .5em;background:var(--card-2);min-width:4em;min-height:1.5em;display:inline-flex;align-items:center}
+.facline .ph{font-family:var(--f-body);font-size:.5em;color:var(--ink-2);font-weight:500}
+.primes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.primes button{min-height:54px;border-radius:12px;border:1.5px solid var(--line);background:var(--card-2);font-family:var(--f-num);font-size:1.4em;font-weight:600}
+.primes .fn{font-family:var(--f-body);font-size:1em;font-weight:700}
+.primes .go{background:var(--ink);color:var(--card);border-color:var(--ink);font-family:var(--f-body)}
+.numbox{border:2.5px solid var(--ink);border-radius:12px;padding:.1em .5em;background:var(--card-2);min-width:4em;min-height:1.5em;display:inline-flex;align-items:center;font-family:var(--f-num);font-weight:600;font-size:clamp(1.4em,5vw,1.9em)}
+.numbox .ph{font-family:var(--f-body);font-size:.5em;color:var(--ink-2);font-weight:500}
+.ladder{display:inline-grid;font-family:var(--f-num);font-weight:600;font-size:1.15em;margin:8px 0 4px;column-gap:0}
+.ladder .d{padding:.15em .55em .15em 0;text-align:right;color:var(--pos)}
+.ladder .v{padding:.15em .3em;border-left:2px solid var(--ink);border-bottom:2px solid var(--ink);display:flex;gap:1.1em}
+.ladder .v span{min-width:1.6em;text-align:right}
+.ladder .lastd{padding:.15em .55em .15em 0}
+.ladder .lastv{padding:.15em .3em;display:flex;gap:1.1em;color:var(--neg)}
+.ladder .lastv span{min-width:1.6em;text-align:right}
+@media (max-width:560px){.choice button{font-size:1.2em}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>質因數與公因數倍數 50 題</h1>
+    <label class="who" for="nm">名字 <input id="nm" maxlength="10" placeholder="寫上名字" autocomplete="off"></label>
+  </header>
+  <nav class="levels" id="levels" aria-label="選擇關卡"></nav>
+  <main class="card" id="main"></main>
+  <p class="foot">每題兩次機會：錯一次看提示，再錯就看解題步驟（短除法）。紀錄存在這台裝置上。</p>
+</div>
+
+<script>
+"use strict";
+const QS=[{"t": "pc", "q": "9 是質數還是合數？", "a": "c", "steps": ["9 除了 1 和 9，還可以被 3 整除（9 = 3 × 3），所以是合數。"], "lv": 1}, {"t": "pc", "q": "63 是質數還是合數？", "a": "c", "steps": ["63 除了 1 和 63，還可以被 3 整除（63 = 3 × 21），所以是合數。"], "lv": 1}, {"t": "pc", "q": "26 是質數還是合數？", "a": "c", "steps": ["26 除了 1 和 26，還可以被 2 整除（26 = 2 × 13），所以是合數。"], "lv": 1}, {"t": "pc", "q": "37 是質數還是合數？", "a": "p", "steps": ["37 只有 1 和 37 兩個因數，所以是質數。"], "lv": 1}, {"t": "pc", "q": "43 是質數還是合數？", "a": "p", "steps": ["43 只有 1 和 43 兩個因數，所以是質數。"], "lv": 1}, {"t": "pc", "q": "1 是質數還是合數？", "a": "none", "steps": ["1 只有 1 一個因數，既不是質數，也不是合數。"], "lv": 1}, {"t": "pc", "q": "7 是質數還是合數？", "a": "p", "steps": ["7 只有 1 和 7 兩個因數，所以是質數。"], "lv": 1}, {"t": "pc", "q": "96 是質數還是合數？", "a": "c", "steps": ["96 除了 1 和 96，還可以被 2 整除（96 = 2 × 48），所以是合數。"], "lv": 1}, {"t": "pc", "q": "13 是質數還是合數？", "a": "p", "steps": ["13 只有 1 和 13 兩個因數，所以是質數。"], "lv": 1}, {"t": "pc", "q": "21 是質數還是合數？", "a": "c", "steps": ["21 除了 1 和 21，還可以被 3 整除（21 = 3 × 7），所以是合數。"], "lv": 1}, {"t": "fac", "q": "把 14 做質因數分解", "a": [2, 7], "lad": {"rows": [[2, [14]]], "last": [7]}, "steps": ["用短除法，一直用質數去除，除到商是質數為止。", "14 = 2 × 7"], "lv": 2}, {"t": "fac", "q": "把 35 做質因數分解", "a": [5, 7], "lad": {"rows": [[5, [35]]], "last": [7]}, "steps": ["用短除法，一直用質數去除，除到商是質數為止。", "35 = 5 × 7"], "lv": 2}, {"t": "fac", "q": "把 55 做質因數分解", "a": [5, 11], "lad": {"rows": [[5, [55]]], "last": [11]}, "steps": ["用短除法，一直用質數去除，除到商是質數為止。", "55 = 5 × 11"], "lv": 2}, {"t": "fac", "q": "把 66 做質因數分解", "a": [2, 3, 11], "lad": {"rows": [[2, [66]], [3, [33]]], "last": [11]}, "steps": ["用短除法，一直用質數去除，除到商是質數為止。", "66 = 2 × 3 × 11"], "lv": 2}, {"t": "fac", "q": "把 16 做質因數分解", "a": [2, 2, 2, 2], "lad": {"rows": [[2, [16]], [2, [8]], [2, [4]]], "last": [2]}, "steps": ["用短除法，一直用質數去除，除到商是質數為止。", "16 = 2 × 2 × 2 × 2"], "lv": 2}, {"t": "fac", "q": "把 54 做質因數分解", "a": [2, 3, 3, 3], "lad": {"rows": [[2, [54]], [3, [27]], [3, [9]]], "last": [3]}, "steps": ["用短除法，一直用質數去除，除到商是質數為止。", "54 = 2 × 3 × 3 × 3"], "lv": 2}, {"t": "fac", "q": "把 56 做質因數分解", "a": [2, 2, 2, 7], "lad": {"rows": [[2, [56]], [2, [28]], [2, [14]]], "last": [7]}, "steps": ["用短除法，一直用質數去除，除到商是質數為止。", "56 = 2 × 2 × 2 × 7"], "lv": 2}, {"t": "fac", "q": "把 90 做質因數分解", "a": [2, 3, 3, 5], "lad": {"rows": [[2, [90]], [3, [45]], [3, [15]]], "last": [5]}, "steps": ["用短除法，一直用質數去除，除到商是質數為止。", "90 = 2 × 3 × 3 × 5"], "lv": 2}, {"t": "fac", "q": "把 48 做質因數分解", "a": [2, 2, 2, 2, 3], "lad": {"rows": [[2, [48]], [2, [24]], [2, [12]], [2, [6]]], "last": [3]}, "steps": ["用短除法，一直用質數去除，除到商是質數為止。", "48 = 2 × 2 × 2 × 2 × 3"], "lv": 2}, {"t": "fac", "q": "把 96 做質因數分解", "a": [2, 2, 2, 2, 2, 3], "lad": {"rows": [[2, [96]], [2, [48]], [2, [24]], [2, [12]], [2, [6]]], "last": [3]}, "steps": ["用短除法，一直用質數去除，除到商是質數為止。", "96 = 2 × 2 × 2 × 2 × 2 × 3"], "lv": 2}, {"t": "num", "q": "30 和 35 的最大公因數是多少？", "a": 5, "lad": {"rows": [[5, [30, 35]]], "last": [6, 7]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 5 = 5"], "lv": 3}, {"t": "num", "q": "15 和 18 的最大公因數是多少？", "a": 3, "lad": {"rows": [[3, [15, 18]]], "last": [5, 6]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 3 = 3"], "lv": 3}, {"t": "num", "q": "10 和 36 的最大公因數是多少？", "a": 2, "lad": {"rows": [[2, [10, 36]]], "last": [5, 18]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 2 = 2"], "lv": 3}, {"t": "num", "q": "18 和 39 的最大公因數是多少？", "a": 3, "lad": {"rows": [[3, [18, 39]]], "last": [6, 13]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 3 = 3"], "lv": 3}, {"t": "num", "q": "24 和 30 的最大公因數是多少？", "a": 6, "lad": {"rows": [[2, [24, 30]], [3, [12, 15]]], "last": [4, 5]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 2 × 3 = 6"], "lv": 3}, {"t": "num", "q": "24 和 80 的最大公因數是多少？", "a": 8, "lad": {"rows": [[2, [24, 80]], [2, [12, 40]], [2, [6, 20]]], "last": [3, 10]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 2 × 2 × 2 = 8"], "lv": 3}, {"t": "num", "q": "28 和 52 的最大公因數是多少？", "a": 4, "lad": {"rows": [[2, [28, 52]], [2, [14, 26]]], "last": [7, 13]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 2 × 2 = 4"], "lv": 3}, {"t": "num", "q": "48 和 60 的最大公因數是多少？", "a": 12, "lad": {"rows": [[2, [48, 60]], [2, [24, 30]], [3, [12, 15]]], "last": [4, 5]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 2 × 2 × 3 = 12"], "lv": 3}, {"t": "num", "q": "44 和 80 的最大公因數是多少？", "a": 4, "lad": {"rows": [[2, [44, 80]], [2, [22, 40]]], "last": [11, 20]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 2 × 2 = 4"], "lv": 3}, {"t": "num", "q": "80 和 90 的最大公因數是多少？", "a": 10, "lad": {"rows": [[2, [80, 90]], [5, [40, 45]]], "last": [8, 9]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 2 × 5 = 10"], "lv": 3}, {"t": "num", "q": "6 和 15 的最小公倍數是多少？", "a": 30, "lad": {"rows": [[3, [6, 15]]], "last": [2, 5]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 3 × 2 × 5 = 30"], "lv": 4}, {"t": "num", "q": "6 和 10 的最小公倍數是多少？", "a": 30, "lad": {"rows": [[2, [6, 10]]], "last": [3, 5]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 2 × 3 × 5 = 30"], "lv": 4}, {"t": "num", "q": "10 和 12 的最小公倍數是多少？", "a": 60, "lad": {"rows": [[2, [10, 12]]], "last": [5, 6]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 2 × 5 × 6 = 60"], "lv": 4}, {"t": "num", "q": "6 和 14 的最小公倍數是多少？", "a": 42, "lad": {"rows": [[2, [6, 14]]], "last": [3, 7]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 2 × 3 × 7 = 42"], "lv": 4}, {"t": "num", "q": "4 和 6 的最小公倍數是多少？", "a": 12, "lad": {"rows": [[2, [4, 6]]], "last": [2, 3]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 2 × 2 × 3 = 12"], "lv": 4}, {"t": "num", "q": "10 和 28 的最小公倍數是多少？", "a": 140, "lad": {"rows": [[2, [10, 28]]], "last": [5, 14]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 2 × 5 × 14 = 140"], "lv": 4}, {"t": "num", "q": "14 和 20 的最小公倍數是多少？", "a": 140, "lad": {"rows": [[2, [14, 20]]], "last": [7, 10]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 2 × 7 × 10 = 140"], "lv": 4}, {"t": "num", "q": "21 和 28 的最小公倍數是多少？", "a": 84, "lad": {"rows": [[7, [21, 28]]], "last": [3, 4]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 7 × 3 × 4 = 84"], "lv": 4}, {"t": "num", "q": "8 和 12 的最小公倍數是多少？", "a": 24, "lad": {"rows": [[2, [8, 12]], [2, [4, 6]]], "last": [2, 3]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 2 × 2 × 2 × 3 = 24"], "lv": 4}, {"t": "num", "q": "10 和 22 的最小公倍數是多少？", "a": 110, "lad": {"rows": [[2, [10, 22]]], "last": [5, 11]}, "steps": ["用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 2 × 5 × 11 = 110"], "lv": 4}, {"t": "num", "q": "有 24 顆糖果和 64 塊餅乾，要平分裝成好幾袋，每袋的糖果一樣多、餅乾也一樣多，而且全部分完。最多可以裝幾袋？", "a": 8, "lad": {"rows": [[2, [24, 64]], [2, [12, 32]], [2, [6, 16]]], "last": [3, 8]}, "steps": ["要把兩種東西都「平分、分完」，袋數要同時是兩個數的因數，最多就是最大公因數。", "用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 2 × 2 × 2 = 8"], "lv": 5}, {"t": "num", "q": "兩路公車分別每 4 分鐘、每 10 分鐘發一班，早上 7 點同時發車。至少再過幾分鐘，兩路公車會再同時發車？", "a": 20, "lad": {"rows": [[2, [4, 10]]], "last": [2, 5]}, "steps": ["再同時發車的時間要同時是兩個數的倍數，最早就是最小公倍數。", "用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 2 × 2 × 5 = 20"], "lv": 5}, {"t": "num", "q": "一張長 33 公分、寬 22 公分的長方形紙，要剪成大小一樣的正方形，而且沒有剩下。正方形的邊長最長是幾公分？", "a": 11, "lad": {"rows": [[11, [22, 33]]], "last": [2, 3]}, "steps": ["邊長要同時能整除長和寬，最長就是最大公因數。", "用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 11 = 11"], "lv": 5}, {"t": "num", "q": "用長 16 公分、寬 12 公分的長方形磁磚，同一個方向排，拼成一個正方形。拼出的正方形邊長最小是幾公分？", "a": 48, "lad": {"rows": [[2, [12, 16]], [2, [6, 8]]], "last": [3, 4]}, "steps": ["正方形的邊長要同時是長和寬的倍數，最小就是最小公倍數。", "用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 2 × 2 × 3 × 4 = 48"], "lv": 5}, {"t": "num", "q": "有 28 顆糖果和 60 塊餅乾，要平分裝成好幾袋，每袋的糖果一樣多、餅乾也一樣多，而且全部分完。最多可以裝幾袋？", "a": 4, "lad": {"rows": [[2, [28, 60]], [2, [14, 30]]], "last": [7, 15]}, "steps": ["要把兩種東西都「平分、分完」，袋數要同時是兩個數的因數，最多就是最大公因數。", "用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 2 × 2 = 4"], "lv": 5}, {"t": "num", "q": "小明每 8 天去一次圖書館，小華每 18 天去一次。今天兩人都去了，至少再過幾天兩人會再同一天去？", "a": 72, "lad": {"rows": [[2, [8, 18]]], "last": [4, 9]}, "steps": ["再同一天去的天數要同時是兩個數的倍數，最少就是最小公倍數。", "用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 2 × 4 × 9 = 72"], "lv": 5}, {"t": "num", "q": "一張長 60 公分、寬 45 公分的長方形紙，要剪成大小一樣的正方形，而且沒有剩下。正方形的邊長最長是幾公分？", "a": 15, "lad": {"rows": [[3, [45, 60]], [5, [15, 20]]], "last": [3, 4]}, "steps": ["邊長要同時能整除長和寬，最長就是最大公因數。", "用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 3 × 5 = 15"], "lv": 5}, {"t": "num", "q": "兩路公車分別每 16 分鐘、每 20 分鐘發一班，早上 7 點同時發車。至少再過幾分鐘，兩路公車會再同時發車？", "a": 80, "lad": {"rows": [[2, [16, 20]], [2, [8, 10]]], "last": [4, 5]}, "steps": ["再同時發車的時間要同時是兩個數的倍數，最早就是最小公倍數。", "用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 2 × 2 × 4 × 5 = 80"], "lv": 5}, {"t": "num", "q": "有 24 顆糖果和 56 塊餅乾，要平分裝成好幾袋，每袋的糖果一樣多、餅乾也一樣多，而且全部分完。最多可以裝幾袋？", "a": 8, "lad": {"rows": [[2, [24, 56]], [2, [12, 28]], [2, [6, 14]]], "last": [3, 7]}, "steps": ["要把兩種東西都「平分、分完」，袋數要同時是兩個數的因數，最多就是最大公因數。", "用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最大公因數 = 左邊的數相乘 = 2 × 2 × 2 = 8"], "lv": 5}, {"t": "num", "q": "用長 12 公分、寬 9 公分的長方形磁磚，同一個方向排，拼成一個正方形。拼出的正方形邊長最小是幾公分？", "a": 36, "lad": {"rows": [[3, [9, 12]]], "last": [3, 4]}, "steps": ["正方形的邊長要同時是長和寬的倍數，最小就是最小公倍數。", "用短除法，同時用兩個數的公因數去除，除到兩個商互質。", "最小公倍數 = 左邊的數 × 最下面的數 = 3 × 3 × 4 = 36"], "lv": 5}];
+const LEVELS=['質數或合數','質因數分解','最大公因數','最小公倍數','生活應用題'];
+const HINTS=['質數只有 1 和自己兩個因數；合數還有別的因數。1 很特別：它不是質數，也不是合數。',
+  '用短除法：從最小的質數 2 開始除，除不盡就換 3、5、7……一直除到商是質數為止。',
+  '用短除法，同時用兩個數都能整除的質數去除，除到兩個商沒有共同的因數；左邊的數相乘就是最大公因數。',
+  '用短除法除到兩個商互質。最小公倍數 = 左邊的數 × 最下面兩個數。',
+  '「平分、分完、最多、最大的邊長」→ 最大公因數；「同時、再一次、最小的正方形」→ 最小公倍數。'];
+const PRIMES=[2,3,5,7,11,13,17,19];
+const KEY='gcdlcm50.v1';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let S=load();
+function load(){let s=null;try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+  if(!s||!Array.isArray(s.res)||s.res.length!==QS.length) s={res:Array(QS.length).fill(null),lv:1,name:''};return s;}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+let cur=null,tries=0,done=false,inp=null;
+const lvQs=lv=>QS.map((q,i)=>({...q,i})).filter(q=>q.lv===lv);
+function lvStat(lv){const r=lvQs(lv).map(q=>S.res[q.i]);return {done:r.filter(Boolean).length,first:r.filter(x=>x==='first').length,second:r.filter(x=>x==='second').length,miss:r.filter(x=>x==='miss').length,total:r.length};}
+function renderLevels(){
+  $('#levels').innerHTML=LEVELS.map((name,k)=>{const st=lvStat(k+1);
+    return `<button class="lvl ${S.lv===k+1?'on':''}" data-lv="${k+1}" aria-pressed="${S.lv===k+1}"><b>第 ${k+1} 關</b><span>${name}</span><span>${st.done}/${st.total}</span><div class="bar"><i style="width:${st.done/st.total*100}%"></i></div></button>`;}).join('');
+  $('#levels').querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{S.lv=+b.dataset.lv;save();openLevel();});
+}
+function openLevel(){renderLevels();const next=lvQs(S.lv).find(q=>!S.res[q.i]);next?show(next.i):result();}
+function dotsHTML(){return `<div class="dots">${lvQs(S.lv).map(q=>`<button data-q="${q.i}" class="${S.res[q.i]||''} ${cur&&cur.i===q.i?'cur':''}" aria-label="第 ${q.i+1} 題">${q.i+1}</button>`).join('')}</div>`;}
+const qHTML=q=>esc(q.q).replace(/(\d+)/g,'<span class="big">$1</span>');
+const KIND={p:'質數',c:'合數',none:'都不是'};
+function show(i){
+  cur={...QS[i],i};tries=0;done=!!S.res[i];inp=cur.t==='fac'?[]:cur.t==='pc'?null:'';
+  const lq=lvQs(S.lv);const pos=lq.findIndex(q=>q.i===i)+1;
+  $('#main').innerHTML=`${dotsHTML()}
+    <div class="qhead"><span>第 ${S.lv} 關・${LEVELS[S.lv-1]}</span><span>第 ${i+1} 題（${pos}/${lq.length}）</span></div>
+    <div class="qtext">${qHTML(cur)}</div>
+    <div id="ansarea"></div>
+    <div class="msg" id="msg" aria-live="polite"></div>
+    <div id="help"></div><div id="ctl"></div>`;
+  $('#main').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>show(+b.dataset.q));
+  if(done){review();return;}
+  controls();drawAns();
+}
+function drawAns(){
+  const a=$('#ansarea');
+  if(cur.t==='fac'){const n=cur.q.match(/\d+/)[0];
+    a.innerHTML=`<div class="facline"><span>${n} =</span><span class="box" id="ansbox">${inp.length?inp.join(' × '):'<span class="ph">按下面的質數，排出乘法算式</span>'}</span></div>`;}
+  else if(cur.t==='num'){a.innerHTML=`<div class="facline"><span>答：</span><span class="numbox" id="ansbox">${inp||'<span class="ph">輸入數字</span>'}</span></div>`;}
+  else a.innerHTML='';
+}
+function controls(){
+  if(cur.t==='pc'){
+    $('#ctl').innerHTML=`<div class="choice">${['p','c','none'].map(k=>`<button data-c="${k}">${KIND[k]}</button>`).join('')}</div>`;
+    $('#ctl').querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{if(done)return;inp=b.dataset.c;check();});
+  }else if(cur.t==='fac'){
+    $('#ctl').innerHTML=`<div class="primes">${PRIMES.map(p=>`<button data-p="${p}">${p}</button>`).join('')}
+      <button class="fn" data-x="back">⌫ 退一個</button><button class="fn" data-x="clr">清除</button><button class="go" data-x="go" style="grid-column:span 2">送出</button></div>`;
+    $('#ctl').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(done)return;
+      if(b.dataset.p){if(inp.length<8)inp.push(+b.dataset.p);}
+      else if(b.dataset.x==='back')inp.pop();else if(b.dataset.x==='clr')inp=[];else{check();return;}
+      drawAns();});
+  }else{
+    $('#ctl').innerHTML=`<div class="pad" style="grid-template-columns:repeat(4,1fr)">
+      ${[7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button data-k="back">⌫</button>
+      ${[4,5,6].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button class="fn" data-k="clr">清除</button>
+      ${[1,2,3].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button class="go" data-k="go" style="grid-row:span 2">送出</button>
+      <button data-k="0" style="grid-column:span 3">0</button></div>`;
+    $('#ctl').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>numKey(b.dataset.k));
+  }
+}
+function numKey(k){if(done)return;
+  if(/^\d$/.test(k)){if(inp.length<4)inp=(inp==='0'?'':inp)+k;}
+  else if(k==='back')inp=inp.slice(0,-1);else if(k==='clr')inp='';else if(k==='go'){check();return;}
+  drawAns();}
+document.addEventListener('keydown',e=>{
+  if(!cur||e.target.id==='nm')return;
+  if(done){if(e.key==='Enter'){const b=$('#nextBtn');if(b){e.preventDefault();b.click();}}return;}
+  if(cur.t==='num'){if(/^\d$/.test(e.key))numKey(e.key);else if(e.key==='Backspace'){e.preventDefault();numKey('back');}else if(e.key==='Enter'){e.preventDefault();numKey('go');}}
+});
+function check(){
+  let right,why='';
+  if(cur.t==='pc'){right=inp===cur.a;}
+  else if(cur.t==='fac'){
+    if(!inp.length){$('#msg').innerHTML='<span class="neg">先按質數排出算式。</span>';return;}
+    const prod=inp.reduce((a,b)=>a*b,1),n=+cur.q.match(/\d+/)[0];
+    const s=[...inp].sort((a,b)=>a-b).join(),t=[...cur.a].sort((a,b)=>a-b).join();
+    right=s===t;if(!right&&prod!==n)why=`你的算式乘起來是 ${prod}，不是 ${n}。`;
+  }else{
+    if(inp===''){$('#msg').innerHTML='<span class="neg">先輸入答案。</span>';return;}
+    right=+inp===cur.a;
+  }
+  tries++;
+  if(right){finish(tries===1?'first':'second');return;}
+  const box=$('#ansbox');if(box){box.classList.remove('wrong');void box.offsetWidth;box.style.borderColor='var(--neg)';}
+  if(tries===1){
+    $('#msg').innerHTML=`<span class="neg">${why}不對喔，看看提示再試一次。</span>`;
+    $('#help').innerHTML=`<div class="hint"><b>提示</b>${esc(HINTS[cur.lv-1])}</div>`;
+    if(cur.t==='fac'){inp=[];setTimeout(drawAns,500);}
+    if(cur.t==='num'){inp='';setTimeout(drawAns,500);}
+    return;
+  }
+  finish('miss',why);
+}
+function ladderHTML(l){
+  if(!l)return '';
+  let h='<div class="ladder" style="grid-template-columns:auto auto">';
+  l.rows.forEach(r=>{h+=`<div class="d">${r[0]}</div><div class="v">${r[1].map(x=>`<span>${x}</span>`).join('')}</div>`;});
+  h+=`<div class="lastd"></div><div class="lastv">${l.last.map(x=>`<span>${x}</span>`).join('')}</div></div>`;
+  return h;
+}
+function ansText(q){return q.t==='pc'?KIND[q.a]:q.t==='fac'?q.a.join(' × '):String(q.a);}
+function stepsHTML(q){
+  return `<div class="steps"><b>解題步驟</b>${q.steps.length>1?`<p style="margin:6px 0">${esc(q.steps[0])}</p>`:''}${ladderHTML(q.lad)}
+    <ol>${q.steps.slice(q.steps.length>1?1:0).map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
+    <div class="fin">答案：<span class="mx">${esc(ansText(q))}</span></div></div>`;
+}
+function finish(res,why){
+  done=true;S.res[cur.i]=res;save();renderLevels();
+  if(cur.t==='fac'){inp=cur.a.slice();drawAns();}
+  if(cur.t==='pc')$('#ctl').querySelectorAll('[data-c]').forEach(b=>b.classList.toggle('picked',b.dataset.c===cur.a));
+  $('#msg').innerHTML=res==='first'?'<span class="okc">答對了！★</span>':res==='second'?'<span class="okc">第二次答對！☆</span>':`<span class="neg">${why||''}兩次都沒答對，一起看看怎麼算：</span>`;
+  $('#help').innerHTML=res==='miss'?stepsHTML(cur):(cur.lad&&res!=='miss'?`<details><summary>看短除法</summary>${stepsHTML(cur)}</details>`:'');
+  nextControls();
+  const dot=$('#main').querySelector(`[data-q="${cur.i}"]`);if(dot)dot.className=res+' cur';
+}
+function nextControls(){
+  const qs=lvQs(S.lv);const after=qs.find(q=>q.i>cur.i&&!S.res[q.i])||qs.find(q=>!S.res[q.i]);
+  $('#ctl').insertAdjacentHTML('beforeend',`<div class="btns"><button class="btn main" id="nextBtn">${after?'下一題 →':'看這一關的成績'}</button></div>`);
+  if(cur.t!=='pc'){[...$('#ctl').children].forEach(c=>{if(!c.classList.contains('btns'))c.remove();});}
+  $('#nextBtn').onclick=()=>after?show(after.i):result();
+}
+function review(){
+  const r=S.res[cur.i];
+  inp=cur.t==='fac'?cur.a.slice():cur.t==='num'?String(cur.a):cur.a;drawAns();
+  $('#msg').innerHTML=r==='first'?'<span class="okc">這題已經答對 ★</span>':r==='second'?'<span class="okc">這題第二次答對 ☆</span>':'<span class="neg">這題沒答對，可以在成績頁重做錯題。</span>';
+  $('#help').innerHTML=r==='miss'?stepsHTML(cur):`<details><summary>看解法</summary>${stepsHTML(cur)}</details>`;
+  $('#ctl').innerHTML='';nextControls();
+}
+function result(){
+  cur=null;
+  const st=lvStat(S.lv),qs=lvQs(S.lv),again=qs.filter(q=>S.res[q.i]==='miss'||S.res[q.i]==='second');
+  const ok=st.first+st.second,need=Math.ceil(st.total*0.9),pass=ok>=need;
+  $('#main').innerHTML=`<div class="result">${dotsHTML()}
+    <h2>第 ${S.lv} 關完成${S.name?`・${esc(S.name)}`:''}</h2>
+    <div class="score">${ok}<small> / ${st.total} 題答對</small></div>
+    <div class="stars"><span class="okc">★ 一次答對 ${st.first}</span><span>☆ 第二次答對 ${st.second}</span><span class="neg">✗ 沒答對 ${st.miss}</span></div>
+    <p>${pass?(S.lv<5?'很棒！可以進下一關了。':'五關全部完成，太厲害了！'):`答對 ${need} 題以上再進下一關。先把錯的題目重做一次吧。`}</p>
+    ${again.length?`<details ${pass?'':'open'}><summary>要再練的題目（${again.length} 題）</summary><ul class="misslist">${again.map(q=>`<li><span>${q.i+1}. ${esc(q.q)}</span><span class="mx">${esc(ansText(q))}</span></li>`).join('')}</ul></details>`:''}
+    <div class="btns">${again.length?'<button class="btn main" id="redo">重做錯的題目</button>':''}
+      ${S.lv<5?`<button class="btn ${again.length?'':'main'}" id="nextLv">前往第 ${S.lv+1} 關</button>`:''}
+      <button class="btn alt" id="again">整關重新開始</button></div></div>`;
+  $('#main').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>show(+b.dataset.q));
+  if($('#redo'))$('#redo').onclick=()=>{again.forEach(q=>S.res[q.i]=null);save();openLevel();};
+  if($('#nextLv'))$('#nextLv').onclick=()=>{S.lv++;save();openLevel();};
+  $('#again').onclick=()=>{
+    $('#again').outerHTML='<span>確定清除這一關的紀錄？</span><button class="btn main" id="againY">清除重來</button><button class="btn alt" id="againN">取消</button>';
+    $('#againY').onclick=()=>{qs.forEach(q=>S.res[q.i]=null);save();openLevel();};
+    $('#againN').onclick=result;
+  };
+}
+$('#nm').value=S.name||'';
+$('#nm').oninput=e=>{S.name=e.target.value.trim();save();};
+openLevel();
+</script>
+
+</body>
+</html>
