@@ -70,9 +70,10 @@ header p{margin:6px 0 0;color:var(--ink-2)}
   <a class="next" id="next" href="#"><b id="nextT">從第 1 份開始</b><span id="nextS"></span><span class="go">開始 →</span></a>
   <div id="stages"></div>
   <div class="legend"><span><i style="background:var(--ok)"></i>一次答對</span><span><i style="background:color-mix(in srgb,var(--ok) 40%,var(--line))"></i>第二次答對</span><span><i style="background:color-mix(in srgb,var(--neg) 55%,var(--line))"></i>沒答對</span></div>
-  <p class="foot">進度存在這台裝置的瀏覽器裡；換裝置或清除瀏覽紀錄會從頭開始。</p>
+  <p class="foot" id="foot">登入後，進度會存到老師的試算表，換裝置也能接著做。</p>
 </div>
 
+<script src="math-sync.js"></script>
 <script>
 "use strict";
 const BASE='https://yulin00918.github.io/games/';
@@ -98,6 +99,7 @@ function stat(it){
   const first=c('first'),second=c('second'),miss=c('miss');
   return {first,second,miss,done:first+second+miss,n:it.n};
 }
+function render(){
 let num=0,next=null;
 document.getElementById('stages').innerHTML=STAGES.map(st=>`<section class="stage"><h2>${st.name}<small>${st.sub}</small></h2><ol class="path">${
   st.items.map(it=>{num++;const s=stat(it);const pass=s.first+s.second>=Math.ceil(s.n*0.9);
@@ -114,6 +116,8 @@ if(next){nx.href=BASE+next.it.f;document.getElementById('nextT').textContent=`�
   document.getElementById('nextS').textContent=next.s.done?`已經做了 ${next.s.done}/${next.s.n} 題`:'下一份要做的';
   nx.querySelector('.go').textContent=next.s.done?'繼續 →':'開始 →';}
 else{nx.removeAttribute('href');document.getElementById('nextT').textContent='全部 10 份都完成了！';nx.querySelector('.go').hidden=true;}
+}
+if(window.MathSync&&MathSync.enabled){render();MathSync.start(()=>render());}else render();
 </script>
 
 </body>
