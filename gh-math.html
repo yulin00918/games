@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>數學學習扶助練習</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: a single learning path — two stages (六年級複習 → 七年級正負數) of numbered stops, each a card with progress. */
+:root{
+  --paper:#f1f5f3; --card:#ffffff; --card-2:#f5f8f7; --ink:#1b2729; --ink-2:#56666a; --line:#d3ddda;
+  --pos:#1d63a8; --neg:#cc3a26; --ok:#2e8a4e; --accent:#e39a12;
+  --f-display:"LXGW WenKai TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111a1b; --card:#1b2627; --card-2:#162021; --ink:#e6eeec; --ink-2:#a2b2b4; --line:#2f3d3f;
+  --pos:#6cb2f5; --neg:#ff7a63; --ok:#5fc27f; --accent:#f2b23a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111a1b; --card:#1b2627; --card-2:#162021; --ink:#e6eeec; --ink-2:#a2b2b4; --line:#2f3d3f;
+  --pos:#6cb2f5; --neg:#ff7a63; --ok:#5fc27f; --accent:#f2b23a; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 36px}
+a{color:inherit}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header h1{font-family:var(--f-display);font-size:clamp(1.9em,6vw,2.5em);line-height:1.15;margin:0;text-wrap:balance}
+header h1 .p{color:var(--pos)} header h1 .m{color:var(--neg)}
+header p{margin:6px 0 0;color:var(--ink-2)}
+.next{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--ink);color:var(--card);border-radius:14px;padding:14px 16px;text-decoration:none}
+.next b{font-family:var(--f-display);font-size:1.3em}
+.next span{opacity:.8;font-size:.9em}
+.next .go{margin-left:auto;font-weight:700;border:1.5px solid currentColor;border-radius:999px;padding:.2em .9em}
+.stage h2{font-family:var(--f-display);font-size:1.45em;margin:0 0 2px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.stage h2 small{font-family:var(--f-body);font-size:.6em;color:var(--ink-2);font-weight:500}
+.path{list-style:none;margin:10px 0 0;padding:0;position:relative}
+.path::before{content:"";position:absolute;left:19px;top:22px;bottom:22px;width:3px;background:var(--line);border-radius:2px}
+.stop{position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px;align-items:start;margin-bottom:10px}
+.num{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-num);font-weight:600;background:var(--card);border:2.5px solid var(--line);z-index:1}
+.stop.done .num{background:var(--ok);border-color:var(--ok);color:#fff}
+.stop.doing .num{border-color:var(--accent);color:var(--ink)}
+.card{display:block;text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 6px 18px -14px rgba(20,50,50,.5);transition:border-color .15s,transform .15s;min-width:0}
+.card:hover{border-color:var(--ink);transform:translateY(-1px)}
+.card:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.title{font-family:var(--f-display);font-weight:700;font-size:1.2em}
+.count{font-family:var(--f-num);font-size:.85em;color:var(--ink-2);white-space:nowrap}
+.desc{font-size:.88em;color:var(--ink-2);margin-top:2px}
+.bar{height:7px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:8px;display:flex}
+.bar i{display:block;height:100%}
+.bar .a{background:var(--ok)} .bar .b{background:color-mix(in srgb,var(--ok) 40%,var(--line))} .bar .c{background:color-mix(in srgb,var(--neg) 55%,var(--line))}
+.tag{display:inline-block;font-size:.72em;font-weight:700;letter-spacing:.05em;border-radius:999px;padding:0 .6em;margin-left:6px;vertical-align:middle;border:1px solid var(--line);color:var(--ink-2)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.8em;color:var(--ink-2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.foot{font-size:.82em;color:var(--ink-2)}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>數學練習：從六年級到<span class="p">正</span><span class="m">負</span>數</h1>
+    <p>照順序一份一份往下做。每份答對九成，就可以進下一份。</p>
+  </header>
+  <a class="next" id="next" href="#"><b id="nextT">從第 1 份開始</b><span id="nextS"></span><span class="go">開始 →</span></a>
+  <div id="stages"></div>
+  <div class="legend"><span><i style="background:var(--ok)"></i>一次答對</span><span><i style="background:color-mix(in srgb,var(--ok) 40%,var(--line))"></i>第二次答對</span><span><i style="background:color-mix(in srgb,var(--neg) 55%,var(--line))"></i>沒答對</span></div>
+  <p class="foot">進度存在這台裝置的瀏覽器裡；換裝置或清除瀏覽紀錄會從頭開始。</p>
+</div>
+
+<script>
+"use strict";
+const BASE='https://yulin00918.github.io/games/';
+const STAGES=[
+  {name:'六年級複習',sub:'數與計算、圖形',items:[
+    {f:'gh-gcd-lcm.html',k:'gcdlcm50.v1',n:50,t:'質因數與公因數倍數',d:'質數、質因數分解、最大公因數、最小公倍數'},
+    {f:'gh-frac-add.html',k:'frac-add.v1',n:50,t:'分數加減',d:'通分、帶分數，後段加入負分數'},
+    {f:'gh-frac-md.html',k:'frac-md.v1',n:50,t:'分數乘除',d:'先約分再乘、除以分數 = 乘以倒數'},
+    {f:'gh-frac-four.html',k:'frac-four.v1',n:50,t:'分數四則運算',d:'先乘除後加減、括號'},
+    {f:'gh-frac-dec.html',k:'frac-dec.v1',n:50,t:'分數與小數四則',d:'小數先化成分數再算'},
+    {f:'gh-ratio-speed.html',k:'frac-ratio.v1',n:50,t:'比與比值、速度',d:'最簡整數比、速度換算、基準量與比較量'},
+    {f:'gh-circle.html',k:'frac-circle.v1',n:50,t:'圓',d:'圓周長、圓面積、扇形',tag:'圖形'},
+    {f:'gh-prism.html',k:'frac-prism.v1',n:50,t:'柱體',d:'角柱、圓柱的體積與表面積',tag:'圖形'},
+  ]},
+  {name:'七年級正負數',sub:'整數的四則運算',items:[
+    {f:'signed100.html',k:'pm100.v1',n:100,t:'正負數加減 100 題',d:'正 + 負、減法改加法、三數連算、絕對值'},
+    {f:'signed-md100.html',k:'pmMD100.v1',n:100,t:'正負數乘除 100 題',d:'數負號、乘除由左到右、絕對值'},
+  ]},
+];
+function stat(it){
+  let res=null;try{const s=JSON.parse(localStorage.getItem(it.k));if(s&&Array.isArray(s.res))res=s.res;}catch(e){}
+  const r=res||[];const c=x=>r.filter(v=>v===x).length;
+  const first=c('first'),second=c('second'),miss=c('miss');
+  return {first,second,miss,done:first+second+miss,n:it.n};
+}
+let num=0,next=null;
+document.getElementById('stages').innerHTML=STAGES.map(st=>`<section class="stage"><h2>${st.name}<small>${st.sub}</small></h2><ol class="path">${
+  st.items.map(it=>{num++;const s=stat(it);const pass=s.first+s.second>=Math.ceil(s.n*0.9);
+    const state=pass?'done':s.done?'doing':'';if(!pass&&!next)next={it,num,s};
+    const pc=x=>(x/s.n*100).toFixed(1)+'%';
+    return `<li class="stop ${state}"><span class="num" aria-hidden="true">${pass?'✓':num}</span>
+      <a class="card" href="${BASE+it.f}"><div class="row"><span class="title">${it.t}${it.tag?`<span class="tag">${it.tag}</span>`:''}</span>
+      <span class="count">${s.done?`做了 ${s.done}/${s.n}・答對 ${s.first+s.second}`:`${s.n} 題`}</span></div>
+      <div class="desc">${it.d}</div>
+      ${s.done?`<div class="bar" aria-label="一次答對 ${s.first} 題，第二次答對 ${s.second} 題，沒答對 ${s.miss} 題"><i class="a" style="width:${pc(s.first)}"></i><i class="b" style="width:${pc(s.second)}"></i><i class="c" style="width:${pc(s.miss)}"></i></div>`:''}
+      </a></li>`;}).join('')}</ol></section>`).join('');
+const nx=document.getElementById('next');
+if(next){nx.href=BASE+next.it.f;document.getElementById('nextT').textContent=`第 ${next.num} 份：${next.it.t}`;
+  document.getElementById('nextS').textContent=next.s.done?`已經做了 ${next.s.done}/${next.s.n} 題`:'下一份要做的';
+  nx.querySelector('.go').textContent=next.s.done?'繼續 →':'開始 →';}
+else{nx.removeAttribute('href');document.getElementById('nextT').textContent='全部 10 份都完成了！';nx.querySelector('.go').hidden=true;}
+</script>
+
+</body>
+</html>
