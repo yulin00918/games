@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>分數四則運算 50 題</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: title, level picker, one big question card; answer typed into a mixed-number box (whole / numerator / denominator) with an on-screen keypad. */
+:root{
+  --paper:#f1f5f3; --card:#ffffff; --card-2:#f5f8f7; --ink:#1b2729; --ink-2:#56666a; --line:#d3ddda;
+  --pos:#1d63a8; --neg:#cc3a26; --ok:#2e8a4e; --accent:#e39a12; --sel:#1d63a8;
+  --f-display:"LXGW WenKai TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111a1b; --card:#1b2627; --card-2:#162021; --ink:#e6eeec; --ink-2:#a2b2b4; --line:#2f3d3f;
+  --pos:#6cb2f5; --neg:#ff7a63; --ok:#5fc27f; --accent:#f2b23a; --sel:#6cb2f5; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111a1b; --card:#1b2627; --card-2:#162021; --ink:#e6eeec; --ink-2:#a2b2b4; --line:#2f3d3f;
+  --pos:#6cb2f5; --neg:#ff7a63; --ok:#5fc27f; --accent:#f2b23a; --sel:#6cb2f5; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 28px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-size:2em;line-height:1.1;margin:0;letter-spacing:.03em}
+.who{display:flex;align-items:center;gap:6px;font-size:.9em;color:var(--ink-2)}
+.who input{font:inherit;border:1.5px solid var(--line);border-radius:8px;padding:.25em .5em;background:var(--card);color:var(--ink);width:8em}
+.levels{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.lvl{border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:8px 8px 10px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0}
+.lvl b{font-family:var(--f-display);font-size:1.15em}
+.lvl span{font-size:.78em;color:var(--ink-2);line-height:1.3}
+.lvl .bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:6px}
+.lvl .bar i{display:block;height:100%;background:var(--ok)}
+.lvl.on{border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--ink)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 8px 24px -16px rgba(20,50,50,.45)}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.dots button{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);background:var(--card-2);font-family:var(--f-num);font-size:.8em;padding:0;color:var(--ink-2)}
+.dots button.cur{border-color:var(--ink);color:var(--ink);font-weight:600}
+.dots button.first{background:var(--ok);border-color:var(--ok);color:#fff}
+.dots button.second{background:color-mix(in srgb,var(--ok) 35%,var(--card));border-color:var(--ok);color:var(--ink)}
+.dots button.miss{background:color-mix(in srgb,var(--neg) 25%,var(--card));border-color:var(--neg);color:var(--ink)}
+.qhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;color:var(--ink-2);font-size:.9em}
+/* math typesetting */
+.mx{font-family:var(--f-num);font-weight:600;display:inline-flex;align-items:center;flex-wrap:wrap;gap:.18em .3em;line-height:1}
+.fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;margin:0 .05em}
+.fr>span{padding:0 .12em}
+.fr>span:first-child{border-bottom:.09em solid currentColor;padding-bottom:.08em}
+.fr>span:last-child{padding-top:.08em}
+.mixed{display:inline-flex;align-items:center;gap:.08em}
+.q{font-size:clamp(1.6em,5.6vw,2.3em);margin:16px 0 12px;overflow-wrap:anywhere}
+.q .fr{font-size:.82em}
+.paren{font-weight:400;font-size:1.15em;margin:0 -.12em}
+.steps .mx,.hint .mx,.misslist .mx{font-size:1.02em;font-weight:500}
+.steps .fr{font-size:.86em}
+/* answer box */
+.ansrow{display:flex;align-items:center;gap:12px;font-family:var(--f-num);font-weight:600;font-size:clamp(1.4em,5vw,1.9em);flex-wrap:wrap}
+.ansbox{display:inline-flex;align-items:center;gap:.25em;border:2.5px solid var(--ink);border-radius:14px;padding:.25em .5em;background:var(--card-2)}
+.ansbox.wrong{border-color:var(--neg);animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.sgn{min-width:.6em;text-align:center;color:var(--neg)}
+.slot{min-width:2.1em;min-height:1.35em;border:2px dashed var(--line);border-radius:8px;background:var(--card);display:inline-flex;align-items:center;justify-content:center;padding:0 .2em;font:inherit;color:var(--ink)}
+.slot.on{border:2.5px solid var(--sel);box-shadow:0 0 0 3px color-mix(in srgb,var(--sel) 20%,transparent)}
+.slot.ph{color:var(--ink-2);font-family:var(--f-body);font-size:.45em;font-weight:500}
+.fracslot{display:inline-flex;flex-direction:column;align-items:center;gap:4px}
+.fracslot .line{width:100%;height:3px;background:var(--ink);border-radius:2px}
+.anshint{font-size:.85em;color:var(--ink-2);margin-top:6px}
+.msg{min-height:1.5em;margin:10px 0 2px;font-weight:700}
+.hint{border-left:4px solid var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent);padding:8px 12px;border-radius:0 10px 10px 0;margin:8px 0}
+.hint b{display:block;font-size:.8em;letter-spacing:.1em}
+.steps{background:var(--card-2);border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+.steps ol{margin:6px 0;padding-left:1.4em;display:flex;flex-direction:column;gap:10px}
+.steps .fin{font-weight:700;display:flex;align-items:center;gap:.5em;flex-wrap:wrap}
+.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}
+.pad button{min-height:54px;border-radius:12px;border:1.5px solid var(--line);background:var(--card-2);font-family:var(--f-num);font-size:1.4em;font-weight:600}
+.pad button:active{transform:translateY(1px)}
+.pad .fn{font-family:var(--f-body);font-size:.95em;font-weight:700}
+.pad .neg-k{color:var(--neg)}
+.pad .go{background:var(--ink);color:var(--card);border-color:var(--ink);font-family:var(--f-body);font-size:1.1em}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{border:1.5px solid var(--ink);background:var(--card);border-radius:10px;padding:.55em 1.1em;font-weight:700}
+.btn.main{background:var(--ink);color:var(--card)}
+.btn.alt{border-color:var(--line);font-weight:500}
+.okc{color:var(--ok)} .neg{color:var(--neg)}
+.result h2{font-family:var(--f-display);font-size:1.8em;margin:0 0 4px}
+.score{font-family:var(--f-num);font-size:3em;font-weight:600;line-height:1}
+.score small{font-size:.35em;color:var(--ink-2)}
+.stars{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;font-size:.95em}
+.misslist{list-style:none;padding:0;margin:8px 0;display:flex;flex-direction:column;gap:10px}
+.misslist li{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:6px;flex-wrap:wrap}
+.foot{font-size:.82em;color:var(--ink-2);text-align:center}
+@media (max-width:560px){
+  .lvl{padding:6px 5px 8px;border-radius:10px}
+  .lvl span{display:none}
+  .card{padding:14px}
+  .dots{gap:4px}
+  .dots button{width:26px;height:26px;font-size:.7em}
+  .pad{grid-template-columns:repeat(5,1fr);gap:6px}
+  .pad button{min-height:50px;font-size:1.2em}
+  .pad .fn{font-size:.8em}
+}
+@media (prefers-reduced-motion:reduce){.ansbox.wrong{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>分數四則運算 50 題</h1>
+    <label class="who" for="nm">名字 <input id="nm" maxlength="10" placeholder="寫上名字" autocomplete="off"></label>
+  </header>
+  <nav class="levels" id="levels" aria-label="選擇關卡"></nav>
+  <main class="card" id="main"></main>
+  <p class="foot">答案要寫成最簡分數，假分數或帶分數都可以。每題兩次機會：錯一次看提示，再錯就看解題步驟。紀錄存在這台裝置上。</p>
+</div>
+
+<script>
+"use strict";
+const SET={"key": "four", "levels": ["先乘除後加減", "括號先算", "帶分數四則", "負分數四則", "綜合運算"], "qs": [{"lv": 1, "q": "1/2 + 1/2 × 3/5", "a": [4, 5], "steps": ["1/2 × 3/5 = 3/10", "通分（分母 10）：1/2 + 3/10 = 5/10 + 3/10 = 8/10，約分 → 4/5"]}, {"lv": 1, "q": "5/8 × 2/5 − 1/8", "a": [1, 8], "steps": ["5/8 × 2/5 = 10/40，約分 → 1/4", "通分（分母 8）：1/4 − 1/8 = 2/8 − 1/8 = 1/8"]}, {"lv": 1, "q": "4/7 + 3/7 ÷ 3/4", "a": [8, 7], "steps": ["除以 3/4 等於乘以倒數 4/3：3/7 ÷ 3/4 = 3/7 × 4/3 = 12/21，約分 → 4/7", "4/7 + 4/7 = 8/7", "化成帶分數也可以：8/7 = 1又1/7"]}, {"lv": 1, "q": "3/8 ÷ 1/6 − 5/7", "a": [43, 28], "steps": ["除以 1/6 等於乘以倒數 6：3/8 ÷ 1/6 = 3/8 × 6 = 18/8，約分 → 9/4", "通分（分母 28）：9/4 − 5/7 = 63/28 − 20/28 = 43/28", "化成帶分數也可以：43/28 = 1又15/28"]}, {"lv": 1, "q": "5/6 + 3/8 × 4/9", "a": [1, 1], "steps": ["3/8 × 4/9 = 12/72，約分 → 1/6", "5/6 + 1/6 = 6/6，約分 → 1"]}, {"lv": 1, "q": "5/8 × 2/3 − 1/8", "a": [7, 24], "steps": ["5/8 × 2/3 = 10/24，約分 → 5/12", "通分（分母 24）：5/12 − 1/8 = 10/24 − 3/24 = 7/24"]}, {"lv": 1, "q": "4/7 + 3/5 ÷ 1/4", "a": [104, 35], "steps": ["除以 1/4 等於乘以倒數 4：3/5 ÷ 1/4 = 3/5 × 4 = 12/5", "通分（分母 35）：4/7 + 12/5 = 20/35 + 84/35 = 104/35", "化成帶分數也可以：104/35 = 2又34/35"]}, {"lv": 1, "q": "1/2 ÷ 4/5 − 3/5", "a": [1, 40], "steps": ["除以 4/5 等於乘以倒數 5/4：1/2 ÷ 4/5 = 1/2 × 5/4 = 5/8", "通分（分母 40）：5/8 − 3/5 = 25/40 − 24/40 = 1/40"]}, {"lv": 1, "q": "1/2 + 1/5 × 5/9", "a": [11, 18], "steps": ["1/5 × 5/9 = 5/45，約分 → 1/9", "通分（分母 18）：1/2 + 1/9 = 9/18 + 2/18 = 11/18"]}, {"lv": 1, "q": "1/2 × 3/4 − 1/4", "a": [1, 8], "steps": ["1/2 × 3/4 = 3/8", "通分（分母 8）：3/8 − 1/4 = 3/8 − 2/8 = 1/8"]}, {"lv": 2, "q": "(2/3 − 1/6) ÷ 1/6", "a": [3, 1], "steps": ["通分（分母 6）：2/3 − 1/6 = 4/6 − 1/6 = 3/6，約分 → 1/2", "除以 1/6 等於乘以倒數 6：1/2 ÷ 1/6 = 1/2 × 6 = 6/2，約分 → 3"]}, {"lv": 2, "q": "5/6 × (2/3 − 1/2)", "a": [5, 36], "steps": ["通分（分母 6）：2/3 − 1/2 = 4/6 − 3/6 = 1/6", "5/6 × 1/6 = 5/36"]}, {"lv": 2, "q": "(4/5 + 2/5) × 5/8", "a": [3, 4], "steps": ["4/5 + 2/5 = 6/5", "6/5 × 5/8 = 30/40，約分 → 3/4"]}, {"lv": 2, "q": "(4/5 − 1/2) ÷ 1/2", "a": [3, 5], "steps": ["通分（分母 10）：4/5 − 1/2 = 8/10 − 5/10 = 3/10", "除以 1/2 等於乘以倒數 2：3/10 ÷ 1/2 = 3/10 × 2 = 6/10，約分 → 3/5"]}, {"lv": 2, "q": "6/7 × (1/6 + 1/2)", "a": [4, 7], "steps": ["通分（分母 6）：1/6 + 1/2 = 1/6 + 3/6 = 4/6，約分 → 2/3", "6/7 × 2/3 = 12/21，約分 → 4/7"]}, {"lv": 2, "q": "(1/2 + 5/8) × 3/4", "a": [27, 32], "steps": ["通分（分母 8）：1/2 + 5/8 = 4/8 + 5/8 = 9/8", "9/8 × 3/4 = 27/32"]}, {"lv": 2, "q": "(5/7 − 1/5) ÷ 5/7", "a": [18, 25], "steps": ["通分（分母 35）：5/7 − 1/5 = 25/35 − 7/35 = 18/35", "除以 5/7 等於乘以倒數 7/5：18/35 ÷ 5/7 = 18/35 × 7/5 = 126/175，約分 → 18/25"]}, {"lv": 2, "q": "1/2 × (3/4 + 1/2)", "a": [5, 8], "steps": ["通分（分母 4）：3/4 + 1/2 = 3/4 + 2/4 = 5/4", "1/2 × 5/4 = 5/8"]}, {"lv": 2, "q": "(1/2 + 1/2) × 3/8", "a": [3, 8], "steps": ["1/2 + 1/2 = 2/2，約分 → 1", "1 × 3/8 = 3/8"]}, {"lv": 2, "q": "(5/6 − 1/6) ÷ 2/5", "a": [5, 3], "steps": ["5/6 − 1/6 = 4/6，約分 → 2/3", "除以 2/5 等於乘以倒數 5/2：2/3 ÷ 2/5 = 2/3 × 5/2 = 10/6，約分 → 5/3", "化成帶分數也可以：5/3 = 1又2/3"]}, {"lv": 3, "q": "2又1/3 + 1/3 × 6", "a": [13, 3], "steps": ["帶分數化成假分數：2又1/3 = 7/3", "1/3 × 6 = 6/3，約分 → 2", "7/3 + 2 = 7/3 + 6/3 = 13/3", "化成帶分數也可以：13/3 = 4又1/3"]}, {"lv": 3, "q": "1又2/5 − 2/3 ÷ 1/2", "a": [1, 15], "steps": ["帶分數化成假分數：1又2/5 = 7/5", "除以 1/2 等於乘以倒數 2：2/3 ÷ 1/2 = 2/3 × 2 = 4/3", "通分（分母 15）：7/5 − 4/3 = 21/15 − 20/15 = 1/15"]}, {"lv": 3, "q": "1又1/4 + 1/6 × 6", "a": [9, 4], "steps": ["帶分數化成假分數：1又1/4 = 5/4", "1/6 × 6 = 6/6，約分 → 1", "5/4 + 1 = 5/4 + 4/4 = 9/4", "化成帶分數也可以：9/4 = 2又1/4"]}, {"lv": 3, "q": "3又4/5 − 1/4 ÷ 1/5", "a": [51, 20], "steps": ["帶分數化成假分數：3又4/5 = 19/5", "除以 1/5 等於乘以倒數 5：1/4 ÷ 1/5 = 1/4 × 5 = 5/4", "通分（分母 20）：19/5 − 5/4 = 76/20 − 25/20 = 51/20", "化成帶分數也可以：51/20 = 2又11/20"]}, {"lv": 3, "q": "2又1/2 + 1/6 × 3", "a": [3, 1], "steps": ["帶分數化成假分數：2又1/2 = 5/2", "1/6 × 3 = 3/6，約分 → 1/2", "5/2 + 1/2 = 6/2，約分 → 3"]}, {"lv": 3, "q": "3又3/5 − 3/8 ÷ 1/4", "a": [21, 10], "steps": ["帶分數化成假分數：3又3/5 = 18/5", "除以 1/4 等於乘以倒數 4：3/8 ÷ 1/4 = 3/8 × 4 = 12/8，約分 → 3/2", "通分（分母 10）：18/5 − 3/2 = 36/10 − 15/10 = 21/10", "化成帶分數也可以：21/10 = 2又1/10"]}, {"lv": 3, "q": "2又1/5 + 4/5 × 3", "a": [23, 5], "steps": ["帶分數化成假分數：2又1/5 = 11/5", "4/5 × 3 = 12/5", "11/5 + 12/5 = 23/5", "化成帶分數也可以：23/5 = 4又3/5"]}, {"lv": 3, "q": "3又3/4 − 1/5 ÷ 8/9", "a": [141, 40], "steps": ["帶分數化成假分數：3又3/4 = 15/4", "除以 8/9 等於乘以倒數 9/8：1/5 ÷ 8/9 = 1/5 × 9/8 = 9/40", "通分（分母 40）：15/4 − 9/40 = 150/40 − 9/40 = 141/40", "化成帶分數也可以：141/40 = 3又21/40"]}, {"lv": 3, "q": "2又1/2 + 1/8 × 3", "a": [23, 8], "steps": ["帶分數化成假分數：2又1/2 = 5/2", "1/8 × 3 = 3/8", "通分（分母 8）：5/2 + 3/8 = 20/8 + 3/8 = 23/8", "化成帶分數也可以：23/8 = 2又7/8"]}, {"lv": 3, "q": "3又1/4 − 3/8 ÷ 1/2", "a": [5, 2], "steps": ["帶分數化成假分數：3又1/4 = 13/4", "除以 1/2 等於乘以倒數 2：3/8 ÷ 1/2 = 3/8 × 2 = 6/8，約分 → 3/4", "13/4 − 3/4 = 10/4，約分 → 5/2", "化成帶分數也可以：5/2 = 2又1/2"]}, {"lv": 4, "q": "(−1/2) + 3/8 × (−1/2)", "a": [-11, 16], "steps": ["3/8 × (−1/2)（異號得負） = −3/16", "通分（分母 16）：(−1/2) + (−3/16) = (−8/16) + (−3/16) = −11/16"]}, {"lv": 4, "q": "1/2 − (−5/8) ÷ 1/6", "a": [17, 4], "steps": ["除以 1/6 等於乘以倒數 6：(−5/8) ÷ 1/6 = (−5/8) × 6（異號得負） = −30/8，約分 → −15/4", "通分（分母 4）：1/2 − (−15/4) = 2/4 − (−15/4) = 17/4", "化成帶分數也可以：17/4 = 4又1/4"]}, {"lv": 4, "q": "[(−5/8) + 2/3] × (−8/9)", "a": [-1, 27], "steps": ["通分（分母 24）：(−5/8) + 2/3 = (−15/24) + 16/24 = 1/24", "1/24 × (−8/9)（異號得負） = −8/216，約分 → −1/27"]}, {"lv": 4, "q": "(−1/2) + 1/6 × (−1/6)", "a": [-19, 36], "steps": ["1/6 × (−1/6)（異號得負） = −1/36", "通分（分母 36）：(−1/2) + (−1/36) = (−18/36) + (−1/36) = −19/36"]}, {"lv": 4, "q": "1/2 − (−2/5) ÷ 1/4", "a": [21, 10], "steps": ["除以 1/4 等於乘以倒數 4：(−2/5) ÷ 1/4 = (−2/5) × 4（異號得負） = −8/5", "通分（分母 10）：1/2 − (−8/5) = 5/10 − (−16/10) = 21/10", "化成帶分數也可以：21/10 = 2又1/10"]}, {"lv": 4, "q": "[(−1/2) + 1/4] × (−1/9)", "a": [1, 36], "steps": ["通分（分母 4）：(−1/2) + 1/4 = (−2/4) + 1/4 = −1/4", "(−1/4) × (−1/9)（同號得正） = 1/36"]}, {"lv": 4, "q": "(−5/8) + 3/5 × (−1/6)", "a": [-29, 40], "steps": ["3/5 × (−1/6)（異號得負） = −3/30，約分 → −1/10", "通分（分母 40）：(−5/8) + (−1/10) = (−25/40) + (−4/40) = −29/40"]}, {"lv": 4, "q": "1/3 − (−3/8) ÷ 5/8", "a": [14, 15], "steps": ["除以 5/8 等於乘以倒數 8/5：(−3/8) ÷ 5/8 = (−3/8) × 8/5（異號得負） = −24/40，約分 → −3/5", "通分（分母 15）：1/3 − (−3/5) = 5/15 − (−9/15) = 14/15"]}, {"lv": 4, "q": "[(−4/7) + 4/5] × (−5/8)", "a": [-1, 7], "steps": ["通分（分母 35）：(−4/7) + 4/5 = (−20/35) + 28/35 = 8/35", "8/35 × (−5/8)（異號得負） = −40/280，約分 → −1/7"]}, {"lv": 4, "q": "(−1/2) + 1/3 × (−3/4)", "a": [-3, 4], "steps": ["1/3 × (−3/4)（異號得負） = −3/12，約分 → −1/4", "通分（分母 4）：(−1/2) + (−1/4) = (−2/4) + (−1/4) = −3/4"]}, {"lv": 5, "q": "[1/6 + (−1/7)] ÷ [1/8 × (−1/2)]", "a": [-8, 21], "steps": ["通分（分母 42）：1/6 + (−1/7) = 7/42 + (−6/42) = 1/42", "1/8 × (−1/2)（異號得負） = −1/16", "除以 (−1/16) 等於乘以倒數 (−16)：1/42 ÷ (−1/16) = 1/42 × (−16)（異號得負） = −16/42，約分 → −8/21"]}, {"lv": 5, "q": "(−2/3) + (1/2 − 7/8) ÷ 1/2", "a": [-17, 12], "steps": ["通分（分母 8）：1/2 − 7/8 = 4/8 − 7/8 = −3/8", "除以 1/2 等於乘以倒數 2：(−3/8) ÷ 1/2 = (−3/8) × 2（異號得負） = −6/8，約分 → −3/4", "通分（分母 12）：(−2/3) + (−3/4) = (−8/12) + (−9/12) = −17/12", "化成帶分數也可以：−17/12 = −1又5/12"]}, {"lv": 5, "q": "[(−2/3) − 5/6] × 7/9 − 1/3", "a": [-3, 2], "steps": ["通分（分母 6）：(−2/3) − 5/6 = (−4/6) − 5/6 = −9/6，約分 → −3/2", "(−3/2) × 7/9（異號得負） = −21/18，約分 → −7/6", "通分（分母 6）：(−7/6) − 1/3 = (−7/6) − 2/6 = −9/6，約分 → −3/2", "化成帶分數也可以：−3/2 = −1又1/2"]}, {"lv": 5, "q": "[1/4 + (−1/2)] ÷ [1/9 × (−1/2)]", "a": [9, 2], "steps": ["通分（分母 4）：1/4 + (−1/2) = 1/4 + (−2/4) = −1/4", "1/9 × (−1/2)（異號得負） = −1/18", "除以 (−1/18) 等於乘以倒數 (−18)：(−1/4) ÷ (−1/18) = (−1/4) × (−18)（同號得正） = 18/4，約分 → 9/2", "化成帶分數也可以：9/2 = 4又1/2"]}, {"lv": 5, "q": "(−4/5) + (5/6 − 1/6) ÷ 1/6", "a": [16, 5], "steps": ["5/6 − 1/6 = 4/6，約分 → 2/3", "除以 1/6 等於乘以倒數 6：2/3 ÷ 1/6 = 2/3 × 6 = 12/3，約分 → 4", "(−4/5) + 4 = (−4/5) + 20/5 = 16/5", "化成帶分數也可以：16/5 = 3又1/5"]}, {"lv": 5, "q": "[(−1/4) − 3/4] × 5/6 − 3/4", "a": [-19, 12], "steps": ["(−1/4) − 3/4 = −4/4，約分 → −1", "(−1) × 5/6（異號得負） = −5/6", "通分（分母 12）：(−5/6) − 3/4 = (−10/12) − 9/12 = −19/12", "化成帶分數也可以：−19/12 = −1又7/12"]}, {"lv": 5, "q": "[3/8 + (−1/8)] ÷ [6/7 × (−1/6)]", "a": [-7, 4], "steps": ["3/8 + (−1/8) = 2/8，約分 → 1/4", "6/7 × (−1/6)（異號得負） = −6/42，約分 → −1/7", "除以 (−1/7) 等於乘以倒數 (−7)：1/4 ÷ (−1/7) = 1/4 × (−7)（異號得負） = −7/4", "化成帶分數也可以：−7/4 = −1又3/4"]}, {"lv": 5, "q": "(−4/5) + (2/3 − 5/6) ÷ 1/4", "a": [-22, 15], "steps": ["通分（分母 6）：2/3 − 5/6 = 4/6 − 5/6 = −1/6", "除以 1/4 等於乘以倒數 4：(−1/6) ÷ 1/4 = (−1/6) × 4（異號得負） = −4/6，約分 → −2/3", "通分（分母 15）：(−4/5) + (−2/3) = (−12/15) + (−10/15) = −22/15", "化成帶分數也可以：−22/15 = −1又7/15"]}, {"lv": 5, "q": "[(−3/4) − 1/4] × 1/3 − 2/3", "a": [-1, 1], "steps": ["(−3/4) − 1/4 = −4/4，約分 → −1", "(−1) × 1/3（異號得負） = −1/3", "(−1/3) − 2/3 = −3/3，約分 → −1"]}, {"lv": 5, "q": "[1/2 + (−3/4)] ÷ [1/4 × (−1/6)]", "a": [6, 1], "steps": ["通分（分母 4）：1/2 + (−3/4) = 2/4 + (−3/4) = −1/4", "1/4 × (−1/6)（異號得負） = −1/24", "除以 (−1/24) 等於乘以倒數 (−24)：(−1/4) ÷ (−1/24) = (−1/4) × (−24)（同號得正） = 24/4，約分 → 6"]}]};
+const HINTS=["先乘除、後加減。先把乘除算完，再通分做加減。", "括號裡面先算，再算括號外面的乘除。", "帶分數先化成假分數；一樣先乘除、後加減。", "先乘除後加減，每一步都要注意正負號：同號得正，異號得負。", "由裡到外：先算 ( ) 再算 [ ]，裡面一樣先乘除後加減。"];
+const KEY='frac-'+SET.key+'.v1';
+const M='−';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a};
+
+/* ---- 把「−2又1/3」「3/4」這類文字排成上下式分數 ---- */
+function fracHTML(n,d){return `<span class="fr" aria-label="${d}分之${n}"><span>${n}</span><span>${d}</span></span>`;}
+function mathHTML(t){
+  t=esc(t);
+  t=t.replace(/(\d+)又(\d+)\/(\d+)/g,(_,w,n,d)=>`<span class="mixed">${w}${fracHTML(n,d)}</span>`);
+  t=t.replace(/(\d+)\/(\d+)/g,(_,n,d)=>fracHTML(n,d));
+  t=t.replace(/([()\[\]])/g,'<span class="paren">$1</span>');
+  return `<span class="mx">${t}</span>`;
+}
+function valHTML(n,d){ // 最簡分數答案，含帶分數
+  const s=n<0?M:'';n=Math.abs(n);
+  if(d===1) return mathHTML(s+n);
+  let h=mathHTML(s+n+'/'+d);
+  if(n>d){const w=Math.floor(n/d),r=n%d;h+=` <span class="mx" style="font-weight:400">=</span> `+mathHTML(s+w+'又'+r+'/'+d);}
+  return h;
+}
+
+let S=load();
+function load(){let s=null;try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+  if(!s||!Array.isArray(s.res)||s.res.length!==SET.qs.length) s={res:Array(SET.qs.length).fill(null),lv:1,name:''};return s;}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+let cur=null,tries=0,done=false;
+let A={neg:false,w:'',n:'',d:'',slot:'n'}; // 作答狀態
+
+const lvQs=lv=>SET.qs.map((q,i)=>({...q,i})).filter(q=>q.lv===lv);
+function lvStat(lv){const r=lvQs(lv).map(q=>S.res[q.i]);return {done:r.filter(Boolean).length,first:r.filter(x=>x==='first').length,second:r.filter(x=>x==='second').length,miss:r.filter(x=>x==='miss').length,total:r.length};}
+function renderLevels(){
+  $('#levels').innerHTML=SET.levels.map((name,k)=>{const st=lvStat(k+1);
+    return `<button class="lvl ${S.lv===k+1?'on':''}" data-lv="${k+1}" aria-pressed="${S.lv===k+1}"><b>第 ${k+1} 關</b><span>${name}</span><span>${st.done}/${st.total}</span><div class="bar"><i style="width:${st.done/st.total*100}%"></i></div></button>`;}).join('');
+  $('#levels').querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{S.lv=+b.dataset.lv;save();openLevel();});
+}
+function openLevel(){renderLevels();const next=lvQs(S.lv).find(q=>!S.res[q.i]);next?show(next.i):result();}
+function dotsHTML(){return `<div class="dots">${lvQs(S.lv).map(q=>`<button data-q="${q.i}" class="${S.res[q.i]||''} ${cur&&cur.i===q.i?'cur':''}" aria-label="第 ${q.i+1} 題">${q.i+1}</button>`).join('')}</div>`;}
+
+function show(i){
+  cur={...SET.qs[i],i};tries=0;done=!!S.res[i];A={neg:false,w:'',n:'',d:'',slot:'n'};
+  const lq=lvQs(S.lv);const pos=lq.findIndex(q=>q.i===i)+1;
+  $('#main').innerHTML=`${dotsHTML()}
+    <div class="qhead"><span>第 ${S.lv} 關・${SET.levels[S.lv-1]}</span><span>第 ${i+1} 題（${pos}/${lq.length}）</span></div>
+    <div class="q">${mathHTML(cur.q)}</div>
+    <div class="ansrow"><span>=</span><div class="ansbox" id="ansbox"></div></div>
+    <div class="anshint" id="anshint">點格子選擇要填的地方：整數（帶分數才需要）、分子、分母。整數答案只填左邊那格。</div>
+    <div class="msg" id="msg" aria-live="polite"></div>
+    <div id="help"></div><div id="ctl"></div>`;
+  $('#main').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>show(+b.dataset.q));
+  if(done) review(); else padMode();
+  drawAns();
+}
+function slotHTML(k,ph){const v=A[k];return `<button class="slot ${A.slot===k&&!done?'on':''} ${v?'':'ph'}" data-slot="${k}" aria-label="${ph}">${v||ph}</button>`;}
+function drawAns(){
+  const b=$('#ansbox');if(!b)return;b.classList.remove('wrong');
+  b.innerHTML=`<span class="sgn">${A.neg?M:''}</span>${slotHTML('w','整數')}<span class="fracslot">${slotHTML('n','分子')}<span class="line"></span>${slotHTML('d','分母')}</span>`;
+  b.querySelectorAll('[data-slot]').forEach(s=>s.onclick=()=>{if(done)return;A.slot=s.dataset.slot;drawAns();});
+}
+function padMode(){
+  $('#ctl').innerHTML=`<div class="pad">
+    ${[7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button class="fn" data-k="w">整數</button><button data-k="back" aria-label="退一格">⌫</button>
+    ${[4,5,6].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button class="fn" data-k="n">分子</button><button class="fn neg-k" data-k="neg">− 負號</button>
+    ${[1,2,3].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button class="fn" data-k="d">分母</button><button class="fn" data-k="clr">清除</button>
+    <button data-k="0" style="grid-column:span 3">0</button><button class="go" data-k="go" style="grid-column:span 2">送出</button></div>`;
+  $('#ctl').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>key(b.dataset.k));
+}
+function key(k){
+  if(done) return;
+  if(/^\d$/.test(k)){const v=A[A.slot];if(v.length<4) A[A.slot]=(v==='0'?'':v)+k;}
+  else if(k==='w'||k==='n'||k==='d'){A.slot=k;}
+  else if(k==='neg'){A.neg=!A.neg;}
+  else if(k==='back'){if(A[A.slot]) A[A.slot]=A[A.slot].slice(0,-1); else {const order=['w','n','d'];const j=order.indexOf(A.slot);if(j>0){A.slot=order[j-1];A[A.slot]=A[A.slot].slice(0,-1);}}}
+  else if(k==='clr'){A={neg:false,w:'',n:'',d:'',slot:'n'};}
+  else if(k==='go'){check();return;}
+  drawAns();
+}
+document.addEventListener('keydown',e=>{
+  if(!cur||e.target.id==='nm') return;
+  if(done){if(e.key==='Enter'){const b=$('#nextBtn');if(b){e.preventDefault();b.click();}}return;}
+  if(/^\d$/.test(e.key)) key(e.key);
+  else if(e.key==='-'||e.key==='−') key('neg');
+  else if(e.key==='/'||e.key==='ArrowDown'){e.preventDefault();key('d');}
+  else if(e.key==='ArrowUp'){e.preventDefault();key('n');}
+  else if(e.key===' '||e.key==='ArrowRight'){e.preventDefault();key(A.slot==='w'?'n':A.slot==='n'?'d':'d');}
+  else if(e.key==='ArrowLeft'){e.preventDefault();key('w');}
+  else if(e.key==='Backspace'){e.preventDefault();key('back');}
+  else if(e.key==='Enter'){e.preventDefault();key('go');}
+});
+// 回傳 {err} 或 {n,d,simplest,why}
+function readAns(){
+  const w=A.w===''?null:+A.w,n=A.n===''?null:+A.n,d=A.d===''?null:+A.d;
+  if(w===null&&n===null&&d===null) return {err:'先填答案。'};
+  if(n===null&&d===null){const v=A.neg?-w:w;return {n:v,d:1,simplest:true};}
+  if(n===null) return {err:'分子還沒填。'};
+  if(d===null) return {err:'分母還沒填。'};
+  if(d===0) return {err:'分母不能是 0。'};
+  let N=(w||0)*d+n;if(A.neg)N=-N;
+  const g=gcd(N,d);const rn=N/g,rd=d/g;
+  let simplest=true,why='';
+  if(gcd(n,d)!==1){simplest=false;why='還可以約分';}
+  else if(d===1){simplest=false;why='分母是 1，要寫成整數';}
+  else if(w!==null&&n>=d){simplest=false;why='帶分數的分數部分要比 1 小';}
+  else if(n===0){simplest=false;why='分子是 0，答案要寫成整數';}
+  return {n:rn,d:rd,simplest,why};
+}
+function check(){
+  const r=readAns();
+  if(r.err){$('#msg').innerHTML=`<span class="neg">${r.err}</span>`;return;}
+  tries++;
+  const right=r.n===cur.a[0]&&r.d===cur.a[1];
+  if(right&&r.simplest){finish(tries===1?'first':'second');return;}
+  $('#ansbox').classList.add('wrong');
+  const note=right?`數值對了，但${r.why}。`:'';
+  if(tries===1){
+    $('#msg').innerHTML=`<span class="neg">${note||'不對喔，'}看看提示再試一次。</span>`;
+    $('#help').innerHTML=`<div class="hint"><b>提示</b>${esc(HINTS[cur.lv-1])}</div>`;
+    return;
+  }
+  finish('miss',note);
+}
+function stepsHTML(q){return `<div class="steps"><b>解題步驟</b><ol>${q.steps.map(s=>`<li>${mathHTML(s)}</li>`).join('')}</ol><div class="fin">答案：${valHTML(q.a[0],q.a[1])}</div></div>`;}
+function finish(res,note){
+  done=true;S.res[cur.i]=res;save();renderLevels();drawAns();
+  $('#msg').innerHTML=res==='first'?'<span class="okc">答對了！★</span>':res==='second'?'<span class="okc">第二次答對！☆</span>':`<span class="neg">${note||''}兩次都沒答對，一起看看怎麼算：</span>`;
+  $('#help').innerHTML=res==='miss'?stepsHTML(cur):'';
+  nextControls();
+  const dot=$('#main').querySelector(`[data-q="${cur.i}"]`);if(dot) dot.className=res+' cur';
+}
+function nextControls(){
+  const qs=lvQs(S.lv);const after=qs.find(q=>q.i>cur.i&&!S.res[q.i])||qs.find(q=>!S.res[q.i]);
+  $('#ctl').innerHTML=`<div class="btns"><button class="btn main" id="nextBtn">${after?'下一題 →':'看這一關的成績'}</button></div>`;
+  $('#nextBtn').onclick=()=>after?show(after.i):result();
+}
+function review(){
+  const r=S.res[cur.i];const [n,d]=cur.a;
+  A={neg:n<0,w:'',n:d===1?'':String(Math.abs(n)),d:d===1?'':String(d),slot:''};if(d===1)A.w=String(Math.abs(n));
+  $('#anshint').hidden=true;
+  $('#msg').innerHTML=r==='first'?'<span class="okc">這題已經答對 ★</span>':r==='second'?'<span class="okc">這題第二次答對 ☆</span>':'<span class="neg">這題沒答對，可以在成績頁重做錯題。</span>';
+  $('#help').innerHTML=r==='miss'?stepsHTML(cur):'';
+  nextControls();
+}
+function result(){
+  cur=null;
+  const st=lvStat(S.lv),qs=lvQs(S.lv),again=qs.filter(q=>S.res[q.i]==='miss'||S.res[q.i]==='second');
+  const ok=st.first+st.second,need=Math.ceil(st.total*0.9),pass=ok>=need;
+  $('#main').innerHTML=`<div class="result">${dotsHTML()}
+    <h2>第 ${S.lv} 關完成${S.name?`・${esc(S.name)}`:''}</h2>
+    <div class="score">${ok}<small> / ${st.total} 題答對</small></div>
+    <div class="stars"><span class="okc">★ 一次答對 ${st.first}</span><span>☆ 第二次答對 ${st.second}</span><span class="neg">✗ 沒答對 ${st.miss}</span></div>
+    <p>${pass?(S.lv<5?'很棒！可以進下一關了。':'五關全部完成，太厲害了！'):`答對 ${need} 題以上再進下一關。先把錯的題目重做一次吧。`}</p>
+    ${again.length?`<details ${pass?'':'open'}><summary>要再練的題目（${again.length} 題）</summary><ul class="misslist">${again.map(q=>`<li><span>${q.i+1}. ${mathHTML(q.q)}</span><span>${valHTML(q.a[0],q.a[1])}</span></li>`).join('')}</ul></details>`:''}
+    <div class="btns">${again.length?'<button class="btn main" id="redo">重做錯的題目</button>':''}
+      ${S.lv<5?`<button class="btn ${again.length?'':'main'}" id="nextLv">前往第 ${S.lv+1} 關</button>`:''}
+      <button class="btn alt" id="again">整關重新開始</button></div></div>`;
+  $('#main').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>show(+b.dataset.q));
+  if($('#redo')) $('#redo').onclick=()=>{again.forEach(q=>S.res[q.i]=null);save();openLevel();};
+  if($('#nextLv')) $('#nextLv').onclick=()=>{S.lv++;save();openLevel();};
+  $('#again').onclick=()=>{
+    $('#again').outerHTML='<span>確定清除這一關的紀錄？</span><button class="btn main" id="againY">清除重來</button><button class="btn alt" id="againN">取消</button>';
+    $('#againY').onclick=()=>{qs.forEach(q=>S.res[q.i]=null);save();openLevel();};
+    $('#againN').onclick=result;
+  };
+}
+$('#nm').value=S.name||'';
+$('#nm').oninput=e=>{S.name=e.target.value.trim();save();};
+openLevel();
+</script>
+
+</body>
+</html>
