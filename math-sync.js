@@ -1,6 +1,6 @@
 /* 數學練習：雲端進度同步（Google 試算表）
  * 網址是《我的100分挑戰》的 Apps Script（同一組名單和密碼）。留空 = 只存在這台裝置。 */
-var MATH_SYNC_URL = "var MATH_SYNC_URL = "";";
+var MATH_SYNC_URL = 0;
 
 (function () {
   "use strict";
