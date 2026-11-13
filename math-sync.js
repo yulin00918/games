@@ -1,6 +1,6 @@
 /* 數學練習：雲端進度同步（Google 試算表）
  * 網址是《我的100分挑戰》的 Apps Script（同一組名單和密碼）。留空 = 只存在這台裝置。 */
-var MATH_SYNC_URL = 0;
+var MATH_SYNC_URL = "https://script.google.com/macros/s/AKfycbxWbYfyAe9ua2HJGNaevyHm5EUhOj-nSVOixV9DoDWvGkFGpsmmxRb9jAUcQn7gTZkq/exec";
 
 (function () {
   "use strict";
@@ -18,9 +18,24 @@ var MATH_SYNC_URL = 0;
   function call(req) {
     // text/plain 是「簡單請求」，不會觸發 CORS 預檢，Apps Script 可以直接收
     return fetch(MATH_SYNC_URL, { method: "POST", body: JSON.stringify(req), redirect: "follow" })
-      .then(function (r) { return r.json(); });
+      .catch(function () { var e = new Error("net"); e.kind = "net"; throw e; })
+      .then(function (r) { return r.text(); })
+      .then(function (t) {
+        try { return JSON.parse(t); } catch (x) {
+          var e = new Error("server"); e.kind = "server";
+          e.detail = /doPost/.test(t) ? "nopost" : (/accounts\.google|ServiceLogin|登入/.test(t) ? "login" : "other");
+          throw e;
+        }
+      });
   }
-  function cred() { return { cls: user.cls, seat: user.seat, pin: user.pin }; }
+  function why(e) {
+    if (e && e.kind === "server") {
+      if (e.detail === "nopost") return "後台還沒有「數學練習」程式（請老師：部署 → 管理部署作業 → 編輯 → 新版本 → 部署）";
+      if (e.detail === "login") return "後台要求登入 Google（請老師把部署的存取權改成「所有人」）";
+      return "後台回應不正確（請老師重新部署新版本）";
+    }
+    return "連不上老師的後台（網路正常的話，請老師確認 Apps Script 已部署「新版本」、存取權是「所有人」）";
+  }
 
   /* ---------- 介面 ---------- */
   var CSS = ".ms-badge{position:fixed;left:max(10px,env(safe-area-inset-left,0px));bottom:max(10px,env(safe-area-inset-bottom,0px));z-index:40;display:flex;align-items:center;gap:8px;" +
@@ -31,7 +46,7 @@ var MATH_SYNC_URL = 0;
     ".ms-box{background:var(--card,#fff);color:var(--ink,#1b2729);border-radius:16px;padding:22px;width:min(380px,100%);box-shadow:0 20px 50px -10px rgba(0,0,0,.5);font-family:var(--f-body,system-ui)}" +
     ".ms-box h2{font-family:var(--f-display,serif);font-size:1.6em;margin:0 0 4px}.ms-box p{margin:0 0 12px;color:var(--ink-2,#56666a);font-size:.92em}" +
     ".ms-box label{display:block;font-size:.85em;font-weight:700;color:var(--ink-2,#56666a);margin-top:10px}" +
-    ".ms-box input{display:block;width:100%;font:600 1.3em var(--f-num,monospace);padding:.35em .5em;margin-top:4px;border:2px solid var(--line,#d3ddda);border-radius:10px;background:var(--card-2,#f5f8f7);color:inherit;box-sizing:border-box}" +
+    ".ms-box input{display:block;width:100%;font:600 1.3em var(--f-body,system-ui);padding:.35em .5em;margin-top:4px;border:2px solid var(--line,#d3ddda);border-radius:10px;background:var(--card-2,#f5f8f7);color:inherit;box-sizing:border-box}" +
     ".ms-box .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ms-err{color:var(--neg,#cc3a26);min-height:1.4em;font-size:.9em;margin-top:8px;font-weight:700}" +
     ".ms-go{margin-top:10px;width:100%;font:700 1.05em var(--f-body,system-ui);background:var(--ink,#1b2729);color:var(--card,#fff);border:0;border-radius:10px;padding:.7em;cursor:pointer}" +
     ".ms-skip{margin-top:8px;width:100%;font:500 .9em var(--f-body,system-ui);background:none;color:var(--ink-2,#56666a);border:0;cursor:pointer;text-decoration:underline}";
@@ -48,8 +63,8 @@ var MATH_SYNC_URL = 0;
     return new Promise(function (resolve) {
       var last = ls.get(LOGIN) || {};
       var m = document.createElement("div"); m.className = "ms-mask";
-      m.innerHTML = '<form class="ms-box" autocomplete="off"><h2>登入</h2><p>用老師給的密碼登入，換裝置也能接著做。</p>' +
-        '<div class="row"><label>班級<input name="cls" inputmode="numeric" maxlength="6" placeholder="例如 701" value="' + esc(last.cls || "") + '"></label>' +
+      m.innerHTML = '<form class="ms-box" autocomplete="off"><h2>登入</h2><p>和《100分挑戰》用同一組班級代碼、座號、密碼。</p>' +
+        '<div class="row"><label>班級代碼<input name="cls" maxlength="12" placeholder="例如 七數C" autocapitalize="characters" value="' + esc(last.cls || "") + '"></label>' +
         '<label>座號<input name="seat" inputmode="numeric" maxlength="3" value=""></label></div>' +
         '<label>密碼（4 位數）<input name="pin" inputmode="numeric" maxlength="4" type="password"></label>' +
         '<div class="ms-err">' + esc(msg || "") + '</div><button class="ms-go" type="submit">登入</button>' +
@@ -61,12 +76,12 @@ var MATH_SYNC_URL = 0;
       f.onsubmit = function (e) {
         e.preventDefault();
         var c = { cls: f.cls.value.trim(), seat: f.seat.value.trim(), pin: f.pin.value.trim() };
-        if (!c.cls || !c.seat || !c.pin) { err.textContent = "班級、座號、密碼都要填。"; return; }
+        if (!c.cls || !c.seat || !c.pin) { err.textContent = "班級代碼、座號、密碼都要填。"; return; }
         err.textContent = "登入中…"; f.querySelector(".ms-go").disabled = true;
         call({ action: "login", cls: c.cls, seat: c.seat, pin: c.pin }).then(function (r) {
           if (!r.ok) { err.textContent = r.err || "登入失敗"; f.querySelector(".ms-go").disabled = false; return; }
           m.remove(); resolve({ c: c, r: r });
-        }).catch(function () { err.textContent = "連不上網路，請稍後再試。"; f.querySelector(".ms-go").disabled = false; });
+        }).catch(function (e) { err.textContent = why(e); f.querySelector(".ms-go").disabled = false; });
       };
     });
   }
@@ -102,7 +117,7 @@ var MATH_SYNC_URL = 0;
         if (r.ok) { delete pending[key]; setBadge(Object.keys(pending).length ? "存檔中…" : "已存到雲端 ✓"); }
         else if (r.auth) { setBadge("登入過期", true); }
         else setBadge("存檔失敗，下一題會再試", true);
-      }).catch(function () { setBadge("沒有網路，先存在這台裝置", true); });
+      }).catch(function (e) { setBadge(e && e.kind === "server" ? "後台設定有問題，先存在這台裝置" : "沒有網路，先存在這台裝置", true); });
     }, 700);
   }
   function logout() {
@@ -132,7 +147,8 @@ var MATH_SYNC_URL = 0;
     if (saved && saved.pin) {
       call({ action: "login", cls: saved.cls, seat: saved.seat, pin: saved.pin }).then(function (r) {
         if (r.ok) done(saved, r); else ask(r.err);
-      }).catch(function () {
+      }).catch(function (e) {
+        if (e && e.kind === "server") { ask(why(e)); return; }
         // 離線：先用本機進度，有網路時再存
         user = saved; setBadge("沒有網路，先存在這台裝置", true); onReady(user);
       });
