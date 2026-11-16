@@ -127,7 +127,9 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .slide .box .m{color:var(--muted);font-size:.82em}
 .slide .stl{display:flex;flex-direction:column;gap:.35em;overflow:hidden}
 .slide .stl div{display:flex;gap:.8em;align-items:baseline;background:#fff;border-radius:.5em;padding:.35em .8em;border-left:.35em solid var(--c)}
-.slide .stl .tm{font-weight:900;color:var(--c);min-width:5.6em;font-variant-numeric:tabular-nums}
+.slide .stl .tm{font-weight:900;color:var(--c);min-width:5.6em;font-variant-numeric:tabular-nums;flex:none}
+.slide .stl.two{display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;grid-template-rows:repeat(6,auto);gap:.4em .8em;font-size:.8em}
+.slide .stl.two .tag{font-size:.75em;margin:0 0 0 .3em}
 .slide .bigno{font-size:3em;font-weight:900;color:var(--terra-d);line-height:1.1}
 .slide .sbar2{height:1.4em;border-radius:999px;overflow:hidden;display:flex;margin:.4em 0}
 .slide .sbar2 div{height:100%}
@@ -157,6 +159,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
       <p>食・住・行・樂 自己查、自己排、自己算預算</p>
     </div>
     <div class="spacer"></div>
+    <button class="badge" id="btnBackupHelp" style="border:0;cursor:pointer;font:inherit;font-weight:700;color:#fff">🔑 備份碼怎麼用</button>
     <div class="badge" id="saveBadge">尚未儲存</div>
   </div>
 </header>
@@ -197,6 +200,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
         <li>行程從<b>第1天早上出發</b>，到<b>第2天傍晚回到出發地</b>。</li>
         <li>食住行樂每一項都要<b>自己上網查</b>，並貼上<b>資料來源網址</b>。</li>
         <li>費用要寫清楚是「<b>每人</b>」還是「<b>全組</b>」，網頁會自動幫你們加總。</li>
+        <li>資料只存在這台平板。<b>每節課結束前</b>，記錄員要到「⑧ 成果」最下面<b>複製備份碼</b>存起來（右上角「🔑 備份碼怎麼用」有步驟）。</li>
       </ul>
     </div>
   </section>
@@ -267,12 +271,32 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
         <button class="btn ghost" id="btnPrint">🖨️ 列印 / 存成 PDF</button>
       </div>
     </div>
-    <div class="card noprint">
-      <h3>備份與換平板</h3>
-      <p class="sub">資料只存在這台平板。換平板或怕不見，請先複製「備份碼」，到新平板貼上還原。</p>
-      <div class="row">
-        <button class="btn line" id="btnBackup">複製備份碼</button>
-        <button class="btn line" id="btnRestore">貼上備份碼還原</button>
+    <div class="card noprint" id="backupCard">
+      <h3>🔑 備份碼：換平板也不怕資料不見</h3>
+      <p class="sub">資料只存在這台平板。<b>每節課結束前</b>、<b>要換平板時</b>，都要先存一份備份碼。</p>
+      <div class="grid g2">
+        <div style="background:#E3EFF1;border-radius:14px;padding:14px 16px">
+          <b style="color:#2F6F7D;font-size:1.05rem">① 存備份（在原本的平板）</b>
+          <ol style="margin:8px 0 12px;padding-left:22px;line-height:1.7">
+            <li>按下面的「<b>複製備份碼</b>」</li>
+            <li>看到「已複製備份碼」後，貼到找得到的地方：<b>Classroom 私人留言</b>（最推薦）、備忘錄，或 LINE 給自己</li>
+          </ol>
+          <button class="btn" id="btnBackup" style="background:var(--go)">📋 複製備份碼</button>
+        </div>
+        <div style="background:#E6F0E3;border-radius:14px;padding:14px 16px">
+          <b style="color:#3E7039;font-size:1.05rem">② 還原（在新的平板）</b>
+          <ol style="margin:8px 0 12px;padding-left:22px;line-height:1.7">
+            <li>打開同一個規劃網頁，來到這裡</li>
+            <li>按下面的「<b>貼上備份碼還原</b>」</li>
+            <li>在框框裡長按 → 貼上 → 按「<b>確定</b>」</li>
+          </ol>
+          <button class="btn" id="btnRestore" style="background:var(--fun)">📥 貼上備份碼還原</button>
+        </div>
+      </div>
+      <div style="margin-top:12px;background:#FBE9E5;border:1.5px solid #E7B9AF;border-radius:14px;padding:10px 14px;font-size:.95rem;line-height:1.7">
+        <b style="color:var(--warn)">⚠️ 注意</b>：還原會<b>蓋掉</b>這台平板原本的資料；備份碼要<b>整串完整</b>複製，少一個字就不能用；修改後要<b>再複製一次</b>新的備份碼。按了沒反應？長按跳出來的文字 → 全選 → 複製。
+      </div>
+      <div class="row" style="margin-top:12px">
         <div class="spacer"></div>
         <button class="btn danger sm" id="btnReset">清空重來</button>
       </div>
@@ -675,11 +699,15 @@ function buildSlides(){
   [1,2].forEach(d=>{
     const ev=dayList(d);
     const date=s.date?new Date(new Date(s.date).getTime()+(d-1)*864e5).toLocaleDateString("zh-TW",{month:"numeric",day:"numeric",weekday:"short"}):"";
-    const max=9,shown=ev.slice(0,max);
-    add(`<h2>🗓️ 第 ${d} 天 <span class="tag">${date}</span></h2><div class="body"><div class="stl">${shown.map(e=>{const c=CATS[e.cat];
-      return`<div style="--c:${c.hex}"><span class="tm">${esc(e.start||"")}${e.end?"–"+esc(e.end):""}</span><span>${c.icon} ${e._l?e._l+"・":""}<b>${esc(e.name)}</b>${e.mode?` <span class="tag">${esc(e.mode)}</span>`:""}${e.meal?` <span class="tag">${esc(e.meal)}</span>`:""}</span></div>`}).join("")||"<div style='--c:#ccc'>（尚未安排）</div>"}
-      ${ev.length>max?`<div style="--c:#ccc">……還有 ${ev.length-max} 項</div>`:""}</div></div>`,
-      `帶大家走一遍第${d}天：幾點去哪裡、怎麼過去、為什麼這樣排順序。`);
+    // 6 項以內一欄；7–12 項分成左右兩欄；超過 12 項自動接到下一頁（續）
+    const PER=12, pages=[];
+    for(let i=0;i<Math.max(ev.length,1);i+=PER) pages.push(ev.slice(i,i+PER));
+    pages.forEach((chunk,pi)=>{
+      const rows=chunk.map(e=>{const c=CATS[e.cat];
+        return`<div style="--c:${c.hex}"><span class="tm">${esc(e.start||"")}${e.end?"–"+esc(e.end):""}</span><span>${c.icon} ${e._l?e._l+"・":""}<b>${esc(e.name)}</b>${e.mode?` <span class="tag">${esc(e.mode)}</span>`:""}${e.meal?` <span class="tag">${esc(e.meal)}</span>`:""}</span></div>`}).join("")||"<div style='--c:#ccc'>（尚未安排）</div>";
+      add(`<h2>🗓️ 第 ${d} 天${pages.length>1?`（${pi+1}/${pages.length}）`:""} <span class="tag">${date}</span></h2><div class="body"><div class="stl${chunk.length>6?" two":""}">${rows}</div></div>`,
+        pi===0?`帶大家走一遍第${d}天：幾點去哪裡、怎麼過去、為什麼這樣排順序。`:`接著說第${d}天後半段的安排。`);
+    });
   });
   const boxes=(arr,c,f)=>arr.slice(0,6).map(i=>`<div class="box" style="--c:${c.hex}"><b class="t">${esc(i.name)}</b>${f(i)}<div class="m">${money(itemCost(i))}</div></div>`).join("")||`<div class="box">（尚未安排）</div>`;
   add(`<h2>🚆 行・怎麼移動</h2><div class="cols">${boxes(by("go"),CATS.go,i=>`<span class="tag">${esc(i.leg)}</span><span class="tag">${esc(i.mode)}</span>${i.detail?`<div class="m">${esc(i.detail)}</div>`:""}`)}</div>`,
@@ -744,6 +772,7 @@ function refreshAll(){
   renderLists();
 }
 
+$("#btnBackupHelp").onclick=()=>{go("result");setTimeout(()=>{const c=$("#backupCard");if(c)c.scrollIntoView({behavior:"smooth",block:"start"})},350)};
 buildTabs();buildCats();bindSetup();renderLists();
 if(S.saved)badge("✓ 已讀取上次的進度");
 const h=(location.hash||"").slice(1);
