@@ -740,7 +740,18 @@ function showSlide(i){
   document.querySelectorAll("#stage .slide").forEach((el,k)=>el.classList.toggle("on",k===sIdx));
   $("#sNo").textContent=`${sIdx+1} / ${slides.length}`;
   $("#sProg").style.width=((sIdx+1)/slides.length*100)+"%";
+  fitSlide(document.querySelectorAll("#stage .slide")[sIdx]);
 }
+// 字的大小依「投影片本身的寬度」計算；如果內容還是放不下，就逐步縮小直到放得下
+function fitSlide(el){
+  if(!el) return;
+  const base=el.clientWidth*0.0185;
+  let scale=1;
+  const overflow=()=>[el,...el.querySelectorAll(".body,.stl,.cols,.box,.stl div")].some(x=>x.scrollHeight>x.clientHeight+2||x.scrollWidth>x.clientWidth+2);
+  el.style.fontSize=base+"px";
+  for(let k=0;k<12&&overflow();k++){scale-=0.05;el.style.fontSize=(base*scale)+"px";}
+}
+window.addEventListener("resize",()=>{if($("#show").classList.contains("on"))fitSlide(document.querySelectorAll("#stage .slide")[sIdx])});
 function openShow(){
   slides=buildSlides();
   $("#stage").innerHTML=slides.map((s,i)=>`<div class="slide">${s.html}<div class="note">💬 講稿提示：${s.note}</div><div class="pg">${i+1}</div></div>`).join("");
