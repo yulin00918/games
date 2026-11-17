@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>數學逆襲｜12月成長測驗線上特訓</title>
+<style>
+:root{--ink:#24423e;--deep:#254e47;--teal:#55a99c;--mint:#e9f5ef;--line:#d9e5dd;--bg:#faf8f2;--orange:#e88b4a;--red:#c76050;font-family:system-ui,"Noto Sans TC","Microsoft JhengHei",sans-serif;color:var(--ink);background:var(--bg)}
+*{box-sizing:border-box}body{margin:0}
+header{background:var(--deep);color:#fff;padding:20px 18px}
+header .in{max-width:860px;margin:auto}header h1{margin:0;font-size:1.6rem}header p{margin:6px 0 0;opacity:.9}
+main{max-width:860px;margin:22px auto;padding:0 14px 60px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:16px;box-shadow:0 5px 18px #24423e0b}
+h2{margin:0 0 12px}.muted{color:#657771}.small{font-size:.88rem}
+.hidden{display:none!important}
+.info{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 4px}
+.info label{display:flex;flex-direction:column;font-size:.85rem;gap:4px;color:#4b625c}
+.info input{padding:10px;border:1px solid #a9c2b5;border-radius:9px;font:inherit;width:130px}
+.info input.wide{width:180px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px}
+.card{border:1px solid #cbdcd4;border-radius:15px;padding:16px;display:flex;flex-direction:column}
+.card h3{margin:0 0 8px;font-size:1.08rem}.card p{margin:0 0 12px;flex:1;line-height:1.55}
+.badge{display:inline-block;font-size:.8rem;padding:3px 9px;border-radius:99px;background:#eef3f0;margin-bottom:10px}
+.badge.done{background:var(--teal);color:#fff}
+button{cursor:pointer;font:inherit;border:0;border-radius:12px;padding:11px 16px;background:var(--deep);color:#fff}
+button.secondary{background:#e7eee9;color:var(--ink)}button.orange{background:var(--orange);color:#1c2f2b;font-weight:700}
+button:disabled{opacity:.4;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.progress{height:9px;background:#e7eee9;border-radius:9px;overflow:hidden;margin-top:14px}.bar{height:100%;background:var(--teal);transition:width .2s}
+.qnum{display:inline-block;background:var(--deep);color:#fff;border-radius:10px;padding:2px 10px;margin-right:6px;font-size:1rem;vertical-align:middle}
+.question{font-size:1.22rem;font-weight:700;line-height:1.9;margin:20px 0 10px}
+.fig{margin:6px 0 10px;overflow-x:auto}
+.option{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px 15px;border:2px solid #dce7df;border-radius:12px;margin:10px 0;background:#fff;color:var(--ink);line-height:1.7;font-size:1.08rem}
+.option:hover{border-color:#a7cfc4}.option.sel{background:var(--mint);border-color:var(--teal)}
+.option .no{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#eef3f0;font-weight:700}
+.option.sel .no{background:var(--teal);color:#fff}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0}
+.dot{padding:6px 0;min-width:36px;font-size:.85rem;background:#e7eee9;color:var(--ink)}
+.dot.done{background:var(--teal);color:#fff}.dot.active{outline:3px solid var(--orange)}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 2px;line-height:1.1;font-size:.9em}
+.frac>span:first-child{border-bottom:1.5px solid currentColor;padding:0 3px}.frac>span:last-child{padding:0 3px}
+.sdiv{border-collapse:collapse;font-size:1.1rem;margin-left:8px}.sdiv td{padding:2px 10px;text-align:center}
+.sdiv td.l{border-right:2px solid #222}.sdiv tr:not(:last-child) td.b{border-bottom:2px solid #222}
+.ftab{border-collapse:collapse;font-size:1rem}.ftab th,.ftab td{border:1.5px solid #333;padding:6px 12px;text-align:center}.ftab th{background:#f3f6f4;font-weight:600}
+.score{font-size:2.4rem;font-weight:800;color:var(--deep);margin:4px 0}
+.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:12px 0}
+.cat{background:var(--bg);border-radius:10px;padding:10px 12px}.cat b{display:block}.cat .m{height:6px;background:#e3e9e5;border-radius:6px;margin-top:6px;overflow:hidden}.cat .m i{display:block;height:100%;background:var(--teal)}
+.cat.weak .m i{background:var(--red)}
+.review{padding:14px 16px;margin:12px 0;border-radius:12px;background:var(--bg);line-height:1.75}
+.review.right{border-left:5px solid var(--teal)}.review.wrong{border-left:5px solid var(--red)}
+.review p{margin:4px 0}.tag{font-size:.8rem;padding:2px 8px;border-radius:99px;background:#fff;border:1px solid #cbdcd4;margin-left:6px}
+.ok{color:#2c7d6f;font-weight:700}.bad{color:var(--red);font-weight:700}
+.modal{position:fixed;inset:0;background:#0007;display:grid;place-items:center;padding:16px;z-index:9}
+.modal .box{background:#fff;border-radius:16px;padding:22px;max-width:380px;width:100%}
+.modal p{line-height:1.6;margin:0 0 16px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--deep);color:#fff;padding:10px 16px;border-radius:10px;z-index:10}
+@media(max-width:520px){.panel{padding:16px}.question{font-size:1.1rem}.option{font-size:1rem}}
+@media print{header,.controls,.dots,#home{display:none!important}}
+</style>
+</head>
+<body>
+<header><div class="in"><h1>⚡ 數學逆襲</h1><p>12月成長測驗線上特訓｜三回 × 25 題｜每題 4 分</p></div></header>
+<main>
+
+<section id="home" class="panel">
+  <h2>先填寫你的資料</h2>
+  <div class="info">
+    <label>班級<input id="klass" placeholder="例：701"></label>
+    <label>座號<input id="seat" placeholder="例：12"></label>
+    <label>姓名<input id="sname" class="wide" placeholder="你的名字"></label>
+  </div>
+  <p class="small muted">每題四選一，一次顯示一題，可以回頭修改；全部做完再按「完成並交卷」，一次批改。</p>
+  <div class="cards" id="cards"></div>
+  <p class="small muted" style="margin-top:14px">作答進度會暫存在這台裝置的瀏覽器；換裝置不會同步。交卷後可以下載 CSV 作答紀錄交給老師。</p>
+</section>
+
+<section id="quiz" class="panel hidden">
+  <div class="controls"><button class="secondary" onclick="goHome()">← 回首頁</button><strong id="roundTitle"></strong></div>
+  <div class="progress"><div id="bar" class="bar"></div></div>
+  <p id="status" class="small muted"></p>
+  <div id="qtext" class="question"></div>
+  <div id="qfig" class="fig"></div>
+  <div id="options"></div>
+  <div id="dots" class="dots"></div>
+  <div class="controls">
+    <button class="secondary" id="prev" onclick="move(-1)">上一題</button>
+    <button id="next" onclick="move(1)">下一題</button>
+    <button class="orange" onclick="askSubmit()">完成並交卷</button>
+  </div>
+</section>
+
+<section id="result" class="panel hidden">
+  <div class="controls"><button class="secondary" onclick="goHome()">← 回首頁</button><strong id="resultTitle"></strong></div>
+  <div id="scoreBox"></div>
+  <h3 style="margin:18px 0 4px">各單元表現</h3>
+  <div id="cats" class="cats"></div>
+  <div class="controls" style="margin:14px 0">
+    <button id="filterBtn" class="secondary" onclick="toggleFilter()">只看錯題</button>
+    <button class="secondary" onclick="copyRecord()">複製成績（可貼到 Excel）</button>
+    <button class="secondary" onclick="exportCSV()">下載 CSV</button>
+    <button class="secondary" onclick="window.print()">列印結果</button>
+    <button onclick="askRedo()">清除重做</button>
+  </div>
+  <textarea id="copyBox" class="hidden" readonly style="width:100%;height:120px;font-size:.8rem"></textarea>
+  <div id="reviews"></div>
+</section>
+</main>
+
+<div id="modal" class="modal hidden"><div class="box"><p id="modalText"></p><div class="controls"><button id="modalOk">確定</button><button class="secondary" onclick="closeModal()">取消</button></div></div></div>
+
+<script>
+// 第一回：109年基本學習內容標準化評量 六年級數學（答案依官方答案卷）
+const FIG_BOX = `<svg viewBox="0 0 170 130" width="170" role="img" aria-label="長方體，上面標示為面A">
+<polygon points="20,40 120,40 150,15 50,15" fill="#9fd3e6" stroke="#222" stroke-width="2"/>
+<rect x="20" y="40" width="100" height="75" fill="#fff" stroke="#222" stroke-width="2"/>
+<polygon points="120,40 150,15 150,90 120,115" fill="#fff" stroke="#222" stroke-width="2"/>
+<line x1="50" y1="15" x2="50" y2="90" stroke="#222" stroke-dasharray="5 4"/>
+<line x1="50" y1="90" x2="150" y2="90" stroke="#222" stroke-dasharray="5 4"/>
+<line x1="50" y1="90" x2="20" y2="115" stroke="#222" stroke-dasharray="5 4"/>
+<text x="80" y="33" font-size="15" font-style="italic" font-weight="700" text-anchor="middle">A</text></svg>`;
+const FIG_CYL = `<svg viewBox="0 0 220 130" width="220" role="img" aria-label="圓柱，直徑20公分，高10公分">
+<ellipse cx="85" cy="105" rx="70" ry="16" fill="#fff" stroke="#222" stroke-width="2"/>
+<rect x="15" y="25" width="140" height="80" fill="#fff" stroke="none"/>
+<path d="M15 105 A70 16 0 0 0 155 105" fill="none" stroke="#222" stroke-width="2"/>
+<line x1="15" y1="25" x2="15" y2="105" stroke="#222" stroke-width="2"/>
+<line x1="155" y1="25" x2="155" y2="105" stroke="#222" stroke-width="2"/>
+<ellipse cx="85" cy="25" rx="70" ry="16" fill="#fff" stroke="#222" stroke-width="2"/>
+<line x1="15" y1="25" x2="155" y2="25" stroke="#222" stroke-dasharray="4 3"/>
+<text x="85" y="20" font-size="13" text-anchor="middle">20 cm</text>
+<line x1="165" y1="25" x2="165" y2="105" stroke="#222" stroke-dasharray="4 3"/>
+<text x="170" y="70" font-size="13">10 cm</text></svg>`;
+const FIG_DIV = `<table class="sdiv"><tr><td class="l">2</td><td class="b">18</td><td class="b">24</td></tr><tr><td class="l">3</td><td class="b">9</td><td class="b">12</td></tr><tr><td></td><td>3</td><td>4</td></tr></table>`;
+const FIG_TABLE = `<table class="ftab"><tr><th>竹竿長（公尺）</th><td>1/12</td><td>1/8</td><td>1/4</td><td>2</td></tr><tr><th>影子長（公尺）</th><td>1/3</td><td>1/2</td><td>1</td><td><i>A</i></td></tr></table>`;
+
+const ROUND1 = [
+{q:"下列哪個分數<u>不是</u>最簡分數？",options:["10/11","15/18","21/25","32/35"],answer:1,category:"因數倍數",explanation:"15和18都是3的倍數，15/18 可以約分成 5/6，所以不是最簡分數。"},
+{q:"如圖，長方體的 6 個面中，和面 A 垂直的面有幾個？",fig:FIG_BOX,options:["1","2","3","4"],answer:3,category:"柱體與縮放",explanation:"面A是上面。和它相鄰的前、後、左、右 4 個面都和它垂直；只有底面和它平行。"},
+{q:"下列哪個選項是 48 質因數分解的結果？",options:["6 × 8","2 × 3 × 8","2 × 2 × 2 × 2 × 3","1 × 2 × 4 × 6"],answer:2,category:"因數倍數",explanation:"質因數分解要拆到每個數都是質數：48＝2×2×2×2×3。6、8、4 都不是質數，1 也不是質數。"},
+{q:"火車 3 小時行駛 270 公里，5 小時可以行駛多少公里？",options:["1350","540","450","162"],answer:2,category:"比與速率",explanation:"每小時 270÷3＝90 公里，5 小時 90×5＝450 公里。"},
+{q:"下列哪個數用四捨五入法取概數到小數第一位是 7.4？",options:["7.456","7.382","7.349","7.462"],answer:1,category:"分數小數",explanation:"看小數第二位：7.382 的 8≥5 要進位，得 7.4。7.456→7.5、7.349→7.3、7.462→7.5。"},
+{q:"直笛隊男、女隊員的人數比是 2：5，已知女隊員有 10 位，請問男隊員有多少位？",options:["2","4","20","25"],answer:1,category:"比與速率",explanation:"女生 5 份＝10 人，1 份＝2 人；男生 2 份＝4 人。"},
+{q:"「麵包店有 24.8 公斤的麵粉，用掉了 1.4 公斤，剩下的麵粉每 1.3 公斤裝成一袋，共可裝成幾袋？」下列哪個算式可以算出正確答案？",options:["24.8 ÷ 1.3 − 1.4","24.8 − 1.4 ÷ 1.3","(24.8 − 1.4) × 1.3","(24.8 − 1.4) ÷ 1.3"],answer:3,category:"分數小數",explanation:"先算剩下多少：24.8−1.4，要先算所以加括號；再看可以分成幾袋，用除法 ÷1.3。"},
+{q:"「直徑 20 公分的 1/4 圓，它的面積是多少平方公分？」下列哪個算式可以算出正確答案？（圓周率＝3.14）",options:["(20 ÷ 2) × (20 ÷ 2) × 3.14 × 1/4","(20 ÷ 2) × (20 ÷ 2) × 3.14","20 × 20 × 3.14 × 1/4","20 × 20 × 3.14"],answer:0,category:"圓與扇形",explanation:"圓面積＝半徑×半徑×3.14，半徑是 20÷2；四分之一圓再 ×1/4。"},
+{q:"下面是老師用短除法求 18 和 24 最大公因數的計算過程，請問下列哪個選項是 18 和 24 的最大公因數？",fig:FIG_DIV,options:["2 × 3 × 3 × 4","3 × 4","2 × 3","3"],answer:2,category:"因數倍數",explanation:"最大公因數是左邊除數相乘：2×3＝6。下面的 3 和 4 是相除後剩下的數，不能乘進去（乘進去是最小公倍數）。"},
+{q:"把 8 公斤的米，每 0.5 公斤裝成一包，最多可以裝成幾包？剩下幾公斤？",options:["最多可以裝成 1 包，剩下 0.3 公斤","最多可以裝成 1.6 包，剩下 0 公斤","最多可以裝成 10 包，剩下 3 公斤","最多可以裝成 16 包，剩下 0 公斤"],answer:3,category:"分數小數",explanation:"8÷0.5＝80÷5＝16，剛好分完，所以 16 包，剩 0 公斤。"},
+{q:"時速 15 公里和分速多少公里一樣快？",options:["0.25","0.9","250","900"],answer:0,category:"比與速率",explanation:"1 小時＝60 分鐘，15÷60＝0.25（公里／分）。"},
+{q:"甲是邊長 2.5 公分的正方形，乙是甲的 2 倍放大圖，乙的面積是甲的幾倍？",options:["2","4","5","25"],answer:1,category:"柱體與縮放",explanation:"邊長放大 2 倍，面積放大 2×2＝4 倍。"},
+{q:"「半徑為 15 公分的圓，圓周長是多少公分？」下列哪個算式可以算出正確答案？（圓周率＝3.14）",options:["15 × 15 × 3.14 ÷ 2","15 × 15 × 3.14","15 × 2 × 3.14","15 × 3.14"],answer:2,category:"圓與扇形",explanation:"圓周長＝直徑×3.14＝半徑×2×3.14。15×15×3.14 是面積的算法。"},
+{q:"下列哪個數和 3 <u>不互質</u>？",options:["7","21","35","49"],answer:1,category:"因數倍數",explanation:"21＝3×7，和 3 有公因數 3，所以不互質。其他三個都不是 3 的倍數。"},
+{q:"下列哪個選項中的數都是質數？",options:["1、2、3、5","2、3、4、5","2、3、5、7","3、5、7、9"],answer:2,category:"因數倍數",explanation:"1 不是質數；4＝2×2、9＝3×3 都不是質數。2、3、5、7 都只有 1 和自己兩個因數。"},
+{q:"已知「6 × 5 = 120 ÷ 4」，下列哪個算式<u>不正確</u>？",options:["6 × 5 − 8 = 120 ÷ 4 + 8","6 × 5 ÷ 2 = 120 ÷ 4 ÷ 2","6 × 5 × 2 = 120 ÷ 4 × 2","6 × 5 − 5 = 120 ÷ 4 − 5"],answer:0,category:"數量關係",explanation:"等號兩邊要做「一樣的事」才會相等。(1) 左邊 −8、右邊 +8，兩邊變成 22 和 38，不相等。"},
+{q:"圖書室裡，科學類書籍和文學類書籍數量的比值是 4/5，科學類書籍有 180 本，文學類書籍有多少本？",options:["80","100","144","225"],answer:3,category:"比與速率",explanation:"科學：文學＝4：5。4 份＝180 本，1 份＝45 本，文學 5 份＝225 本。"},
+{q:"半徑長 5 公分的圓，它的圓周長和直徑長的比值是多少？（圓周率＝3.14）",options:["3.14","10","15.7","31.4"],answer:0,category:"圓與扇形",explanation:"圓周長÷直徑就是圓周率，不管圓多大都是 3.14。"},
+{q:"同一時刻的竹竿長和影子長成正比，下表是竹竿長和影子長的關係表，求 <i>A</i>＝？",fig:FIG_TABLE,options:["1/2","1/8","4","8"],answer:3,category:"比與速率",explanation:"竹竿 1/4 公尺時影子 1 公尺，影子是竹竿的 4 倍。竹竿 2 公尺，影子 2×4＝8 公尺。"},
+{q:"如圖，圓柱的體積是多少立方公分？（圓周率＝3.14）",fig:FIG_CYL,options:["200","628","3140","12560"],answer:2,category:"柱體與縮放",explanation:"直徑 20，半徑 10。體積＝底面積×高＝10×10×3.14×10＝3140。"},
+{q:"用一些長 12 公分、寬 15 公分的長方形紙片排成正方形，排成的正方形中，最小正方形的邊長是幾公分？",options:["180","60","30","3"],answer:1,category:"因數倍數",explanation:"正方形邊長要同時是 12 和 15 的倍數，最小就是最小公倍數 60。"},
+{q:"「秀秀有 800 元，秀秀的錢是真真的 4/5 倍，真真有幾元？」用 <i>B</i> 表示真真有幾元，下列哪個列式和答案都正確？",options:["<i>B</i> × 4/5 = 800，<i>B</i> = 1000，答：1000 元","<i>B</i> × 4/5 = 800，<i>B</i> = 640，答：640 元","<i>B</i> ÷ 4/5 = 800，<i>B</i> = 1000，答：1000 元","<i>B</i> ÷ 4/5 = 800，<i>B</i> = 640，答：640 元"],answer:0,category:"數量關係",explanation:"秀秀是真真的 4/5 倍：真真×4/5＝秀秀，所以 B×4/5＝800，B＝800÷4/5＝1000。"},
+{q:"有 26/7 公升的米酒，每 3/7 公升裝成一瓶，最多可裝滿幾瓶？剩下多少公升？",options:["最多可裝滿 8 瓶，剩下 1/3 公升","最多可裝滿 8 瓶，剩下 2/3 公升","最多可裝滿 8 瓶，剩下 1/7 公升","最多可裝滿 8 瓶，剩下 2/7 公升"],answer:3,category:"分數小數",explanation:"分母相同，看分子：26÷3＝8 餘 2。剩下的是 2 個 1/7，也就是 2/7 公升（不是 2/3）。"},
+{q:"「一盒糖果有 64 顆，小欣將 3/8 盒的 1/4 給小蘭，小蘭得到幾顆糖果？」下列哪個算式能算出正確答案？",options:["64 × 3/8 × 1/4","64 × 3/8 ÷ 1/4","64 ÷ 3/8 × 1/4","64 ÷ 3/8 ÷ 1/4"],answer:0,category:"分數小數",explanation:"「的」用乘法：3/8 盒是 64×3/8，再取它的 1/4 就再 ×1/4，得 6 顆。"},
+{q:"地圖上甲、乙兩地的距離是 10 公分，而甲、乙兩地的實際距離是 5 公里，下列何者是這張地圖的比例尺？（1 公里＝100000 公分）",options:["10 : 5","1 : 50","1 : 5000","1 : 50000"],answer:3,category:"柱體與縮放",explanation:"5 公里＝500000 公分。10：500000＝1：50000。單位要先換成一樣再比。"}
+];
+
+const R23 = [[{"q": "下列哪一個數是質數？", "options": ["21", "29", "39", "51"], "category": "因數倍數", "answer": 1, "label": "29", "explanation": "29只有1與29兩個正因數。"}, {"q": "36的質因數分解是哪一個？", "options": ["2×2×3×3", "2×3×6", "4×9", "1×2×18"], "category": "因數倍數", "answer": 0, "label": "2×2×3×3", "explanation": "36＝2×2×3×3。"}, {"q": "24與36的最大公因數是多少？", "options": ["6", "8", "12", "72"], "category": "因數倍數", "answer": 2, "label": "12", "explanation": "24＝2³×3，36＝2²×3²，最大公因數12。"}, {"q": "每6天與每8天各有一次活動，今天同時舉行，下次同時舉行是幾天後？", "options": ["12", "14", "24", "48"], "category": "因數倍數", "answer": 2, "label": "24", "explanation": "6與8的最小公倍數為24。"}, {"q": "3/4 ÷ 2/5 的結果是多少？", "options": ["3/10", "6/20", "15/8", "8/15"], "category": "分數小數", "answer": 2, "label": "15/8", "explanation": "3/4×5/2＝15/8。"}, {"q": "2又1/2公升果汁，每杯裝1/4公升，可以裝滿幾杯？", "options": ["6", "8", "10", "12"], "category": "分數小數", "answer": 2, "label": "10", "explanation": "5/2÷1/4＝10。"}, {"q": "計算 1/2＋3/4×2/3，結果是多少？", "options": ["5/6", "1", "7/6", "5/4"], "category": "分數小數", "answer": 1, "label": "1", "explanation": "先乘後加：3/4×2/3＝1/2，再加1/2＝1。"}, {"q": "7.2 ÷ 0.6 的結果是多少？", "options": ["1.2", "12", "120", "0.12"], "category": "分數小數", "answer": 1, "label": "12", "explanation": "同乘10變成72÷6＝12。"}, {"q": "有15.6公斤麵粉，用掉3.6公斤後，每1.5公斤裝一袋，可裝幾袋？", "options": ["6", "7", "8", "10"], "category": "分數小數", "answer": 2, "label": "8", "explanation": "(15.6－3.6)÷1.5＝8。"}, {"q": "甲乙人數比為3：5，乙有20人，甲有幾人？", "options": ["8", "12", "15", "30"], "category": "比與速率", "answer": 1, "label": "12", "explanation": "20÷5×3＝12。"}, {"q": "甲、乙兩數的比是4：7，比值是多少？", "options": ["7/4", "4/7", "11", "3/7"], "category": "比與速率", "answer": 1, "label": "4/7", "explanation": "比值＝前項÷後項＝4/7。"}, {"q": "一本書原價240元，特價是原價的3/4，特價多少元？", "options": ["160", "180", "200", "320"], "category": "比與速率", "answer": 1, "label": "180", "explanation": "240×3/4＝180。"}, {"q": "一輛車2小時行駛150公里，速度不變，5小時行駛多少公里？", "options": ["300", "325", "375", "750"], "category": "比與速率", "answer": 2, "label": "375", "explanation": "150÷2×5＝375。"}, {"q": "時速72公里等於秒速多少公尺？", "options": ["12", "18", "20", "24"], "category": "比與速率", "answer": 2, "label": "20", "explanation": "72×1000÷3600＝20。"}, {"q": "直徑14公分的圓，圓周長是多少公分？（π＝3.14）", "options": ["21.98", "43.96", "153.86", "615.44"], "category": "圓與扇形", "answer": 1, "label": "43.96", "explanation": "14×3.14＝43.96。"}, {"q": "半徑10公分的圓，面積是多少平方公分？（π＝3.14）", "options": ["31.4", "62.8", "157", "314"], "category": "圓與扇形", "answer": 3, "label": "314", "explanation": "10×10×3.14＝314。"}, {"q": "半徑6公分、圓心角90°的扇形，面積是多少平方公分？（π＝3.14）", "options": ["9.42", "28.26", "56.52", "113.04"], "category": "圓與扇形", "answer": 1, "label": "28.26", "explanation": "6×6×3.14×90/360＝28.26。"}, {"q": "長方體長8、寬5、高3公分，體積是多少立方公分？", "options": ["16", "40", "80", "120"], "category": "柱體與縮放", "answer": 3, "label": "120", "explanation": "8×5×3＝120。"}, {"q": "底面積25平方公分、高12公分的直角柱，體積是多少立方公分？", "options": ["37", "150", "300", "600"], "category": "柱體與縮放", "answer": 2, "label": "300", "explanation": "柱體體積＝底面積×高＝25×12＝300。"}, {"q": "正方形邊長放大為原來的3倍，面積變成原來的幾倍？", "options": ["3", "6", "9", "12"], "category": "柱體與縮放", "answer": 2, "label": "9", "explanation": "面積倍率為3²＝9。"}, {"q": "數列2、5、8、11、……，第7項是多少？", "options": ["17", "18", "20", "23"], "category": "數量關係", "answer": 2, "label": "20", "explanation": "首項2，每次加3，第7項2＋6×3＝20。"}, {"q": "某數的3倍再加5等於26，這個數是多少？", "options": ["5", "6", "7", "8"], "category": "數量關係", "answer": 2, "label": "7", "explanation": "(26－5)÷3＝7。"}, {"q": "一個數減去8後再乘4等於36，這個數是多少？", "options": ["1", "9", "17", "44"], "category": "數量關係", "answer": 2, "label": "17", "explanation": "36÷4＋8＝17。"}, {"q": "班上40人，圓形圖中喜歡籃球占25%，有幾人？", "options": ["8", "10", "12", "16"], "category": "圓形圖", "answer": 1, "label": "10", "explanation": "40×25%＝10。"}, {"q": "圓形圖中某項目占總數的30%，對應的圓心角是多少度？", "options": ["30°", "90°", "108°", "120°"], "category": "圓形圖", "answer": 2, "label": "108°", "explanation": "360°×30%＝108°。"}], [{"q": "下列哪一組數互質？", "options": ["12與18", "14與21", "16與25", "15與35"], "category": "因數倍數", "answer": 2, "label": "16與25", "explanation": "16與25的最大公因數為1。"}, {"q": "下列哪一個分數不是最簡分數？", "options": ["7/11", "9/14", "12/18", "13/17"], "category": "因數倍數", "answer": 2, "label": "12/18", "explanation": "12/18可同除以6，約成2/3。"}, {"q": "18與30的最大公因數是多少？", "options": ["3", "6", "9", "90"], "category": "因數倍數", "answer": 1, "label": "6", "explanation": "共同質因數2×3＝6。"}, {"q": "兩盞燈每10秒、15秒閃一次，同時閃後，至少幾秒會再同時閃？", "options": ["5", "20", "30", "150"], "category": "因數倍數", "answer": 2, "label": "30", "explanation": "10與15的最小公倍數30。"}, {"q": "4/5 ÷ 2/3 的結果是多少？", "options": ["8/15", "6/5", "5/6", "2/15"], "category": "分數小數", "answer": 1, "label": "6/5", "explanation": "4/5×3/2＝6/5。"}, {"q": "3又1/2公尺的繩子，每段剪7/8公尺，最多剪成幾段？", "options": ["3", "4", "5", "6"], "category": "分數小數", "answer": 1, "label": "4", "explanation": "7/2÷7/8＝4。"}, {"q": "計算 5/6－1/3×1/2，結果是多少？", "options": ["1/4", "1/2", "2/3", "3/4"], "category": "分數小數", "answer": 2, "label": "2/3", "explanation": "先乘得1/6，5/6－1/6＝2/3。"}, {"q": "9.45 ÷ 0.35 的結果是多少？", "options": ["2.7", "27", "270", "0.27"], "category": "分數小數", "answer": 1, "label": "27", "explanation": "945÷35＝27。"}, {"q": "有18.9公升飲料，先喝掉2.1公升，剩下每0.7公升裝一瓶，可裝幾瓶？", "options": ["21", "23", "24", "27"], "category": "分數小數", "answer": 2, "label": "24", "explanation": "(18.9－2.1)÷0.7＝24。"}, {"q": "男生與女生人數比為5：4，男生有25人，女生有幾人？", "options": ["16", "20", "24", "30"], "category": "比與速率", "answer": 1, "label": "20", "explanation": "25÷5×4＝20。"}, {"q": "果汁與水的比是2：7，果汁占混合飲料的幾分之幾？", "options": ["2/7", "2/9", "7/9", "7/2"], "category": "比與速率", "answer": 1, "label": "2/9", "explanation": "總份數9，果汁占2/9。"}, {"q": "甲的錢是乙的4/5，甲有320元，乙有幾元？", "options": ["256", "360", "400", "500"], "category": "比與速率", "answer": 2, "label": "400", "explanation": "320÷4/5＝400。"}, {"q": "火車3小時行駛210公里，速度不變，7小時行駛幾公里？", "options": ["420", "470", "490", "630"], "category": "比與速率", "answer": 2, "label": "490", "explanation": "210÷3×7＝490。"}, {"q": "分速150公尺等於秒速多少公尺？", "options": ["2.5", "15", "25", "9000"], "category": "比與速率", "answer": 0, "label": "2.5", "explanation": "150÷60＝2.5。"}, {"q": "半徑8公分的圓，圓周長是多少公分？（π＝3.14）", "options": ["25.12", "50.24", "100.48", "200.96"], "category": "圓與扇形", "answer": 1, "label": "50.24", "explanation": "8×2×3.14＝50.24。"}, {"q": "直徑12公分的圓，面積是多少平方公分？（π＝3.14）", "options": ["37.68", "75.36", "113.04", "452.16"], "category": "圓與扇形", "answer": 2, "label": "113.04", "explanation": "半徑6，面積6×6×3.14＝113.04。"}, {"q": "半徑4公分、圓心角90°的扇形，周長是多少公分？（π＝3.14）", "options": ["6.28", "12.56", "14.28", "25.12"], "category": "圓與扇形", "answer": 2, "label": "14.28", "explanation": "弧長＝2×4×3.14÷4＝6.28，再加兩條半徑8，得14.28。"}, {"q": "底面是邊長6公分的正方形、高10公分的直角柱，體積多少立方公分？", "options": ["60", "120", "240", "360"], "category": "柱體與縮放", "answer": 3, "label": "360", "explanation": "6×6×10＝360。"}, {"q": "半徑5公分、高4公分的圓柱，體積是多少立方公分？（π＝3.14）", "options": ["62.8", "100", "157", "314"], "category": "柱體與縮放", "answer": 3, "label": "314", "explanation": "5×5×3.14×4＝314。"}, {"q": "地圖比例尺1：20000，圖上3公分代表實際多少公尺？", "options": ["60", "300", "600", "6000"], "category": "柱體與縮放", "answer": 2, "label": "600", "explanation": "3×20000＝60000公分＝600公尺。"}, {"q": "數列4、9、14、19、……，第6項是多少？", "options": ["24", "29", "34", "39"], "category": "數量關係", "answer": 1, "label": "29", "explanation": "4＋5×5＝29。"}, {"q": "某數的2倍減7等於19，某數是多少？", "options": ["6", "12", "13", "26"], "category": "數量關係", "answer": 2, "label": "13", "explanation": "(19＋7)÷2＝13。"}, {"q": "一盒彩筆比一本筆記本貴18元，兩者共82元，筆記本多少元？", "options": ["28", "32", "41", "50"], "category": "數量關係", "answer": 1, "label": "32", "explanation": "(82－18)÷2＝32。"}, {"q": "某校200人參加社團，圓形圖中美術社占15%，有幾人？", "options": ["15", "20", "30", "45"], "category": "圓形圖", "answer": 2, "label": "30", "explanation": "200×15%＝30。"}, {"q": "圓形圖中A類占40%，B類占35%，其餘為C類。C類的圓心角是多少度？", "options": ["72°", "90°", "108°", "144°"], "category": "圓形圖", "answer": 1, "label": "90°", "explanation": "C占25%，360×25%＝90°。"}]];
+const SETS = [ROUND1, R23[0], R23[1]];
+const TITLES = ['第一回｜109年考古題','第二回｜觀念強化卷','第三回｜正式模擬卷'];
+const DESCS = ['教育部 109 年基本學習內容標準化評量原題，含圖形題。','因數倍數、分數小數、比與速率、圓、柱體與圓形圖。','混合各單元的正式模擬，包含扇形周長與比例尺。'];
+const N = 25;
+
+/* ---- 安全的儲存：瀏覽器擋住 localStorage 時改用記憶體，不會讓網頁停住 ---- */
+const mem = {};
+const store = {
+  get(k){ try{ const v = localStorage.getItem(k); return v===null ? (k in mem ? mem[k] : null) : v; }catch(e){ return k in mem ? mem[k] : null; } },
+  set(k,v){ mem[k]=v; try{ localStorage.setItem(k,v); }catch(e){} },
+  del(k){ delete mem[k]; try{ localStorage.removeItem(k); }catch(e){} }
+};
+const KEY = r => 'mathDec2026_r'+r;
+function load(r){ try{ const d = JSON.parse(store.get(KEY(r))||'null'); if(d && Array.isArray(d.a) && d.a.length===N) return d; }catch(e){} return {a:Array(N).fill(null), done:false}; }
+function persist(){ store.set(KEY(round), JSON.stringify(state)); }
+
+/* ---- 文字格式：把 3/4、2又1/2 變成上下分數 ---- */
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fracs(t){
+  return t.replace(/(\d+)又(\d+)\/(\d+)/g,(m,w,a,b)=>w+'<span class="frac"><span>'+a+'</span><span>'+b+'</span></span>')
+          .replace(/(\d+)\/(\d+)/g,(m,a,b)=>'<span class="frac"><span>'+a+'</span><span>'+b+'</span></span>');
+}
+function fmt(s, html){ const src = html ? String(s) : esc(s); return src.split(/(<[^>]+>)/).map(p => p.startsWith('<') ? p : fracs(p)).join(''); }
+const isHTML = r => r===0;
+
+const $ = id => document.getElementById(id);
+let round=-1, pos=0, state=null, onlyWrong=false;
+
+function show(id){ ['home','quiz','result'].forEach(x => $(x).classList.toggle('hidden', x!==id)); window.scrollTo(0,0); }
+
+function info(){ return {klass:$('klass').value.trim(), seat:$('seat').value.trim(), name:$('sname').value.trim()}; }
+function saveInfo(){ store.set('mathDec2026_info', JSON.stringify(info())); }
+function loadInfo(){ try{ const i = JSON.parse(store.get('mathDec2026_info')||'{}'); $('klass').value=i.klass||''; $('seat').value=i.seat||''; $('sname').value=i.name||''; }catch(e){} }
+['klass','seat','sname'].forEach(id => $(id).addEventListener('input', saveInfo));
+
+function score(r, d){ return d.a.reduce((s,a,i)=> s + (a===SETS[r][i].answer ? 1 : 0), 0); }
+
+function renderHome(){
+  $('cards').innerHTML = '';
+  SETS.forEach((set, r) => {
+    const d = load(r), answered = d.a.filter(x=>x!==null).length;
+    const c = document.createElement('div'); c.className='card';
+    const badge = d.done ? `<span class="badge done">已交卷｜${score(r,d)*4} 分</span>` : answered ? `<span class="badge">進行中｜已答 ${answered}/${N}</span>` : `<span class="badge">尚未開始｜${set.length} 題</span>`;
+    c.innerHTML = `<h3>${TITLES[r]}</h3>${badge}<p class="small">${DESCS[r]}</p>`;
+    const b = document.createElement('button');
+    b.textContent = d.done ? '查看結果' : answered ? '繼續作答' : '開始作答';
+    b.onclick = () => start(r);
+    c.append(b); $('cards').append(c);
+  });
+}
+
+function start(r){
+  round = r; state = load(r); onlyWrong = false;
+  if(state.done){ showResult(); return; }
+  const first = state.a.indexOf(null); pos = first<0 ? 0 : first;
+  show('quiz'); render();
+}
+function goHome(){ renderHome(); show('home'); }
+
+function render(){
+  const q = SETS[round][pos], answered = state.a.filter(a=>a!==null).length;
+  $('roundTitle').textContent = TITLES[round];
+  $('status').textContent = `第 ${pos+1} / ${N} 題｜已作答 ${answered} 題`;
+  $('bar').style.width = (answered/N*100)+'%';
+  $('qtext').innerHTML = `<span class="qnum">${pos+1}</span>` + fmt(q.q, isHTML(round));
+  $('qfig').innerHTML = q.fig ? fmt(q.fig, true) : '';
+  $('options').innerHTML = '';
+  q.options.forEach((o,i) => {
+    const b = document.createElement('button');
+    b.className = 'option' + (state.a[pos]===i ? ' sel' : '');
+    b.innerHTML = `<span class="no">${i+1}</span><span>${fmt(o, isHTML(round))}</span>`;
+    b.onclick = () => { state.a[pos]=i; persist(); if(pos<N-1){ render(); setTimeout(()=>{ pos++; render(); }, 220); } else render(); };
+    $('options').append(b);
+  });
+  $('dots').innerHTML = '';
+  for(let i=0;i<N;i++){
+    const b = document.createElement('button');
+    b.textContent = i+1;
+    b.className = 'dot' + (state.a[i]!==null ? ' done':'') + (i===pos ? ' active':'');
+    b.onclick = () => { pos=i; render(); };
+    $('dots').append(b);
+  }
+  $('prev').disabled = pos===0; $('next').disabled = pos===N-1;
+}
+function move(d){ pos = Math.min(N-1, Math.max(0, pos+d)); render(); }
+
+/* ---- 網頁內的確認視窗（不用 confirm，平板與內嵌預覽都能用） ---- */
+function ask(text, fn){ $('modalText').textContent = text; $('modalOk').onclick = () => { closeModal(); fn(); }; $('modal').classList.remove('hidden'); }
+function closeModal(){ $('modal').classList.add('hidden'); }
+function toast(t){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.append(d); setTimeout(()=>d.remove(),2200); }
+
+function askSubmit(){
+  const missing = state.a.filter(a=>a===null).length;
+  ask(missing ? `還有 ${missing} 題沒有作答，確定要交卷嗎？` : '25 題都完成了，確定交卷嗎？', () => { state.done = true; state.at = new Date().toLocaleString('zh-TW'); persist(); showResult(); });
+}
+function askRedo(){ ask('確定清除這一回的作答，重新練習嗎？', () => { store.del(KEY(round)); start(round); }); }
+
+function showResult(){
+  show('result');
+  const set = SETS[round], right = score(round, state), missing = state.a.filter(a=>a===null).length, who = info();
+  $('resultTitle').textContent = TITLES[round] + '｜作答結果';
+  $('scoreBox').innerHTML = `<p class="score">${right*4} 分</p><p>答對 ${right} 題／${N} 題　未作答 ${missing} 題</p>
+    <p class="small muted">${esc([who.klass && who.klass+'班', who.seat && who.seat+'號', who.name].filter(Boolean).join(' ') || '（未填寫姓名）')}　交卷時間：${esc(state.at||'')}</p>`;
+  const cats = {};
+  set.forEach((q,i) => { cats[q.category] = cats[q.category] || {t:0,r:0}; cats[q.category].t++; if(state.a[i]===q.answer) cats[q.category].r++; });
+  $('cats').innerHTML = Object.entries(cats).map(([k,v]) => `<div class="cat${v.r/v.t<0.6?' weak':''}"><b>${esc(k)}</b>${v.r} / ${v.t} 題${v.r/v.t<0.6?'　<span class="bad">要加強</span>':''}<div class="m"><i style="width:${v.r/v.t*100}%"></i></div></div>`).join('');
+  $('filterBtn').textContent = onlyWrong ? '顯示全部' : '只看錯題';
+  $('reviews').innerHTML = '';
+  set.forEach((q,i) => {
+    const a = state.a[i], ok = a===q.answer;
+    if(onlyWrong && ok) return;
+    const h = isHTML(round), d = document.createElement('div');
+    d.className = 'review ' + (ok ? 'right' : 'wrong');
+    d.innerHTML = `<p><strong>第 ${i+1} 題</strong><span class="tag">${esc(q.category)}</span>　${ok ? '<span class="ok">✔ 答對</span>' : '<span class="bad">✘ 待加強</span>'}</p>
+      <p>${fmt(q.q, h)}</p>${q.fig ? '<div class="fig">'+fmt(q.fig,true)+'</div>' : ''}
+      <p>你的答案：${a===null ? '未作答' : '('+(a+1)+') '+fmt(q.options[a], h)}</p>
+      ${ok ? '' : `<p>正確答案：<span class="ok">(${q.answer+1}) ${fmt(q.options[q.answer], h)}</span></p>`}
+      <p class="muted">💡 ${fmt(q.explanation, h)}</p>`;
+    $('reviews').append(d);
+  });
+  if(onlyWrong && !$('reviews').children.length) $('reviews').innerHTML = '<p class="ok">全部答對，太厲害了！</p>';
+}
+function toggleFilter(){ onlyWrong = !onlyWrong; showResult(); }
+
+function plain(s){ const t=document.createElement('div'); t.innerHTML=String(s).replace(/<svg[\s\S]*?<\/svg>|<table[\s\S]*?<\/table>/g,''); return t.textContent.trim(); }
+function recordRows(){
+  const who = info(), set = SETS[round];
+  const rows = [['回次','班級','座號','姓名','交卷時間','題號','單元','作答選項','正確選項','是否正確']];
+  set.forEach((q,i) => { const a = state.a[i]; rows.push([TITLES[round], who.klass, who.seat, who.name, state.at||'', i+1, q.category, a===null?'':a+1, q.answer+1, a===q.answer?'正確':'錯誤']); });
+  rows.push([TITLES[round], who.klass, who.seat, who.name, state.at||'', '總分', '', '', '', score(round,state)*4]);
+  return rows;
+}
+function copyRecord(){
+  const who = info();
+  const line = [TITLES[round], who.klass, who.seat, who.name, score(round,state)*4].concat(SETS[round].map((q,i)=> state.a[i]===q.answer ? 'O' : 'X')).join('\t');
+  const box = $('copyBox'); box.value = line;
+  const fallback = () => { box.classList.remove('hidden'); box.focus(); box.select(); toast('請按 Ctrl+C（或長按）複製下方文字'); };
+  try{ navigator.clipboard.writeText(line).then(()=>toast('已複製：回次、班級、座號、姓名、分數、25 題對錯'), fallback); }catch(e){ fallback(); }
+}
+function exportCSV(){
+  const who = info(), rows = recordRows();
+  const csv = '﻿' + rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  try{
+    const url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+    const a = document.createElement('a'); a.href = url;
+    a.download = `數學逆襲_${TITLES[round].split('｜')[0]}_${who.klass||''}${who.seat?'-'+who.seat:''}${who.name||''}.csv`;
+    document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 1000);
+    toast('已下載作答紀錄');
+  }catch(e){ toast('這個環境無法下載，請用一般瀏覽器開啟'); }
+}
+
+loadInfo(); renderHome();
+</script>
+</body>
+</html>
