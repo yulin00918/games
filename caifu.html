@@ -69,21 +69,21 @@ th{color:var(--muted);font-weight:600}
 <div id="app" class="wrap"></div>
 <div id="toast" class="toast"></div>
 
-<!-- Firebase（線上模式用）：與總舖師、正負數大富翁使用同一個 Firebase 專案即可 -->
+<!-- Firebase（線上模式用）：與總舖師、正負數大富翁共用 tsongposai 專案 -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
-// ★★★ 請把這裡換成你 Firebase 專案的設定（可直接從 monopoly.html 複製 firebaseConfig）★★★
 const FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  databaseURL: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyCwWWNly7V-ORMbTFBVcN_ZQ_zdZ-4L5Ik",
+  authDomain: "tsongposai.firebaseapp.com",
+  databaseURL: "https://tsongposai-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "tsongposai",
+  storageBucket: "tsongposai.firebasestorage.app",
+  messagingSenderId: "340842053383",
+  appId: "1:340842053383:web:9f2a6f1654dfc1ddcbcfa2"
 };
-const DB_PATH = 'caifu/rooms'; // 資料存放位置
+// 資料放在 rooms/cf1234（和正負數大富翁的 rooms/pm1234 同一層，不會互相干擾）
+const roomPath = code => `rooms/cf${code}`;
 </script>
 <script>
 // ===== 《財富之道》遊戲引擎（純邏輯，無畫面） =====
@@ -656,11 +656,11 @@ function home() {
     let code;
     for (let i = 0; i < 20; i++) {
       code = String(1000 + Math.floor(Math.random() * 9000));
-      const snap = await fb.ref(`${DB_PATH}/${code}`).get();
+      const snap = await fb.ref(roomPath(code)).get();
       const v = snap.val();
       if (!v || Date.now() - (v.t || 0) > 12 * 3600e3) break;
     }
-    await fb.ref(`${DB_PATH}/${code}`).set(E.clean(E.newGame(code, myId)));
+    await fb.ref(roomPath(code)).set(E.clean(E.newGame(code, myId)));
     const n = $('#play').checked ? ($('#nm').value.trim() || prompt('你的名字') || '老師') : '';
     goOnline(code, n);
   };
@@ -675,7 +675,7 @@ function connect() {
 async function goOnline(code, name) {
   if (!connect()) return;
   mode = 'online';
-  roomRef = fb.ref(`${DB_PATH}/${code}`);
+  roomRef = fb.ref(roomPath(code));
   const snap = await roomRef.get();
   if (!snap.val()) { toast('找不到這個房間'); return home(); }
   history.replaceState(null, '', '#' + code);
