@@ -63,6 +63,12 @@ th{color:var(--muted);font-weight:600}
 .routes button.on{background:var(--event);color:#fff}
 .tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:999px;background:#e6ebf0;margin-left:4px}
 .up{color:var(--ret);font-weight:700}.down{color:var(--risk);font-weight:700}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.tcard{background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-top:6px solid #9aa7b3}
+.tcard.lobby{border-top-color:var(--gold)}.tcard.play,.tcard.setup{border-top-color:var(--ret)}.tcard.over{border-top-color:var(--strat)}
+.tcard .num{font-size:30px;font-weight:900;letter-spacing:2px}
+.chip{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;background:#e6ebf0;margin-left:6px;vertical-align:middle}
+.qr{margin:8px 0}.qr img,.qr canvas{display:block}
 </style>
 </head>
 <body>
@@ -70,6 +76,7 @@ th{color:var(--muted);font-weight:600}
 <div id="toast" class="toast"></div>
 
 <!-- Firebase（線上模式用）：與總舖師、正負數大富翁共用 tsongposai 專案 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
@@ -376,7 +383,7 @@ function act(s, pid, a) {
     case 'join': {
       if (s.phase !== 'lobby') return me ? null : '遊戲已開始，不能加入';
       if (me) { me.name = a.name; return null; }
-      if (Object.keys(s.players).length >= 18) return '人數已滿';
+      if (Object.keys(s.players).length >= 6) return '這一桌已滿 6 人，請加入別桌';
       const used = Object.values(s.players).map(p => p.color);
       s.players[pid] = { id: pid, name: (a.name || '玩家').slice(0, 10), color: COLORS.find(c => !used.includes(c)) || '#333',
         route: 0, pos: 0, cash: START_CASH, cards: [], strat: [], offer: [], ready: false, out: false, stratRound: 0, divRound: 0, laps: 0 };
@@ -625,9 +632,10 @@ async function send(a, pidOverride) {
 
 // ---------- 首頁 ----------
 function home() {
-  mode = null; S = null; if (roomRef) { roomRef.off(); roomRef = null; }
+  closeDash(); mode = null; S = null; if (roomRef) { roomRef.off(); roomRef = null; }
   const name = localStorage.getItem('caifu_name') || '';
   const hasLocal = !!localStorage.getItem('caifu_local');
+  const hasTeacher = (teacherRooms().length > 0);
   $('#app').innerHTML = `<div class="home">
   <div class="hero"><h1>💹 財富之道</h1><div>投資理財桌遊・線上版</div></div>
   <div class="panel">
@@ -637,10 +645,12 @@ function home() {
     <div class="row" style="margin-top:10px"><button class="pri" id="join" style="flex:1">加入</button></div>
   </div>
   <div class="panel">
-    <h2>老師：建立房間</h2>
-    <label class="row"><input type="checkbox" id="play"> 我也要下場玩（不勾選＝只看大螢幕）</label>
-    <div class="row" style="margin-top:10px"><button class="ok" id="create" style="flex:1">建立新房間</button></div>
-    ${fbReady() ? '' : '<p class="muted">⚠️ 尚未填入 Firebase 設定，線上模式無法使用；可先用下方單機模式試玩。</p>'}
+    <h2>老師：開桌</h2>
+    <div class="row">開 <input type="number" id="tn" min="1" max="12" value="4" style="width:70px"> 桌（每桌 2–6 人，各用自己的裝置），每局
+    <input type="number" id="tr" min="1" max="20" value="10" style="width:70px"> 輪</div>
+    <div class="row" style="margin-top:10px"><button class="ok" id="create" style="flex:1">開桌</button>
+    ${hasTeacher ? '<button id="dash">回到老師控制台</button>' : ''}</div>
+    ${fbReady() ? '' : '<p class="muted">⚠️ Firebase 沒有載入，線上模式無法使用；可先用下方單機模式試玩。</p>'}
   </div>
   <div class="panel">
     <h2>單機模式（一台裝置輪流玩／試玩）</h2>
@@ -653,20 +663,98 @@ function home() {
   };
   $('#create').onclick = async () => {
     if (!connect()) return;
-    let code;
-    for (let i = 0; i < 20; i++) {
-      code = String(1000 + Math.floor(Math.random() * 9000));
-      const snap = await fb.ref(roomPath(code)).get();
-      const v = snap.val();
-      if (!v || Date.now() - (v.t || 0) > 12 * 3600e3) break;
-    }
-    await fb.ref(roomPath(code)).set(E.clean(E.newGame(code, myId)));
-    const n = $('#play').checked ? ($('#nm').value.trim() || prompt('你的名字') || '老師') : '';
-    goOnline(code, n);
+    const n = Math.min(12, Math.max(1, +$('#tn').value || 1)), r = Math.min(20, Math.max(1, +$('#tr').value || 10));
+    $('#create').disabled = true;
+    const rooms = [];
+    for (let i = 0; i < n; i++) rooms.push(await createRoom(r));
+    saveTeacher({ rooms, rounds: r });
+    openDashboard();
   };
+  if ($('#dash')) $('#dash').onclick = openDashboard;
   $('#local').onclick = () => { mode = 'local'; S = E.newGame('單機', 'local'); render(); };
   if (hasLocal) $('#resume').onclick = () => { mode = 'local'; S = E.norm(JSON.parse(localStorage.getItem('caifu_local'))); render(); };
 }
+// ---------- 老師控制台（一次開好幾桌） ----------
+function teacherRooms() { try { return (JSON.parse(localStorage.getItem('caifu_teacher')) || {}).rooms || []; } catch (e) { return []; } }
+function loadTeacher() { try { return JSON.parse(localStorage.getItem('caifu_teacher')) || { rooms: [], rounds: 10 }; } catch (e) { return { rooms: [], rounds: 10 }; } }
+function saveTeacher(T) { localStorage.setItem('caifu_teacher', JSON.stringify(T)); }
+async function createRoom(rounds) {
+  for (let i = 0; i < 50; i++) {
+    const code = String(1000 + Math.floor(Math.random() * 9000));
+    const v = (await fb.ref(roomPath(code)).get()).val();
+    if (v && Date.now() - (v.t || 0) < 12 * 3600e3) continue;
+    const g = E.newGame(code, myId); g.maxRounds = rounds || 10;
+    await fb.ref(roomPath(code)).set(E.clean(g));
+    return code;
+  }
+  throw new Error('找不到可用房號');
+}
+const DASH = { offs: [], data: {} };
+function closeDash() { DASH.offs.forEach(f => f()); DASH.offs = []; }
+function leaveRoom() { if (roomRef) { roomRef.off(); roomRef = null; } }
+const joinURL = code => { const u = new URL(location.href); u.search = '?room=' + code; u.hash = ''; return u.toString(); };
+function openDashboard() {
+  if (!connect()) return;
+  leaveRoom(); closeDash(); mode = 'dash'; S = null;
+  history.replaceState(null, '', location.pathname);
+  const T = loadTeacher(); DASH.data = {};
+  T.rooms.forEach(code => {
+    const ref = fb.ref(roomPath(code));
+    const h = sn => { DASH.data[code] = sn.val() ? E.norm(sn.val()) : 'gone'; renderDash(); };
+    ref.on('value', h); DASH.offs.push(() => ref.off('value', h));
+  });
+  renderDash();
+}
+async function hostAct(code, a) {
+  let err = null;
+  await fb.ref(roomPath(code)).transaction(cur => {
+    if (cur === null) return cur;
+    const s = E.norm(cur); err = E.act(s, myId, a);
+    if (err) return; s.t = Date.now(); return E.clean(s);
+  });
+  if (err) toast(`第 ${code} 桌：${err}`);
+}
+function renderDash() {
+  if (mode !== 'dash') return;
+  const T = loadTeacher();
+  const ST = { lobby: '等待中', setup: '分配資金中', play: '進行中', over: '已結束' };
+  const cards = T.rooms.map(code => {
+    const g = DASH.data[code];
+    if (!g) return `<article class="tcard"><h3>第 ${code} 桌</h3><p class="muted">讀取中…</p></article>`;
+    if (g === 'gone') return `<article class="tcard"><h3>第 ${code} 桌</h3><p class="muted">這一桌已不存在</p><button data-del="${code}">從清單移除</button></article>`;
+    const ps = Object.values(g.players);
+    let body = '';
+    if (g.phase === 'lobby') {
+      body = `<div class="qr" id="qr${code}"></div><p>已加入 ${ps.length} / 6：${ps.map(p => `${esc(p.name)}${p.route ? `（${p.route}）` : '<span class="muted">（未選路線）</span>'}`).join('、') || '<span class="muted">還沒有人</span>'}</p>`;
+    } else {
+      const order = g.order.length ? g.order.map(id => g.players[id]) : ps;
+      const cur = g.phase === 'play' ? E.cur(g) : null;
+      body = `<p>${g.phase === 'over' ? '<b>已結束</b>' : g.phase === 'setup' ? '學生正在分配 1000 元…' : `第 <b>${g.round}</b> / ${g.maxRounds} 輪・輪到 <b>${esc(cur.name)}</b>`}・風險池 ${g.pool} 元</p>
+        <table>${order.sort((a, b) => g.phase === 'over' ? E.total(b) - E.total(a) : 0).map(p => `<tr style="${p.out ? 'opacity:.45' : ''}"><td><span class="tok" style="display:inline-flex;background:${p.color}">${esc(p.name.slice(-1))}</span> ${esc(p.name)}${g.phase === 'setup' ? (p.ready ? ' ✅' : ' ⏳') : ''}</td><td>路線 ${p.route}</td><td><b>${E.total(p)}</b></td></tr>`).join('')}</table>`;
+    }
+    const lobbyBad = ps.length < 2 || ps.some(p => !p.route);
+    return `<article class="tcard ${g.phase}"><div class="row"><span>第</span><span class="num">${code}</span><span>桌</span><span class="chip">${ST[g.phase]}</span></div>${body}
+      <div class="row" style="margin-top:8px">${g.phase === 'lobby' ? `<button class="ok" data-start="${code}" ${lobbyBad ? 'disabled title="至少 2 人且都選好路線"' : ''}>開始</button>` : ''}
+      <button data-view="${code}">放大／投影</button><button data-del="${code}">刪除</button></div></article>`;
+  }).join('');
+  $('#app').innerHTML = `<div class="top"><h1>💹 財富之道・老師控制台</h1><span class="pill">學生打開這個網頁輸入房號，或掃 QR Code 加入</span></div>
+    <div class="panel row"><button class="ok" id="dAll">全部開始</button><button id="dAdd">＋ 再開一桌</button><button id="dHome">回首頁</button>
+    <span class="muted">每局 ${T.rounds || 10} 輪・每桌 2–6 人、每條路線最多 3 人</span></div>
+    <div class="tgrid">${cards || '<p>還沒有開桌。</p>'}</div>`;
+  T.rooms.forEach(code => { const el = document.getElementById('qr' + code); if (el && window.QRCode) { try { new QRCode(el, { text: joinURL(code), width: 120, height: 120 }); } catch (e) {} } });
+  document.querySelectorAll('[data-start]').forEach(b => (b.onclick = () => hostAct(b.dataset.start, { type: 'start' })));
+  document.querySelectorAll('[data-view]').forEach(b => (b.onclick = () => { closeDash(); goOnline(b.dataset.view, ''); }));
+  document.querySelectorAll('[data-del]').forEach(b => (b.onclick = async () => {
+    const code = b.dataset.del;
+    if (!confirm(`刪除第 ${code} 桌？這一桌的進度會被清除，學生畫面也會關閉。`)) return;
+    if (DASH.data[code] !== 'gone') await fb.ref(roomPath(code)).remove();
+    T.rooms = T.rooms.filter(c => c !== code); saveTeacher(T); openDashboard();
+  }));
+  $('#dAll').onclick = () => T.rooms.forEach(c => { const g = DASH.data[c]; if (g && g !== 'gone' && g.phase === 'lobby' && Object.keys(g.players).length >= 2) hostAct(c, { type: 'start' }); });
+  $('#dAdd').onclick = async () => { const code = await createRoom(T.rounds); T.rooms.push(code); saveTeacher(T); openDashboard(); };
+  $('#dHome').onclick = () => { closeDash(); home(); };
+}
+
 function connect() {
   if (!fbReady()) { toast('尚未設定 Firebase，請先用單機模式'); return false; }
   if (!fb) { firebase.initializeApp(FIREBASE_CONFIG); fb = firebase.database(); }
@@ -678,11 +766,11 @@ async function goOnline(code, name) {
   roomRef = fb.ref(roomPath(code));
   const snap = await roomRef.get();
   if (!snap.val()) { toast('找不到這個房間'); return home(); }
-  history.replaceState(null, '', '#' + code);
+  history.replaceState(null, '', '?room=' + code);
   let joined = false;
   roomRef.on('value', sn => {
     const v = sn.val();
-    if (!v) { toast('房間已關閉'); return home(); }
+    if (!v) { toast('這一桌已關閉'); return S && S.host === myId ? openDashboard() : home(); }
     S = E.norm(v);
     if (!joined) { joined = true; if (name && (S.phase === 'lobby' || S.players[myId])) send({ type: 'join', name }); }
     render();
@@ -700,7 +788,7 @@ function render() {
     ${S.phase === 'play' || S.phase === 'over' ? `<span class="pill">第 <b>${Math.min(S.round, S.maxRounds)}</b> / ${S.maxRounds} 輪</span>` : ''}
     ${p ? `<span class="pill">輪到：<b>${esc(p.name)}</b></span>` : ''}
     <span class="pill pool">風險池 ${S.pool} 元</span>
-    <span style="margin-left:auto"></span><button id="exit">離開</button></div>`;
+    <span style="margin-left:auto"></span>${mode === 'online' && S.host === myId ? '<button id="exit">← 回老師控制台</button>' : '<button id="exit">離開</button>'}</div>`;
   if (S.phase === 'lobby') h += lobbyView();
   else if (S.phase === 'setup') h += `<div class="grid"><div>${boardView()}</div><div>${panelWrap()}${playersView()}</div></div>`;
   else {
@@ -719,7 +807,10 @@ function render() {
     lastPanelKey = key;
     bindActions(vid);
   }
-  $('#exit').onclick = () => { if (confirm('確定離開？（線上遊戲可用同一台裝置再次輸入房號回來）')) { location.hash = ''; home(); } };
+  $('#exit').onclick = () => {
+    if (mode === 'online' && S.host === myId) { leaveRoom(); return openDashboard(); }
+    if (confirm('確定離開？（可用同一台裝置再次輸入房號回到座位）')) { history.replaceState(null, '', location.pathname); home(); }
+  };
   const lg = $('.log'); if (lg) lg.scrollTop = lg.scrollHeight;
 }
 function panelKey(vid) {
@@ -734,7 +825,7 @@ function lobbyView() {
   const isHost = mode === 'local' || S.host === myId;
   const me = S.players[myId];
   let h = `<div class="panel"><h2>等待室</h2>`;
-  if (mode === 'online') h += `<p>請同學打開這個網頁，輸入房號 <b style="font-size:28px">${esc(S.code)}</b> 加入。</p>`;
+  if (mode === 'online') h += `<p>請同學打開這個網頁，輸入房號 <b style="font-size:28px">${esc(S.code)}</b> 加入（每桌最多 6 人）。</p>`;
   else h += `<div class="row"><input id="lname" placeholder="玩家名字" maxlength="10"><button class="pri" id="ladd">新增玩家</button></div>`;
   h += `</div>`;
   if (mode === 'online' && me) h += `<div class="panel"><h2>選擇你的路線（每條最多 3 人）</h2>${routePicker(me.route, 'r')}</div>`;
@@ -923,11 +1014,10 @@ function bindActions(vid) {
   on('[data-strat]', el => { const k = el.dataset.strat; const s = $('#st-' + k); send({ type: 'strat', s: k, u: s ? +s.value : 0 }); });
 }
 
-// 網址帶房號直接進入
-if (/^#\d{4}$/.test(location.hash)) {
-  home(); const n = localStorage.getItem('caifu_name');
-  $('#code').value = location.hash.slice(1);
-} else home();
+// 網址帶房號（掃 QR Code）直接帶入
+const qRoom = new URLSearchParams(location.search).get('room') || (location.hash.match(/^#(\d{4})$/) || [])[1];
+home();
+if (qRoom && /^\d{4}$/.test(qRoom)) { $('#code').value = qRoom; $('#nm').focus(); }
 </script>
 </body>
 </html>
