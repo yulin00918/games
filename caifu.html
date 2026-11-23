@@ -121,14 +121,14 @@ const BOARD = {
   6: '0ES_R_TES_RT_ES',
 };
 const RISK = [
-  { k: 'recess', n: '經濟衰退', c: 4, t: 'stock', p: -10, d: '股票類 −10%' },
+  { k: 'recess', n: '經濟衰退', c: 4, t: 'stock', p: -15, d: '股票類 −15%' },
   { k: 'crisis', n: '金融危機', c: 4, t: 'all', p: -10, d: '所有投資 −10%' },
-  { k: 'bust', n: '企業倒閉', c: 3, t: 'randstock', p: -20, d: '擲骰決定一種股票 −20%' },
-  { k: 'bubble', n: '市場泡沫', c: 3, t: 'stock', p: -15, d: '股票類 −15%' },
+  { k: 'bust', n: '企業倒閉', c: 3, t: 'randstock', p: -30, d: '擲骰決定一種股票 −30%' },
+  { k: 'bubble', n: '市場泡沫', c: 3, t: 'stock', p: -25, d: '股票類 −25%' },
   { k: 'disaster', n: '自然災害', c: 3, t: 'estate', p: -15, d: '房地產類 −15%' },
   { k: 'policy', n: '政府政策變動', c: 3, t: 'rand2', p: -10, d: '隨機兩種投資 −10%' },
   { k: 'vol', n: '市場波動', c: 4, t: 'all', p: -5, d: '所有投資 −5%' },
-  { k: 'infl', n: '通貨膨脹', c: 3, t: 'cashbond', p: -10, d: '現金卡與債券類 −10%' },
+  { k: 'infl', n: '通貨膨脹', c: 3, t: 'cashbond', p: -10, d: '現金卡、債券類與手上現金 −10%' },
   { k: 'rate', n: '利率上升', c: 3, t: 'bond', p: -15, d: '債券類 −15%' },
 ];
 const EVENT = [
@@ -164,6 +164,9 @@ const STRAT = [
 const BYK = {};
 [RISK, EVENT, RET, STRAT].forEach(a => a.forEach(c => (BYK[c.k] = c)));
 const MAX_CARDS = 6, MAX_STRAT = 3, START_CASH = 1000;
+// 每輪結束：市場自然成長（%）與手上現金被通膨侵蝕（%）
+const GROWTH = { stock: 4, estate: 4, bond: 3, gold: 2, cash: 2 };
+let CASH_DECAY = 2;
 const COLORS = ['#e53935', '#1e88e5', '#43a047', '#fb8c00', '#8e24aa', '#00897b', '#6d4c41', '#d81b60', '#3949ab', '#7cb342',
   '#f4511e', '#5e35b1', '#00acc1', '#c0ca33', '#546e7a', '#ffb300', '#ec407a', '#26a69a'];
 
@@ -327,6 +330,9 @@ function applyRisk(s) {
       const pct = Math.min(0, pd.p + red);
       if (pct) sum += change(s, q, x, pct);
     });
+    if (pd.t === 'cashbond' && q.cash > 0) {
+      const d = Math.round(q.cash * pd.p / 100); q.cash += d; s.pool += -d; sum += d;
+    }
     if (sum) log(s, `　${q.name} ${sum} 元 → 風險池`);
   });
   s.pending = null;
@@ -360,6 +366,14 @@ function endGame(s) {
   s.phase = 'over'; s.pending = null;
   log(s, '🏆 遊戲結束！');
 }
+function roundEnd(s) {
+  log(s, `📈 第 ${s.round} 輪結束：市場成長（股票 +${GROWTH.stock}%、房地產 +${GROWTH.estate}%、債券 +${GROWTH.bond}%、黃金與現金卡 +${GROWTH.gold}%），手上現金被通膨吃掉 ${CASH_DECAY}%`);
+  Object.values(s.players).filter(q => !q.out).forEach(q => {
+    let up = 0; q.cards.forEach(c => (up += change(s, q, c, GROWTH[INVMAP[c.t].cat])));
+    const d = Math.round(q.cash * CASH_DECAY / 100); q.cash -= d; s.pool += d;
+    if (up || d) log(s, `　${q.name} 投資 +${up}，現金 −${d}`);
+  });
+}
 function nextTurn(s) {
   checkOut(s);
   const alive = s.order.filter(id => !s.players[id].out);
@@ -367,7 +381,7 @@ function nextTurn(s) {
   let i = s.turnIdx;
   for (let n = 0; n < s.order.length; n++) {
     i++;
-    if (i >= s.order.length) { i = 0; s.round++; if (s.round > s.maxRounds) return endGame(s); log(s, `—— 第 ${s.round} 輪 ——`); }
+    if (i >= s.order.length) { i = 0; roundEnd(s); s.round++; if (s.round > s.maxRounds) return endGame(s); log(s, `—— 第 ${s.round} 輪 ——`); }
     if (!s.players[s.order[i]].out) break;
   }
   s.turnIdx = i; s.step = 'roll'; s.dice = 0; s.lastCard = null;
@@ -568,7 +582,7 @@ function act(s, pid, a) {
   return '未知的動作';
 }
 
-const ENGINE = { INV, INVMAP, CATN, ROUTES, BOARD, RISK, EVENT, RET, STRAT, BYK, MAX_CARDS, MAX_STRAT, START_CASH, newGame, norm, clean, act, total, cur };
+const ENGINE = { GROWTH, setDecay: v => (CASH_DECAY = v), INV, INVMAP, CATN, ROUTES, BOARD, RISK, EVENT, RET, STRAT, BYK, MAX_CARDS, MAX_STRAT, START_CASH, newGame, norm, clean, act, total, cur };
 
 
 </script>
@@ -839,7 +853,7 @@ function lobbyView() {
   if (isHost) h += `<div class="panel row"><label>輪數 <input type="number" id="rounds" min="1" max="20" value="${S.maxRounds}"></label>
      <button class="ok big" id="start">開始遊戲</button></div>`;
   else h += `<div class="panel muted">等待老師開始遊戲…</div>`;
-  h += `<div class="panel"><h3>路線主題投資</h3>${Object.entries(E.ROUTES).map(([r, t]) => `路線 ${r}：${t.map(k => E.INVMAP[k].n).join('、')}`).join('<br>')}<p class="muted">完成一圈時，你持有的路線主題投資 +10%。</p></div>`;
+  h += `<div class="panel"><h3>路線主題投資</h3>${Object.entries(E.ROUTES).map(([r, t]) => `路線 ${r}：${t.map(k => E.INVMAP[k].n).join('、')}`).join('<br>')}<p class="muted">完成一圈時，你持有的路線主題投資 +10%。<br>每輪結束：投資會自然成長（股票、房地產 +4%，債券 +3%，黃金、現金卡 +2%），但手上現金會被通膨吃掉 2%。</p></div>`;
   return h;
 }
 function routePicker(curR, attr) {
@@ -960,7 +974,7 @@ function actionsView(vid) {
   if (S.step === 'roll') return `${banner}<div class="center"><h2>輪到你了！</h2><button class="pri big" id="roll">🎲 擲骰子</button></div>`;
   // 交易時間
   const usable = me.strat.filter(k => !E.BYK[k].def || E.BYK[k].own);
-  let h = `${banner}<h2>交易時間</h2><p class="muted">可以賣出、加碼或使用策略卡，做完按「結束回合」。</p>`;
+  let h = `${banner}<h2>交易時間</h2><p class="muted">可以賣出、加碼或使用策略卡，做完按「結束回合」。提醒：手上現金每輪會被通膨吃掉 2%。</p>`;
   if (me.cards.length) {
     h += `<table><tr><th>投資卡</th><th>金額</th><th></th></tr>${me.cards.map(c => `<tr><td>${E.INVMAP[c.t].n}${c.long ? ' 🔒' : ''}</td><td>${c.amt}</td>
       <td class="row"><button data-sell="${c.u}" ${c.long ? 'disabled' : ''}>賣出</button><input type="number" step="50" min="50" value="50" id="add-${c.u}" style="width:80px"><button data-add="${c.u}">加碼</button></td></tr>`).join('')}</table>`;
