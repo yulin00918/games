@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>財富之道｜線上投資桌遊</title>
+<style>
+:root{--ink:#22313f;--muted:#6b7a89;--line:#d5dce3;--bg:#f4f6f9;--card:#fff;
+--risk:#c2527a;--event:#1565c0;--ret:#1b8a5a;--strat:#8e3f86;--inv:#e0633a;--gold:#f2c230}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:9px 14px;background:#e6ebf0;color:var(--ink);font-weight:600}
+button:hover{filter:brightness(.95)}button:disabled{opacity:.45;cursor:default}
+button.pri{background:var(--event);color:#fff}button.ok{background:var(--ret);color:#fff}button.warn{background:var(--risk);color:#fff}
+button.big{font-size:22px;padding:16px 34px;border-radius:14px}
+input,select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+input[type=number]{width:96px}
+.wrap{max-width:1280px;margin:0 auto;padding:12px}
+.panel{background:var(--card);border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:12px}
+h1{margin:0;font-size:24px}h2{margin:0 0 10px;font-size:18px}h3{margin:6px 0;font-size:16px}
+.muted{color:var(--muted)}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.top{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:#22313f;color:#fff;padding:10px 16px;border-radius:14px;margin-bottom:12px}
+.top .pill{background:rgba(255,255,255,.14);padding:5px 12px;border-radius:999px}
+.top .pool{background:var(--gold);color:#3a2c00;font-weight:700}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:12px}
+@media(max-width:980px){.grid{grid-template-columns:1fr}}
+.board{display:flex;flex-direction:column;gap:5px;overflow-x:auto}
+.lane{display:grid;grid-template-columns:34px repeat(15,minmax(44px,1fr));gap:2px;min-width:760px}
+.lane .no{font-weight:900;font-size:20px;display:flex;align-items:center;justify-content:center;background:#fff;border:2px solid #333;border-radius:4px 4px 12px 12px}
+.cell{position:relative;min-height:58px;border:1px solid #8a97a3;padding:3px 2px;text-align:center;font-size:12px;font-weight:800;line-height:1.15;display:flex;flex-direction:column;justify-content:flex-start}
+.cell .lb{white-space:pre-line}
+.cell.R .lb{color:var(--risk)}.cell.E .lb{color:var(--event)}.cell.T .lb{color:var(--ret)}.cell.S .lb{color:var(--strat)}.cell._ .lb{color:#8895a0;font-weight:600}
+.cell.start .lb{font-size:15px;color:#222}
+.cell.here{outline:3px solid #22313f;outline-offset:-3px}
+.toks{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:auto}
+.tok{width:20px;height:20px;border-radius:50%;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
+.lanehead{font-size:12px;color:var(--muted);margin:2px 0 0 38px}
+.cards{display:flex;flex-wrap:wrap;gap:8px}
+.icard{border-radius:10px;padding:8px 10px;color:#fff;min-width:120px;position:relative}
+.icard .t{font-weight:800}.icard .a{font-size:20px;font-weight:800}
+.icard .d{font-size:12px;opacity:.9}
+.icard.sel{outline:4px solid var(--gold)}
+.icard.click{cursor:pointer}
+.cat-stock{background:#d2553a}.cat-bond{background:#2f6db5}.cat-estate{background:#3f8f5b}.cat-gold{background:#b8901a}.cat-cash{background:#5b6b7a}
+.scard{background:var(--strat);color:#fff;border-radius:10px;padding:8px 10px;max-width:220px;font-size:13px}
+.scard b{font-size:15px}
+.big-card{border-radius:14px;padding:14px;color:#fff;text-align:center}
+.big-card .n{font-size:24px;font-weight:900}.big-card .d{margin-top:4px}
+table{border-collapse:collapse;width:100%}td,th{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}
+th{color:var(--muted);font-weight:600}
+.log{max-height:260px;overflow:auto;font-size:13px;line-height:1.6}
+.log div{border-bottom:1px dashed #e4e8ec}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#22313f;color:#fff;padding:12px 20px;border-radius:12px;z-index:9;display:none;max-width:90vw}
+.banner{background:#fff4c7;border:2px solid var(--gold);border-radius:12px;padding:10px 14px;font-weight:700;margin-bottom:10px}
+.dice{font-size:40px;line-height:1}
+.center{text-align:center}
+.home{max-width:520px;margin:40px auto}
+.home .panel{padding:22px}
+.hero{background:linear-gradient(135deg,#1565c0,#8e3f86);color:#fff;border-radius:18px;padding:22px;margin-bottom:14px;text-align:center}
+.hero h1{font-size:32px}
+.routes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.routes button{text-align:left;font-weight:600;padding:10px}
+.routes button.on{background:var(--event);color:#fff}
+.tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:999px;background:#e6ebf0;margin-left:4px}
+.up{color:var(--ret);font-weight:700}.down{color:var(--risk);font-weight:700}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+<div id="toast" class="toast"></div>
+
+<!-- Firebase（線上模式用）：與總舖師、正負數大富翁使用同一個 Firebase 專案即可 -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+// ★★★ 請把這裡換成你 Firebase 專案的設定（可直接從 monopoly.html 複製 firebaseConfig）★★★
+const FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "",
+  databaseURL: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
+const DB_PATH = 'caifu/rooms'; // 資料存放位置
+</script>
+<script>
+// ===== 《財富之道》遊戲引擎（純邏輯，無畫面） =====
+const INV = [
+  { k: 'tech', n: '科技股', cat: 'stock', c: 12 },
+  { k: 'med', n: '醫療股', cat: 'stock', c: 12 },
+  { k: 'cons', n: '消費品股', cat: 'stock', c: 12 },
+  { k: 'gov', n: '政府債券', cat: 'bond', c: 10 },
+  { k: 'corp', n: '公司債券', cat: 'bond', c: 10 },
+  { k: 'home', n: '住宅房地產', cat: 'estate', c: 10 },
+  { k: 'comm', n: '商業房地產', cat: 'estate', c: 10 },
+  { k: 'gold', n: '黃金', cat: 'gold', c: 10 },
+  { k: 'cash', n: '現金', cat: 'cash', c: 10 },
+];
+const INVMAP = Object.fromEntries(INV.map(t => [t.k, t]));
+const CATN = { stock: '股票類', bond: '債券類', estate: '房地產類', gold: '黃金', cash: '現金' };
+const ROUTES = {
+  1: ['tech', 'med'], 2: ['cons', 'gov'], 3: ['corp', 'home'],
+  4: ['comm', 'gold'], 5: ['cash', 'tech'], 6: ['med', 'cons'],
+};
+// 0 = 起點；1..14 = 第2..15格。S策略 _空格 E普通事件 R風險 T回報
+const BOARD = {
+  1: '0S_E_RT_SE_R_T_',
+  2: '0R_ES_T_SER_ST_',
+  3: '0TE_S_RE_ST_RS_',
+  4: '0ES_RT_SE_R_TS_',
+  5: '0S_RE_TS_ERS_T_',
+  6: '0ES_R_TES_RT_ES',
+};
+const RISK = [
+  { k: 'recess', n: '經濟衰退', c: 4, t: 'stock', p: -10, d: '股票類 −10%' },
+  { k: 'crisis', n: '金融危機', c: 4, t: 'all', p: -10, d: '所有投資 −10%' },
+  { k: 'bust', n: '企業倒閉', c: 3, t: 'randstock', p: -20, d: '擲骰決定一種股票 −20%' },
+  { k: 'bubble', n: '市場泡沫', c: 3, t: 'stock', p: -15, d: '股票類 −15%' },
+  { k: 'disaster', n: '自然災害', c: 3, t: 'estate', p: -15, d: '房地產類 −15%' },
+  { k: 'policy', n: '政府政策變動', c: 3, t: 'rand2', p: -10, d: '隨機兩種投資 −10%' },
+  { k: 'vol', n: '市場波動', c: 4, t: 'all', p: -5, d: '所有投資 −5%' },
+  { k: 'infl', n: '通貨膨脹', c: 3, t: 'cashbond', p: -10, d: '現金卡與債券類 −10%' },
+  { k: 'rate', n: '利率上升', c: 3, t: 'bond', p: -15, d: '債券類 −15%' },
+];
+const EVENT = [
+  { k: 'boom', n: '經濟繁榮', c: 3, t: 'stock', p: 10, d: '股票類 +10%（所有玩家）' },
+  { k: 'techup', n: '科技突破', c: 2, t: 'tech', p: 20, d: '科技股 +20%（所有玩家）' },
+  { k: 'medup', n: '醫療技術進步', c: 2, t: 'med', p: 20, d: '醫療股 +20%（所有玩家）' },
+  { k: 'estup', n: '房地產市場上漲', c: 2, t: 'estate', p: 15, d: '房地產類 +15%（所有玩家）' },
+  { k: 'profit', n: '企業盈利', c: 2, t: 'randstock', p: 15, d: '擲骰決定一種股票 +15%（所有玩家）' },
+  { k: 'goodpol', n: '政策利好', c: 2, t: 'rand2', p: 10, d: '隨機兩種投資 +10%（所有玩家）' },
+  { k: 'opp', n: '獲得新的投資機會', c: 3, draw: 1, d: '抽 1 張投資卡，可買入' },
+  { k: 'survey', n: '市場調查', c: 2, draw: 2, d: '抽 2 張投資卡，選 1 張買入' },
+  { k: 'advice', n: '投資建議', c: 2, draw: 3, d: '抽 3 張投資卡，選 1 張買入' },
+];
+const RET = [
+  { k: 'high', n: '高回報', c: 4, p: 20, d: '選自己 1 張投資卡 +20%' },
+  { k: 'mid', n: '中等回報', c: 5, p: 10, d: '選自己 1 張投資卡 +10%' },
+  { k: 'low', n: '低回報', c: 5, p: 5, d: '選自己 1 張投資卡 +5%' },
+  { k: 'hrhr', n: '高風險高回報', c: 3, d: '可抽 1 張投資卡買入 100–300 元，擲骰：1–2 −50%、3–4 +20%、5–6 +50%' },
+  { k: 'long', n: '長期投資回報', c: 3, d: '抽 2 張選 1 張買入，長期持有不能賣，結束時 +30%' },
+];
+const STRAT = [
+  { k: 'div', n: '分散投資', c: 3, def: true, own: true, d: '本輪剩下時間，你每張卡的損失少 10 個百分點' },
+  { k: 'addStock', n: '增持股票', c: 2, cat: 'stock', p: 15, d: '你 1 張股票類 +15%' },
+  { k: 'redStock', n: '減持股票', c: 2, def: true, cat: 'stock', red: 10, d: '防守：1 張股票類這次損失少 10 個百分點' },
+  { k: 'addBond', n: '增持債券', c: 2, cat: 'bond', p: 10, d: '你 1 張債券類 +10%' },
+  { k: 'redBond', n: '減持債券', c: 2, def: true, cat: 'bond', red: 5, d: '防守：1 張債券類這次損失少 5 個百分點' },
+  { k: 'addEstate', n: '增持房地產', c: 2, cat: 'estate', p: 15, d: '你 1 張房地產類 +15%' },
+  { k: 'redEstate', n: '減持房地產', c: 2, def: true, cat: 'estate', red: 10, d: '防守：1 張房地產類這次損失少 10 個百分點' },
+  { k: 'cashKing', n: '現金為王', c: 1, def: true, d: '防守：賣出全部投資卡（長期持有除外）轉為現金，這次風險不扣' },
+  { k: 'realloc', n: '重新分配資產', c: 2, d: '自己回合：抽 2 張投資卡，選 1 張買入' },
+  { k: 'restructure', n: '資本重組', c: 2, d: '自己回合：賣出 1 張投資卡，再抽 2 張選 1 張買入' },
+];
+const BYK = {};
+[RISK, EVENT, RET, STRAT].forEach(a => a.forEach(c => (BYK[c.k] = c)));
+const MAX_CARDS = 6, MAX_STRAT = 3, START_CASH = 1000;
+const COLORS = ['#e53935', '#1e88e5', '#43a047', '#fb8c00', '#8e24aa', '#00897b', '#6d4c41', '#d81b60', '#3949ab', '#7cb342',
+  '#f4511e', '#5e35b1', '#00acc1', '#c0ca33', '#546e7a', '#ffb300', '#ec407a', '#26a69a'];
+
+const rnd = n => Math.floor(Math.random() * n);
+const die = () => rnd(6) + 1;
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function build(defs) { const a = []; defs.forEach(d => { for (let i = 0; i < d.c; i++) a.push(d.k); }); return shuffle(a); }
+
+function newGame(code, host) {
+  return {
+    v: 1, code, phase: 'lobby', host, maxRounds: 10,
+    players: {}, order: [], turnIdx: 0, round: 1, step: 'roll',
+    decks: { inv: build(INV), risk: build(RISK), event: build(EVENT), ret: build(RET), strat: build(STRAT) },
+    disc: { risk: [], event: [], ret: [], strat: [] },
+    pool: 0, pending: null, dice: 0, lastCard: null, lap: false, seq: 1, log: [], t: Date.now(),
+  };
+}
+
+// Firebase 會丟掉空陣列／空物件，讀回來時補齊
+function norm(s) {
+  if (!s) return s;
+  s.players = s.players || {};
+  s.order = s.order || [];
+  s.decks = s.decks || {}; s.disc = s.disc || {};
+  ['inv', 'risk', 'event', 'ret', 'strat'].forEach(k => (s.decks[k] = s.decks[k] || []));
+  ['risk', 'event', 'ret', 'strat'].forEach(k => (s.disc[k] = s.disc[k] || []));
+  s.log = s.log || [];
+  Object.values(s.players).forEach(p => { p.cards = p.cards || []; p.strat = p.strat || []; p.offer = p.offer || []; });
+  if (s.pending) {
+    s.pending.options = s.pending.options || [];
+    s.pending.wait = s.pending.wait || [];
+    s.pending.resp = s.pending.resp || {};
+    s.pending.types = s.pending.types || [];
+  }
+  return s;
+}
+const clean = s => JSON.parse(JSON.stringify(s));
+
+function log(s, msg) { s.log.push(msg); if (s.log.length > 80) s.log.splice(0, s.log.length - 80); }
+const cur = s => s.players[s.order[s.turnIdx]];
+const total = p => p.cash + p.cards.reduce((a, c) => a + c.amt, 0);
+const nm = t => INVMAP[t].n;
+function draw(s, deck) {
+  if (!s.decks[deck].length) { s.decks[deck] = shuffle(s.disc[deck]); s.disc[deck] = []; }
+  return s.decks[deck].shift();
+}
+function drawInv(s, n) { const out = []; for (let i = 0; i < n && s.decks.inv.length; i++) out.push(s.decks.inv.shift()); return out; }
+const toBottom = (s, types) => types.forEach(t => s.decks.inv.push(t));
+function validAmt(a, min, max, cash) {
+  if (!Number.isInteger(a)) return '金額要是整數';
+  if (a < min) return `至少要放 ${min} 元`;
+  if (a % 50) return '金額要是 50 的倍數';
+  if (max && a > max) return `最多只能放 ${max} 元`;
+  if (a > cash) return '手上現金不夠';
+  return null;
+}
+function addCard(s, p, type, amt, long) { p.cash -= amt; p.cards.push({ u: s.seq++, t: type, a0: amt, amt, long: !!long }); }
+function sellCard(s, p, u) {
+  const i = p.cards.findIndex(c => c.u === u); if (i < 0) return null;
+  const c = p.cards[i]; p.cards.splice(i, 1); p.cash += c.amt; toBottom(s, [c.t]); return c;
+}
+function change(s, p, c, pct) {
+  const d = Math.round(c.amt * pct / 100);
+  c.amt += d; if (d < 0) s.pool += -d; return d;
+}
+// 哪些投資類型被影響
+function matchFn(t, types) {
+  if (t === 'all') return k => k !== 'cash';
+  if (t === 'cashbond') return k => k === 'cash' || INVMAP[k].cat === 'bond';
+  if (t === 'randstock' || t === 'rand2') return k => types.includes(k);
+  if (INVMAP[t]) return k => k === t;
+  return k => INVMAP[k].cat === t;
+}
+function pickTypes(s, t) {
+  if (t === 'randstock') { const d = die(); return { types: [d <= 2 ? 'tech' : d <= 4 ? 'med' : 'cons'], note: `擲骰 ${d}` }; }
+  if (t === 'rand2') {
+    const flipped = [], got = [];
+    let guard = 0;
+    while (got.length < 2 && s.decks.inv.length && guard++ < 96) {
+      const k = s.decks.inv.shift(); flipped.push(k);
+      if (k !== 'cash' && !got.includes(k)) got.push(k);
+    }
+    toBottom(s, flipped);
+    return { types: got, note: '翻牌決定' };
+  }
+  return { types: [], note: '' };
+}
+function descTarget(t, types) { return (t === 'randstock' || t === 'rand2') ? types.map(nm).join('、') : (INVMAP[t] ? nm(t) : t === 'all' ? '所有投資' : t === 'cashbond' ? '現金卡與債券類' : CATN[t]); }
+
+// ---------- 階段推進 ----------
+function startPlay(s) {
+  s.phase = 'play';
+  s.order = shuffle(Object.keys(s.players));
+  s.turnIdx = 0; s.round = 1; s.step = 'roll';
+  log(s, `🎲 遊戲開始！順序：${s.order.map(id => s.players[id].name).join(' → ')}`);
+}
+function landing(s, p) {
+  const sq = BOARD[p.route][p.pos];
+  if (sq === '_') {
+    const opts = drawInv(s, 3);
+    s.pending = { kind: 'pick', pid: p.id, options: opts, min: 100, why: '交易所（空格）：翻開 3 張，可買入 1 張' };
+  } else if (sq === 'S') {
+    const k = draw(s, 'strat'); p.strat.push(k); s.lastCard = { deck: 'strat', k };
+    log(s, `🃏 ${p.name} 抽到策略卡（已收入手中）`);
+    if (p.strat.length > MAX_STRAT) s.pending = { kind: 'discardStrat', pid: p.id };
+  } else if (sq === 'T') {
+    const k = draw(s, 'ret'); s.disc.ret.push(k); const c = BYK[k]; s.lastCard = { deck: 'ret', k };
+    log(s, `💰 ${p.name} 抽到回報卡「${c.n}」`);
+    if (c.p) {
+      if (p.cards.length) s.pending = { kind: 'boost', pid: p.id, pct: c.p, cat: '', why: `${c.n}：選 1 張投資卡 +${c.p}%` };
+      else log(s, '　沒有投資卡，這張卡無效');
+    } else if (k === 'hrhr') {
+      s.pending = { kind: 'pick', pid: p.id, options: drawInv(s, 1), min: 100, max: 300, after: 'hrhr', why: '高風險高回報：可買入這張卡（100–300 元），之後擲骰決定漲跌' };
+    } else if (k === 'long') {
+      s.pending = { kind: 'pick', pid: p.id, options: drawInv(s, 2), min: 100, after: 'long', why: '長期投資回報：選 1 張買入，長期持有到遊戲結束 +30%' };
+    }
+  } else if (sq === 'E') {
+    const k = draw(s, 'event'); s.disc.event.push(k); const c = BYK[k]; s.lastCard = { deck: 'event', k };
+    if (c.draw) {
+      log(s, `📢 ${p.name} 抽到普通事件卡「${c.n}」`);
+      s.pending = { kind: 'pick', pid: p.id, options: drawInv(s, c.draw), min: 100, why: `${c.n}：${c.d}` };
+    } else {
+      const { types, note } = pickTypes(s, c.t);
+      const f = matchFn(c.t, types);
+      log(s, `📢 ${p.name} 抽到普通事件卡「${c.n}」${note ? '（' + note + '）' : ''}：${descTarget(c.t, types)} +${c.p}%`);
+      Object.values(s.players).filter(q => !q.out).forEach(q => {
+        let sum = 0; q.cards.filter(x => f(x.t)).forEach(x => (sum += change(s, q, x, c.p)));
+        if (sum) log(s, `　${q.name} +${sum} 元`);
+      });
+    }
+  } else if (sq === 'R') {
+    const k = draw(s, 'risk'); s.disc.risk.push(k); const c = BYK[k]; s.lastCard = { deck: 'risk', k };
+    const { types, note } = pickTypes(s, c.t);
+    log(s, `⚠️ ${p.name} 抽到風險卡「${c.n}」${note ? '（' + note + '）' : ''}：${descTarget(c.t, types)} ${c.p}%`);
+    const f = matchFn(c.t, types);
+    const wait = Object.values(s.players).filter(q => !q.out && q.stratRound !== s.round
+      && q.cards.some(x => f(x.t)) && q.strat.some(sk => BYK[sk].def)).map(q => q.id);
+    s.pending = { kind: 'risk', k, t: c.t, p: c.p, types, wait, resp: {} };
+    if (!wait.length) applyRisk(s);
+  }
+}
+function applyRisk(s) {
+  const pd = s.pending; const f = matchFn(pd.t, pd.types);
+  Object.values(s.players).filter(q => !q.out).forEach(q => {
+    const r = pd.resp[q.id];
+    let note = '';
+    if (r && r.s) {
+      const sc = BYK[r.s];
+      q.strat.splice(q.strat.indexOf(r.s), 1); s.disc.strat.push(r.s); q.stratRound = s.round;
+      if (r.s === 'div') q.divRound = s.round;
+      if (r.s === 'cashKing') {
+        let got = 0; q.cards.filter(x => !x.long).map(x => x.u).forEach(u => (got += sellCard(s, q, u).amt));
+        note = `（現金為王：賣出換回 ${got} 元）`;
+      }
+      log(s, `🛡️ ${q.name} 使用「${sc.n}」${note}`);
+    }
+    let sum = 0;
+    q.cards.filter(x => f(x.t)).forEach(x => {
+      let red = q.divRound === s.round ? 10 : 0;
+      if (r && r.s && BYK[r.s].red && r.u === x.u) red += BYK[r.s].red;
+      const pct = Math.min(0, pd.p + red);
+      if (pct) sum += change(s, q, x, pct);
+    });
+    if (sum) log(s, `　${q.name} ${sum} 元 → 風險池`);
+  });
+  s.pending = null;
+}
+// 一個待處理事項結束後，接著做什麼
+function afterPending(s) {
+  if (s.pending) return;
+  const p = cur(s);
+  if (s.step === 'resolve') {
+    if (s.lap) {
+      s.lap = false;
+      const rt = ROUTES[p.route]; let sum = 0;
+      p.cards.filter(c => rt.includes(c.t)).forEach(c => (sum += change(s, p, c, 10)));
+      p.laps = (p.laps || 0) + 1;
+      log(s, `🏁 ${p.name} 完成路線 ${p.route} 一圈！路線紅利（${rt.map(nm).join('、')} +10%）：+${sum} 元`);
+      s.pending = { kind: 'route', pid: p.id };
+      return;
+    }
+    s.step = 'trade';
+  }
+}
+function checkOut(s) {
+  Object.values(s.players).forEach(q => {
+    if (!q.out && total(q) < 100) { q.out = true; log(s, `💥 ${q.name} 總資產低於 100 元，宣告破產`); }
+  });
+}
+function endGame(s) {
+  Object.values(s.players).forEach(q => q.cards.filter(c => c.long).forEach(c => {
+    const d = change(s, q, c, 30); log(s, `⏳ ${q.name} 長期持有 ${nm(c.t)} +30%：+${d} 元`);
+  }));
+  s.phase = 'over'; s.pending = null;
+  log(s, '🏆 遊戲結束！');
+}
+function nextTurn(s) {
+  checkOut(s);
+  const alive = s.order.filter(id => !s.players[id].out);
+  if (!alive.length) return endGame(s);
+  let i = s.turnIdx;
+  for (let n = 0; n < s.order.length; n++) {
+    i++;
+    if (i >= s.order.length) { i = 0; s.round++; if (s.round > s.maxRounds) return endGame(s); log(s, `—— 第 ${s.round} 輪 ——`); }
+    if (!s.players[s.order[i]].out) break;
+  }
+  s.turnIdx = i; s.step = 'roll'; s.dice = 0; s.lastCard = null;
+}
+
+// ---------- 動作 ----------
+// 回傳錯誤訊息字串；成功回傳 null（直接修改 s）
+function act(s, pid, a) {
+  norm(s);
+  const me = s.players[pid];
+  const isHost = s.host === pid;
+  switch (a.type) {
+    case 'join': {
+      if (s.phase !== 'lobby') return me ? null : '遊戲已開始，不能加入';
+      if (me) { me.name = a.name; return null; }
+      if (Object.keys(s.players).length >= 18) return '人數已滿';
+      const used = Object.values(s.players).map(p => p.color);
+      s.players[pid] = { id: pid, name: (a.name || '玩家').slice(0, 10), color: COLORS.find(c => !used.includes(c)) || '#333',
+        route: 0, pos: 0, cash: START_CASH, cards: [], strat: [], offer: [], ready: false, out: false, stratRound: 0, divRound: 0, laps: 0 };
+      log(s, `👋 ${s.players[pid].name} 加入`);
+      return null;
+    }
+    case 'leave': {
+      if (s.phase !== 'lobby' || !me) return null;
+      delete s.players[pid]; return null;
+    }
+    case 'route': {
+      if (s.phase !== 'lobby' || !me) return '現在不能選路線';
+      if (!ROUTES[a.r]) return '沒有這條路線';
+      if (Object.values(s.players).filter(p => p.route === a.r && p.id !== pid).length >= 3) return '這條路線已經有 3 人';
+      me.route = a.r; return null;
+    }
+    case 'rounds': {
+      if (!isHost || s.phase !== 'lobby') return null;
+      s.maxRounds = Math.max(1, Math.min(20, a.n | 0)); return null;
+    }
+    case 'kick': {
+      if (!isHost || s.phase !== 'lobby') return null;
+      delete s.players[a.id]; return null;
+    }
+    case 'start': {
+      if (!isHost || s.phase !== 'lobby') return '只有房主能開始';
+      const ps = Object.values(s.players);
+      if (ps.length < 1) return '至少要 1 位玩家';
+      if (ps.some(p => !p.route)) return '還有人沒選路線';
+      ps.forEach(p => { p.offer = drawInv(s, 3); p.ready = false; });
+      s.phase = 'setup';
+      log(s, '📦 每人抽 3 張投資卡，請分配 1000 元');
+      return null;
+    }
+    case 'setup': {
+      if (s.phase !== 'setup' || !me || me.ready) return '現在不能分配';
+      const al = a.al || [];
+      let sum = 0;
+      for (let i = 0; i < me.offer.length; i++) {
+        const v = al[i] | 0;
+        if (v === 0) continue;
+        if (v < 100) return '每張卡至少 100 元（不買請填 0）';
+        if (v % 50) return '金額要是 50 的倍數';
+        sum += v;
+      }
+      if (sum > START_CASH) return '總額超過 1000 元';
+      me.offer.forEach((t, i) => { const v = al[i] | 0; if (v) addCard(s, me, t, v); else toBottom(s, [t]); });
+      me.offer = []; me.ready = true;
+      log(s, `✅ ${me.name} 完成分配（投資 ${sum} 元，現金 ${me.cash} 元）`);
+      if (Object.values(s.players).every(p => p.ready)) startPlay(s);
+      return null;
+    }
+    case 'skipWait': { // 房主或當前玩家：不再等待防守卡
+      if (!s.pending || s.pending.kind !== 'risk') return null;
+      if (!isHost && cur(s).id !== pid) return null;
+      applyRisk(s); afterPending(s); return null;
+    }
+    case 'defend': {
+      const pd = s.pending;
+      if (!pd || pd.kind !== 'risk' || !pd.wait.includes(pid) || pd.resp[pid]) return '現在不能使用防守卡';
+      if (a.s) {
+        const sc = BYK[a.s];
+        if (!sc || !sc.def || !me.strat.includes(a.s)) return '你沒有這張防守卡';
+        if (sc.red) {
+          const c = me.cards.find(x => x.u === a.u);
+          if (!c || INVMAP[c.t].cat !== sc.cat) return `請選 1 張${CATN[sc.cat]}投資卡`;
+        }
+        pd.resp[pid] = { s: a.s, u: a.u || 0 };
+      } else pd.resp[pid] = { s: '' };
+      if (pd.wait.every(id => pd.resp[id])) { applyRisk(s); afterPending(s); }
+      return null;
+    }
+  }
+  // 以下為輪到自己才能做的動作
+  if (s.phase !== 'play') return '遊戲尚未開始';
+  const p = cur(s);
+  const pd = s.pending;
+  if (pd && pd.pid && pd.pid !== pid) return `請等 ${s.players[pd.pid].name} 決定`;
+  if (!pd && p.id !== pid) return `現在是 ${p.name} 的回合`;
+  if (pd && pd.kind === 'risk') return '等待大家決定是否使用防守卡';
+
+  switch (a.type) {
+    case 'roll': {
+      if (pd || s.step !== 'roll') return '現在不能擲骰';
+      if (p.pos === 14) p.pos = 0;
+      const d = die(); s.dice = d;
+      p.pos = Math.min(14, p.pos + d);
+      s.step = 'resolve'; s.lap = p.pos === 14;
+      log(s, `🎲 ${p.name} 擲出 ${d}，走到路線 ${p.route} 第 ${p.pos + 1} 格`);
+      landing(s, p); afterPending(s); return null;
+    }
+    case 'pick': { // 從 options 選一張買入，或 i=-1 放棄
+      if (!pd || pd.kind !== 'pick') return '沒有可選的卡';
+      if (a.i === -1) {
+        toBottom(s, pd.options); s.pending = null;
+        log(s, `　${me.name} 沒有買入`);
+      } else {
+        const t = pd.options[a.i]; if (!t) return '請選一張卡';
+        if (me.cards.length >= MAX_CARDS) return `最多持有 ${MAX_CARDS} 張投資卡，請放棄或之後先賣出`;
+        const err = validAmt(a.amt | 0, pd.min || 100, pd.max || 0, me.cash); if (err) return err;
+        const amt = a.amt | 0;
+        addCard(s, me, t, amt, pd.after === 'long');
+        toBottom(s, pd.options.filter((_, j) => j !== a.i));
+        const c = me.cards[me.cards.length - 1];
+        log(s, `🛒 ${me.name} 買入 ${nm(t)} ${amt} 元${pd.after === 'long' ? '（長期持有）' : ''}`);
+        s.pending = null;
+        if (pd.after === 'hrhr') {
+          const d = die(); const pct = d <= 2 ? -50 : d <= 4 ? 20 : 50;
+          const ch = change(s, me, c, pct);
+          log(s, `　高風險高回報擲出 ${d}：${pct > 0 ? '+' : ''}${pct}%（${ch > 0 ? '+' : ''}${ch} 元）`);
+        }
+      }
+      afterPending(s); return null;
+    }
+    case 'boost': {
+      if (!pd || pd.kind !== 'boost') return '現在不能選';
+      const c = me.cards.find(x => x.u === a.u); if (!c) return '請選一張投資卡';
+      if (pd.cat && INVMAP[c.t].cat !== pd.cat) return `請選${CATN[pd.cat]}`;
+      const d = change(s, me, c, pd.pct);
+      log(s, `　${me.name} 的 ${nm(c.t)} +${pd.pct}%（+${d} 元）`);
+      s.pending = null; afterPending(s); return null;
+    }
+    case 'discardStrat': {
+      if (!pd || pd.kind !== 'discardStrat') return null;
+      const i = me.strat.indexOf(a.s); if (i < 0) return '請選一張';
+      me.strat.splice(i, 1); s.disc.strat.push(a.s);
+      log(s, `　${me.name} 棄掉 1 張策略卡`);
+      s.pending = null; afterPending(s); return null;
+    }
+    case 'route2': {
+      if (!pd || pd.kind !== 'route') return null;
+      if (a.r && a.r !== me.route) {
+        if (!ROUTES[a.r]) return '沒有這條路線';
+        if (Object.values(s.players).filter(q => q.route === a.r && !q.out).length >= 3) return '這條路線已經有 3 人';
+        log(s, `🔀 ${me.name} 換到路線 ${a.r}`);
+        me.route = a.r;
+      }
+      me.pos = 14; // 下次擲骰時從起點出發
+      s.pending = null; afterPending(s); return null;
+    }
+  }
+  if (pd) return '請先完成目前的選擇';
+  if (s.step !== 'trade') return '請先擲骰';
+  switch (a.type) {
+    case 'sell': {
+      const c = p.cards.find(x => x.u === a.u); if (!c) return '找不到這張卡';
+      if (c.long) return '長期持有的卡不能賣出';
+      sellCard(s, p, a.u); log(s, `💵 ${p.name} 賣出 ${nm(c.t)}，拿回 ${c.amt} 元`); return null;
+    }
+    case 'add': {
+      const c = p.cards.find(x => x.u === a.u); if (!c) return '找不到這張卡';
+      const amt = a.amt | 0;
+      const err = validAmt(amt, 50, 0, p.cash); if (err) return err;
+      p.cash -= amt; c.amt += amt; c.a0 += amt; log(s, `➕ ${p.name} 加碼 ${nm(c.t)} ${amt} 元`); return null;
+    }
+    case 'strat': {
+      const sc = BYK[a.s];
+      if (!sc || !p.strat.includes(a.s)) return '你沒有這張策略卡';
+      if (p.stratRound === s.round) return '每輪最多使用 1 張策略卡';
+      if (sc.def && !sc.own) return '這是防守卡，要在風險卡出現時使用';
+      if (sc.p) {
+        const c = p.cards.find(x => x.u === a.u);
+        if (!c || INVMAP[c.t].cat !== sc.cat) return `請選 1 張${CATN[sc.cat]}投資卡`;
+        const d = change(s, p, c, sc.p); log(s, `🃏 ${p.name} 使用「${sc.n}」：${nm(c.t)} +${sc.p}%（+${d} 元）`);
+      } else if (a.s === 'div') {
+        p.divRound = s.round; log(s, `🃏 ${p.name} 使用「分散投資」：本輪損失少 10 個百分點`);
+      } else if (a.s === 'realloc') {
+        log(s, `🃏 ${p.name} 使用「重新分配資產」`);
+        s.pending = { kind: 'pick', pid: p.id, options: drawInv(s, 2), min: 100, why: '重新分配資產：選 1 張買入' };
+      } else if (a.s === 'restructure') {
+        const c = p.cards.find(x => x.u === a.u);
+        if (!c || c.long) return '請選 1 張要賣出的投資卡（長期持有不行）';
+        sellCard(s, p, a.u);
+        log(s, `🃏 ${p.name} 使用「資本重組」：賣出 ${nm(c.t)} 拿回 ${c.amt} 元`);
+        s.pending = { kind: 'pick', pid: p.id, options: drawInv(s, 2), min: 100, why: '資本重組：選 1 張買入' };
+      }
+      p.strat.splice(p.strat.indexOf(a.s), 1); s.disc.strat.push(a.s); p.stratRound = s.round;
+      return null;
+    }
+    case 'end': { nextTurn(s); return null; }
+  }
+  return '未知的動作';
+}
+
+const ENGINE = { INV, INVMAP, CATN, ROUTES, BOARD, RISK, EVENT, RET, STRAT, BYK, MAX_CARDS, MAX_STRAT, START_CASH, newGame, norm, clean, act, total, cur };
+
+
+</script>
+<script>
+const E = ENGINE;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const SQN = { '0': '起點', S: '策略\n卡', E: '普通\n事件卡', R: '風險\n卡', T: '回報\n卡', _: '交易所' };
+const LANEBG = { 1: '#b9e1f7', 2: '#fff6c2', 3: '#f7d6e6', 4: '#cfcce6', 5: '#f8d9c6', 6: '#d0e8d8' };
+const DECKC = { risk: 'var(--risk)', event: 'var(--event)', ret: 'var(--ret)', strat: 'var(--strat)' };
+const DECKN = { risk: '風險卡', event: '普通事件卡', ret: '回報卡', strat: '策略卡' };
+const DICE = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
+let myId = localStorage.getItem('caifu_me');
+if (!myId) { myId = 'u' + Math.random().toString(36).slice(2, 10); localStorage.setItem('caifu_me', myId); }
+
+let S = null;            // 目前遊戲狀態
+let mode = null;         // 'online' | 'local'
+let roomRef = null, fb = null;
+let lastPanelKey = '';
+let selCard = {};        // 畫面上的暫時選擇
+
+function toast(m) { const t = $('#toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.h); toast.h = setTimeout(() => (t.style.display = 'none'), 2600); }
+const fbReady = () => FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.databaseURL && window.firebase;
+
+// ---------- 傳送動作 ----------
+function localActor() {
+  if (!S) return null;
+  if (S.phase === 'setup') { const p = Object.values(S.players).find(p => !p.ready); return p && p.id; }
+  if (S.phase !== 'play') return null;
+  const pd = S.pending;
+  if (pd && pd.kind === 'risk') return pd.wait.find(id => !pd.resp[id]);
+  if (pd && pd.pid) return pd.pid;
+  return E.cur(S).id;
+}
+function viewerId() { return mode === 'local' ? localActor() : myId; }
+
+async function send(a, pidOverride) {
+  if (mode === 'local') {
+    const pid = pidOverride || (['start', 'rounds', 'kick', 'skipWait'].includes(a.type) ? 'local' : localActor());
+    const err = E.act(S, pid, a);
+    if (err) return toast(err);
+    S = E.norm(E.clean(S)); S.t = Date.now();
+    try { localStorage.setItem('caifu_local', JSON.stringify(S)); } catch (e) {}
+    render(); return;
+  }
+  let err = null;
+  try {
+    await roomRef.transaction(cur => {
+      if (cur === null) return cur;
+      err = null;
+      const s = E.norm(cur);
+      err = E.act(s, myId, a);
+      if (err) return; // 放棄
+      s.t = Date.now();
+      return E.clean(s);
+    });
+  } catch (e) { err = '連線錯誤：' + e.message; }
+  if (err) toast(err);
+}
+
+// ---------- 首頁 ----------
+function home() {
+  mode = null; S = null; if (roomRef) { roomRef.off(); roomRef = null; }
+  const name = localStorage.getItem('caifu_name') || '';
+  const hasLocal = !!localStorage.getItem('caifu_local');
+  $('#app').innerHTML = `<div class="home">
+  <div class="hero"><h1>💹 財富之道</h1><div>投資理財桌遊・線上版</div></div>
+  <div class="panel">
+    <h2>學生：加入房間</h2>
+    <div class="row"><input id="nm" placeholder="你的名字" value="${esc(name)}" maxlength="10" style="flex:1">
+    <input id="code" placeholder="房號" inputmode="numeric" maxlength="4" style="width:100px"></div>
+    <div class="row" style="margin-top:10px"><button class="pri" id="join" style="flex:1">加入</button></div>
+  </div>
+  <div class="panel">
+    <h2>老師：建立房間</h2>
+    <label class="row"><input type="checkbox" id="play"> 我也要下場玩（不勾選＝只看大螢幕）</label>
+    <div class="row" style="margin-top:10px"><button class="ok" id="create" style="flex:1">建立新房間</button></div>
+    ${fbReady() ? '' : '<p class="muted">⚠️ 尚未填入 Firebase 設定，線上模式無法使用；可先用下方單機模式試玩。</p>'}
+  </div>
+  <div class="panel">
+    <h2>單機模式（一台裝置輪流玩／試玩）</h2>
+    <div class="row"><button id="local">開始單機遊戲</button>${hasLocal ? '<button id="resume">繼續上次單機遊戲</button>' : ''}</div>
+  </div></div>`;
+  $('#join').onclick = () => {
+    const n = $('#nm').value.trim(), c = $('#code').value.trim();
+    if (!n) return toast('請輸入名字'); if (!/^\d{4}$/.test(c)) return toast('房號是 4 位數字');
+    localStorage.setItem('caifu_name', n); goOnline(c, n);
+  };
+  $('#create').onclick = async () => {
+    if (!connect()) return;
+    let code;
+    for (let i = 0; i < 20; i++) {
+      code = String(1000 + Math.floor(Math.random() * 9000));
+      const snap = await fb.ref(`${DB_PATH}/${code}`).get();
+      const v = snap.val();
+      if (!v || Date.now() - (v.t || 0) > 12 * 3600e3) break;
+    }
+    await fb.ref(`${DB_PATH}/${code}`).set(E.clean(E.newGame(code, myId)));
+    const n = $('#play').checked ? ($('#nm').value.trim() || prompt('你的名字') || '老師') : '';
+    goOnline(code, n);
+  };
+  $('#local').onclick = () => { mode = 'local'; S = E.newGame('單機', 'local'); render(); };
+  if (hasLocal) $('#resume').onclick = () => { mode = 'local'; S = E.norm(JSON.parse(localStorage.getItem('caifu_local'))); render(); };
+}
+function connect() {
+  if (!fbReady()) { toast('尚未設定 Firebase，請先用單機模式'); return false; }
+  if (!fb) { firebase.initializeApp(FIREBASE_CONFIG); fb = firebase.database(); }
+  return true;
+}
+async function goOnline(code, name) {
+  if (!connect()) return;
+  mode = 'online';
+  roomRef = fb.ref(`${DB_PATH}/${code}`);
+  const snap = await roomRef.get();
+  if (!snap.val()) { toast('找不到這個房間'); return home(); }
+  history.replaceState(null, '', '#' + code);
+  let joined = false;
+  roomRef.on('value', sn => {
+    const v = sn.val();
+    if (!v) { toast('房間已關閉'); return home(); }
+    S = E.norm(v);
+    if (!joined) { joined = true; if (name && (S.phase === 'lobby' || S.players[myId])) send({ type: 'join', name }); }
+    render();
+  });
+}
+
+// ---------- 畫面 ----------
+function render() {
+  if (!S) return;
+  const vid = viewerId();
+  const me = S.players[vid];
+  const p = S.phase === 'play' ? E.cur(S) : null;
+  let h = `<div class="top"><h1>💹 財富之道</h1>
+    <span class="pill">房號 <b>${esc(S.code)}</b></span>
+    ${S.phase === 'play' || S.phase === 'over' ? `<span class="pill">第 <b>${Math.min(S.round, S.maxRounds)}</b> / ${S.maxRounds} 輪</span>` : ''}
+    ${p ? `<span class="pill">輪到：<b>${esc(p.name)}</b></span>` : ''}
+    <span class="pill pool">風險池 ${S.pool} 元</span>
+    <span style="margin-left:auto"></span><button id="exit">離開</button></div>`;
+  if (S.phase === 'lobby') h += lobbyView();
+  else if (S.phase === 'setup') h += `<div class="grid"><div>${boardView()}</div><div>${panelWrap()}${playersView()}</div></div>`;
+  else {
+    h += `<div class="grid"><div>${boardView()}${S.phase === 'over' ? overView() : ''}${me ? assetsView(me) : ''}</div>
+      <div>${panelWrap()}${lastCardView()}${playersView()}${logView()}</div></div>`;
+  }
+  const keep = document.activeElement && document.activeElement.closest && document.activeElement.closest('#actions');
+  const key = panelKey(vid);
+  if (keep && key === lastPanelKey && $('#actions')) {
+    // 正在輸入：保留行動區，只更新其他區塊
+    const old = $('#actions'); const tmp = document.createElement('div'); tmp.innerHTML = h;
+    tmp.querySelector('#actions').replaceWith(old);
+    $('#app').replaceChildren(...tmp.childNodes);
+  } else {
+    $('#app').innerHTML = h;
+    lastPanelKey = key;
+    bindActions(vid);
+  }
+  $('#exit').onclick = () => { if (confirm('確定離開？（線上遊戲可用同一台裝置再次輸入房號回來）')) { location.hash = ''; home(); } };
+  const lg = $('.log'); if (lg) lg.scrollTop = lg.scrollHeight;
+}
+function panelKey(vid) {
+  const me = S.players[vid];
+  return JSON.stringify([vid, S.phase, S.step, S.turnIdx, S.round, S.pending, me && [me.cash, me.cards, me.strat, me.ready, me.route, me.offer, me.stratRound],
+    S.phase === 'lobby' ? [S.players, S.maxRounds] : 0, S.phase === 'setup' ? Object.values(S.players).map(x => x.ready) : 0]);
+}
+function panelWrap() { return `<div class="panel" id="actions">${actionsView(viewerId())}</div>`; }
+
+function lobbyView() {
+  const ps = Object.values(S.players);
+  const isHost = mode === 'local' || S.host === myId;
+  const me = S.players[myId];
+  let h = `<div class="panel"><h2>等待室</h2>`;
+  if (mode === 'online') h += `<p>請同學打開這個網頁，輸入房號 <b style="font-size:28px">${esc(S.code)}</b> 加入。</p>`;
+  else h += `<div class="row"><input id="lname" placeholder="玩家名字" maxlength="10"><button class="pri" id="ladd">新增玩家</button></div>`;
+  h += `</div>`;
+  if (mode === 'online' && me) h += `<div class="panel"><h2>選擇你的路線（每條最多 3 人）</h2>${routePicker(me.route, 'r')}</div>`;
+  h += `<div class="panel"><h2>玩家（${ps.length} 人）</h2><table><tr><th>玩家</th><th>路線</th><th></th></tr>`;
+  ps.forEach(q => {
+    h += `<tr><td><span class="tok" style="display:inline-flex;background:${q.color}">${esc(q.name.slice(-1))}</span> ${esc(q.name)}</td>
+    <td>${mode === 'local' ? `<select data-lr="${q.id}"><option value="0">—</option>${[1, 2, 3, 4, 5, 6].map(r => `<option ${q.route === r ? 'selected' : ''}>${r}</option>`).join('')}</select>` : (q.route ? '路線 ' + q.route : '<span class="muted">未選</span>')}</td>
+    <td>${isHost ? `<button data-kick="${q.id}">移除</button>` : ''}</td></tr>`;
+  });
+  h += `</table></div>`;
+  if (isHost) h += `<div class="panel row"><label>輪數 <input type="number" id="rounds" min="1" max="20" value="${S.maxRounds}"></label>
+     <button class="ok big" id="start">開始遊戲</button></div>`;
+  else h += `<div class="panel muted">等待老師開始遊戲…</div>`;
+  h += `<div class="panel"><h3>路線主題投資</h3>${Object.entries(E.ROUTES).map(([r, t]) => `路線 ${r}：${t.map(k => E.INVMAP[k].n).join('、')}`).join('<br>')}<p class="muted">完成一圈時，你持有的路線主題投資 +10%。</p></div>`;
+  return h;
+}
+function routePicker(curR, attr) {
+  return `<div class="routes">${[1, 2, 3, 4, 5, 6].map(r => {
+    const n = Object.values(S.players).filter(q => q.route === r && !q.out).length;
+    return `<button data-${attr}="${r}" class="${curR === r ? 'on' : ''}">路線 ${r}（${n}/3）<br><small>${E.ROUTES[r].map(k => E.INVMAP[k].n).join('、')}</small></button>`;
+  }).join('')}</div>`;
+}
+function boardView() {
+  let h = `<div class="panel board">`;
+  for (let r = 1; r <= 6; r++) {
+    const here = Object.values(S.players).filter(q => q.route === r && !q.out);
+    h += `<div class="lane"><div class="no">${r}</div>`;
+    [...E.BOARD[r]].forEach((sq, i) => {
+      const toks = here.filter(q => q.pos === i);
+      const isCur = S.phase === 'play' && E.cur(S).route === r && E.cur(S).pos === i;
+      h += `<div class="cell ${sq === '0' ? 'start' : sq} ${isCur ? 'here' : ''}" style="background:${LANEBG[r]}"><div class="lb">${SQN[sq]}</div>
+        <div class="toks">${toks.map(q => `<span class="tok" title="${esc(q.name)}" style="background:${q.color}">${esc(q.name.slice(-1))}</span>`).join('')}</div></div>`;
+    });
+    h += `</div><div class="lanehead">主題：${E.ROUTES[r].map(k => E.INVMAP[k].n).join('、')}</div>`;
+  }
+  return h + `</div>`;
+}
+function invCard(c, extra = '') {
+  const t = E.INVMAP[c.t]; const diff = c.amt - c.a0;
+  return `<div class="icard cat-${t.cat} ${extra}" data-u="${c.u}"><div class="t">${t.n}${c.long ? ' 🔒長期' : ''}</div>
+    <div class="a">${c.amt} 元</div><div class="d">${E.CATN[t.cat]}・成本 ${c.a0}（${diff >= 0 ? '+' : ''}${diff}）</div></div>`;
+}
+function typeCard(k, extra = '', i = '') {
+  const t = E.INVMAP[k];
+  return `<div class="icard cat-${t.cat} ${extra}" data-i="${i}"><div class="t">${t.n}</div><div class="d">${E.CATN[t.cat]}</div></div>`;
+}
+function stratCard(k) { const c = E.BYK[k]; return `<div class="scard"><b>${c.n}</b>${c.def ? '<span class="tag">防守</span>' : ''}<br>${c.d}</div>`; }
+function assetsView(me) {
+  const inv = me.cards.reduce((a, c) => a + c.amt, 0);
+  return `<div class="panel"><h2 style="color:${me.color}">${esc(me.name)} 的資產　<span class="muted" style="font-size:14px">路線 ${me.route}</span></h2>
+   <div class="row" style="gap:18px;font-size:17px"><span>💵 現金 <b>${me.cash}</b></span><span>📈 投資 <b>${inv}</b></span><span>🏦 總資產 <b>${me.cash + inv}</b></span></div>
+   <h3>投資卡（${me.cards.length}/${E.MAX_CARDS}）</h3><div class="cards">${me.cards.map(c => invCard(c)).join('') || '<span class="muted">沒有投資卡</span>'}</div>
+   <h3>策略卡（${me.strat.length}/${E.MAX_STRAT}）</h3><div class="cards">${me.strat.map(stratCard).join('') || '<span class="muted">沒有策略卡</span>'}</div></div>`;
+}
+function lastCardView() {
+  if (!S.lastCard && !S.dice) return '';
+  let h = `<div class="panel center">`;
+  if (S.dice) h += `<div class="dice">${DICE[S.dice]}</div>`;
+  if (S.lastCard) {
+    const c = E.BYK[S.lastCard.k];
+    const hide = S.lastCard.deck === 'strat';
+    h += `<div class="big-card" style="background:${DECKC[S.lastCard.deck]};margin-top:8px"><div>${DECKN[S.lastCard.deck]}</div>
+      <div class="n">${hide ? '（收入手中）' : c.n}</div>${hide ? '' : `<div class="d">${c.d}</div>`}</div>`;
+  }
+  return h + `</div>`;
+}
+function playersView() {
+  const ps = S.order.length ? S.order.map(id => S.players[id]) : Object.values(S.players);
+  return `<div class="panel"><h2>玩家</h2><table><tr><th>玩家</th><th>路線</th><th>現金</th><th>總資產</th><th>策略</th></tr>
+  ${ps.map(q => `<tr style="${q.out ? 'opacity:.45' : ''}"><td><span class="tok" style="display:inline-flex;background:${q.color}">${esc(q.name.slice(-1))}</span> ${esc(q.name)}${q.out ? ' 💥' : ''}${S.phase === 'setup' ? (q.ready ? ' ✅' : ' ⏳') : ''}</td>
+    <td>${q.route}</td><td>${q.cash}</td><td><b>${E.total(q)}</b></td><td>${q.strat.length}</td></tr>`).join('')}</table></div>`;
+}
+function logView() { return `<div class="panel"><h2>紀錄</h2><div class="log">${S.log.map(l => `<div>${esc(l)}</div>`).join('')}</div></div>`; }
+function overView() {
+  const ps = Object.values(S.players).sort((a, b) => E.total(b) - E.total(a) || new Set(b.cards.map(c => E.INVMAP[c.t].cat)).size - new Set(a.cards.map(c => E.INVMAP[c.t].cat)).size);
+  const medal = ['🥇', '🥈', '🥉'];
+  return `<div class="panel"><h2>🏆 最終排名</h2><table><tr><th>名次</th><th>玩家</th><th>現金</th><th>投資</th><th>總資產</th><th>持有類別</th></tr>
+  ${ps.map((q, i) => `<tr><td>${medal[i] || i + 1}</td><td>${esc(q.name)}</td><td>${q.cash}</td><td>${E.total(q) - q.cash}</td><td><b>${E.total(q)}</b></td>
+   <td>${[...new Set(q.cards.map(c => E.CATN[E.INVMAP[c.t].cat]))].join('、') || '—'}</td></tr>`).join('')}</table>
+  <p>風險池共吃掉 <b>${S.pool}</b> 元。想一想：哪種投資最穩？分散投資有沒有幫到你？</p></div>`;
+}
+
+// ---------- 行動區 ----------
+function actionsView(vid) {
+  const me = S.players[vid];
+  const pd = S.pending;
+  const banner = mode === 'local' && me ? `<div class="banner">👉 請 <span style="color:${me.color}">${esc(me.name)}</span> 操作</div>` : '';
+  if (S.phase === 'setup') {
+    if (!me) return '<h2>等待大家分配資金…</h2>';
+    if (me.ready) return '<h2>✅ 已完成分配</h2><p class="muted">等待其他同學…</p>';
+    return `${banner}<h2>分配 1000 元到投資卡</h2><p class="muted">每張至少 100 元、50 的倍數；不想買填 0。剩下的是手上現金。</p>
+      ${me.offer.map((k, i) => `<div class="row" style="margin:6px 0">${typeCard(k)}<input type="number" class="al" min="0" step="50" value="${i < 2 ? 300 : 200}"> 元</div>`).join('')}
+      <p>手上現金：<b id="left"></b> 元</p><button class="ok big" id="setupGo">確定</button>`;
+  }
+  if (S.phase === 'over') return `<h2>遊戲結束</h2><p>看看左邊的排名吧！</p>`;
+  if (S.phase !== 'play') return '';
+  const p = E.cur(S);
+  if (pd && pd.kind === 'risk') {
+    const c = E.BYK[pd.k];
+    let h = `<div class="big-card" style="background:var(--risk)"><div>風險卡</div><div class="n">${c.n}</div><div class="d">${c.d}</div></div>`;
+    if (me && pd.wait.includes(vid) && !pd.resp[vid]) {
+      const defs = me.strat.filter(k => E.BYK[k].def);
+      h = banner + h + `<h3>要使用防守卡嗎？</h3>`;
+      defs.forEach(k => {
+        const sc = E.BYK[k];
+        const tg = sc.red ? me.cards.filter(x => E.INVMAP[x.t].cat === sc.cat) : [];
+        h += `<div class="row" style="margin:6px 0">${stratCard(k)}
+          ${sc.red ? (tg.length ? `<select id="dt-${k}">${tg.map(x => `<option value="${x.u}">${E.INVMAP[x.t].n} ${x.amt}元</option>`).join('')}</select>` : '<span class="muted">沒有可保護的卡</span>') : ''}
+          <button class="ok" data-def="${k}" ${sc.red && !tg.length ? 'disabled' : ''}>使用</button></div>`;
+      });
+      return h + `<button data-def="">不使用</button>`;
+    }
+    const left = pd.wait.filter(id => !pd.resp[id]).map(id => S.players[id].name);
+    h += `<p>⏳ 等待 ${esc(left.join('、'))} 決定是否使用防守卡…</p>`;
+    if ((mode === 'online' && (S.host === myId || p.id === myId))) h += `<button id="skipWait">不等了，直接結算</button>`;
+    return h;
+  }
+  if (pd && pd.pid !== vid) return `<h2>⏳ ${esc(S.players[pd.pid].name)} 正在選擇…</h2>`;
+  if (!pd && p.id !== vid) return `<h2>⏳ 輪到 ${esc(p.name)}</h2><p class="muted">等一下就輪到你了。</p>`;
+  if (pd) {
+    if (pd.kind === 'pick') {
+      const full = me.cards.length >= E.MAX_CARDS;
+      return `${banner}<h3>${esc(pd.why)}</h3><div class="cards">${pd.options.map((k, i) => typeCard(k, 'click' + (selCard.pick === i ? ' sel' : ''), i)).join('') || '<span class="muted">牌堆沒有牌了</span>'}</div>
+        ${full ? `<p class="down">你已有 ${E.MAX_CARDS} 張投資卡，不能再買。</p>` : ''}
+        <div class="row" style="margin-top:8px">投入 <input type="number" id="amt" min="${pd.min}" step="50" value="${pd.min}"> 元（現金 ${me.cash}${pd.max ? `，上限 ${pd.max}` : ''}）</div>
+        <div class="row" style="margin-top:8px"><button class="ok" id="buy" ${full || !pd.options.length ? 'disabled' : ''}>買入選中的卡</button><button id="nobuy">不買</button></div>`;
+    }
+    if (pd.kind === 'boost') return `${banner}<h3>${esc(pd.why)}</h3><p class="muted">點一張投資卡</p><div class="cards">${me.cards.map(c => invCard(c, 'click boost')).join('')}</div>`;
+    if (pd.kind === 'discardStrat') return `${banner}<h3>策略卡最多 ${E.MAX_STRAT} 張，請棄掉 1 張</h3>${me.strat.map(k => `<div class="row" style="margin:6px 0">${stratCard(k)}<button data-disc="${k}">棄掉</button></div>`).join('')}`;
+    if (pd.kind === 'route') return `${banner}<h3>🏁 完成一圈！要換路線嗎？</h3>${routePicker(me.route, 'r2')}<div class="row" style="margin-top:8px"><button class="ok" data-r2="0">留在路線 ${me.route}</button></div>`;
+  }
+  if (S.step === 'roll') return `${banner}<div class="center"><h2>輪到你了！</h2><button class="pri big" id="roll">🎲 擲骰子</button></div>`;
+  // 交易時間
+  const usable = me.strat.filter(k => !E.BYK[k].def || E.BYK[k].own);
+  let h = `${banner}<h2>交易時間</h2><p class="muted">可以賣出、加碼或使用策略卡，做完按「結束回合」。</p>`;
+  if (me.cards.length) {
+    h += `<table><tr><th>投資卡</th><th>金額</th><th></th></tr>${me.cards.map(c => `<tr><td>${E.INVMAP[c.t].n}${c.long ? ' 🔒' : ''}</td><td>${c.amt}</td>
+      <td class="row"><button data-sell="${c.u}" ${c.long ? 'disabled' : ''}>賣出</button><input type="number" step="50" min="50" value="50" id="add-${c.u}" style="width:80px"><button data-add="${c.u}">加碼</button></td></tr>`).join('')}</table>`;
+  }
+  if (usable.length) {
+    const used = me.stratRound === S.round;
+    h += `<h3>使用策略卡 ${used ? '<span class="muted">（本輪已用過）</span>' : ''}</h3>`;
+    usable.forEach(k => {
+      const sc = E.BYK[k];
+      const tg = sc.cat ? me.cards.filter(x => E.INVMAP[x.t].cat === sc.cat) : k === 'restructure' ? me.cards.filter(x => !x.long) : null;
+      h += `<div class="row" style="margin:6px 0">${stratCard(k)}${tg ? (tg.length ? `<select id="st-${k}">${tg.map(x => `<option value="${x.u}">${E.INVMAP[x.t].n} ${x.amt}元</option>`).join('')}</select>` : '<span class="muted">沒有適用的卡</span>') : ''}
+        <button class="ok" data-strat="${k}" ${used || (tg && !tg.length) ? 'disabled' : ''}>使用</button></div>`;
+    });
+  }
+  return h + `<div class="center" style="margin-top:12px"><button class="pri big" id="end">結束回合 ➜</button></div>`;
+}
+
+function bindActions(vid) {
+  const on = (sel, fn) => document.querySelectorAll(sel).forEach(el => (el.onclick = () => fn(el)));
+  // 等待室
+  on('[data-r]', el => send({ type: 'route', r: +el.dataset.r }));
+  on('[data-kick]', el => send({ type: 'kick', id: el.dataset.kick }));
+  document.querySelectorAll('[data-lr]').forEach(el => (el.onchange = () => send({ type: 'route', r: +el.value }, el.dataset.lr)));
+  if ($('#ladd')) $('#ladd').onclick = () => {
+    const n = $('#lname').value.trim(); if (!n) return toast('請輸入名字');
+    const id = 'L' + Date.now().toString(36);
+    send({ type: 'join', name: n }, id);
+  };
+  if ($('#rounds')) $('#rounds').onchange = () => send({ type: 'rounds', n: +$('#rounds').value });
+  if ($('#start')) $('#start').onclick = () => send({ type: 'start' });
+  // 分配
+  const upd = () => { const sum = [...document.querySelectorAll('.al')].reduce((a, i) => a + (+i.value || 0), 0); if ($('#left')) $('#left').textContent = E.START_CASH - sum; };
+  document.querySelectorAll('.al').forEach(i => (i.oninput = upd)); upd();
+  if ($('#setupGo')) $('#setupGo').onclick = () => send({ type: 'setup', al: [...document.querySelectorAll('.al')].map(i => +i.value || 0) });
+  // 遊戲中
+  if ($('#roll')) $('#roll').onclick = () => send({ type: 'roll' });
+  if ($('#end')) $('#end').onclick = () => send({ type: 'end' });
+  if ($('#skipWait')) $('#skipWait').onclick = () => send({ type: 'skipWait' });
+  on('[data-def]', el => { const k = el.dataset.def; const s = $('#dt-' + k); send({ type: 'defend', s: k, u: s ? +s.value : 0 }); });
+  on('.icard.click[data-i]', el => { selCard.pick = +el.dataset.i; document.querySelectorAll('.icard[data-i]').forEach(x => x.classList.toggle('sel', x === el)); });
+  if ($('#buy')) $('#buy').onclick = () => {
+    if (selCard.pick == null || selCard.pick >= S.pending.options.length) { if (S.pending.options.length === 1) selCard.pick = 0; else return toast('請先點選一張卡'); }
+    const i = selCard.pick; selCard = {}; send({ type: 'pick', i, amt: +$('#amt').value });
+  };
+  if ($('#nobuy')) $('#nobuy').onclick = () => { selCard = {}; send({ type: 'pick', i: -1 }); };
+  on('.icard.boost', el => send({ type: 'boost', u: +el.dataset.u }));
+  on('[data-disc]', el => send({ type: 'discardStrat', s: el.dataset.disc }));
+  on('[data-r2]', el => send({ type: 'route2', r: +el.dataset.r2 }));
+  on('[data-sell]', el => { if (confirm('確定賣出？')) send({ type: 'sell', u: +el.dataset.sell }); });
+  on('[data-add]', el => send({ type: 'add', u: +el.dataset.add, amt: +$('#add-' + el.dataset.add).value }));
+  on('[data-strat]', el => { const k = el.dataset.strat; const s = $('#st-' + k); send({ type: 'strat', s: k, u: s ? +s.value : 0 }); });
+}
+
+// 網址帶房號直接進入
+if (/^#\d{4}$/.test(location.hash)) {
+  home(); const n = localStorage.getItem('caifu_name');
+  $('#code').value = location.hash.slice(1);
+} else home();
+</script>
+</body>
+</html>
